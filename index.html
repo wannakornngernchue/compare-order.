@@ -323,6 +323,9 @@ table.gt{font-size:14px}
 .ut{min-width:640px}.ut td{vertical-align:middle}.ut tr.off td{opacity:.55}
 .step[aria-current="true"][data-step="5"]{background:linear-gradient(135deg,var(--c2),#0E7490)}.step[data-step="5"] b{background:var(--c2s);color:var(--c2)}#s5{border-top-color:var(--c2)}
 input[type=password]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0}
+.okb{display:inline-block;margin-top:4px;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;background:var(--ok-soft);color:var(--ok);white-space:nowrap}
+td[data-qc]{white-space:normal!important;overflow:visible!important}td[data-qc] .nm{display:block;font-size:12px}
+.addbtn{display:block;margin-top:6px;padding:3px 10px;font-size:12px;white-space:nowrap}.addw{display:flex;flex-direction:column;gap:4px;align-items:flex-end}.addb{display:flex;gap:4px}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -850,7 +853,7 @@ async function runMap(run){
   const rows=await runRows(run);let plans=new Map();
   if(S.db&&run.id!=='local'){const ps=await S.db.collection('plans').where('runId','==',run.id).get();ps.docs.forEach(d=>{const x=d.data();if(x)plans.set(x.code,x)})}
   const m=new Map();
-  rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=p&&p.qty!=null&&typeof p.qty==='number'?p.qty:(typeof o.ordered==='number'?o.ordered:null);
+  rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=planTotal(p)!=null?planTotal(p):(typeof o.ordered==='number'?o.ordered:null);
     m.set(o.code,{code:o.code,name:o.name,pack:o.pack,bo:o.bo,plan:q,planTxt:null})});
   return m;}
 async function loadBase(id){
@@ -864,7 +867,7 @@ async function loadBase(id){
     if(S.db&&run.id!=='local'){const ps=await S.db.collection('plans').where('runId','==',run.id).get();ps.docs.forEach(d=>{const x=d.data();if(x)plans.set(x.code,x)})}
     if($('baseRun').value!==id)return;
     const m=new Map();let np=0;
-    rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=p&&p.qty!=null&&typeof p.qty==='number'?p.qty:(typeof o.ordered==='number'?o.ordered:null);
+    rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=planTotal(p)!=null?planTotal(p):(typeof o.ordered==='number'?o.ordered:null);
       if(q!=null)np++;m.set(o.code,{code:o.code,name:o.name,pack:o.pack,bo:o.bo,plan:q,planTxt:null})});
     S.baseMap=m;st.className='stat ok';
     st.textContent='พบ '+fmt(m.size)+' รายการ · BO '+fmt([...m.values()].filter(r=>r.bo<0).length)+' · มี Plan order '+fmt(np);
@@ -946,24 +949,33 @@ $('saveRun').addEventListener('click',async()=>{
 
 /* ---------- step 3: plan order (front store) + ordered tick (system staff) ---------- */
 const F3=[['all','ทั้งหมด'],['bo','มี BO'],['empty','ยังไม่กรอก Plan'],['filled','กรอก Plan แล้ว'],['undone','มี Plan รอสั่ง'],['done','สั่งแล้ว'],['skip','ไม่สั่งตามแพลน']];
-S.rows=[];S.orders=new Map();S.unsubOrders=null;
+S.rows=[];S.orders=new Map();S.unsubOrders=null;S.addCode=null;
+/* "เพิ่ม Plan" after an item was ticked as ordered: the plan doc keeps base (qty already ordered) and rev (how many times it was topped up).
+   An order tick counts only for the plan rev it was made on, so topping up puts the item back to "รอสั่ง" without touching the order doc. */
+const pRev=p=>(p&&p.rev)||0, pBase=p=>(p&&p.base)||0;
+const oMatch=(p,o)=>!!o&&((o.rev||0)===pRev(p));
+const isDoneP=(p,o)=>oMatch(p,o)&&!!o.done;
+const isSkipP=(p,o)=>oMatch(p,o)&&!o.done&&!!o.note;
+const orderedTotal=(p,o)=>pBase(p)+(isDoneP(p,o)&&p&&typeof p.qty==='number'?p.qty:0);
+const planTotal=p=>p&&typeof p.qty==='number'?pBase(p)+p.qty:null;
+const isDoneC=c=>isDoneP(S.plans.get(c),S.orders.get(c));
 const histHtml=(i,labels)=>{if(!i.hist)return'';
   const t=i.hist.map(v=>v?'−'+fmt(v):'0').join(' → ');
   const pl=(i.hplan||[]).some(v=>v!=null)?'<div class="nm">สั่ง: '+i.hplan.map(v=>v==null?'–':fmt(v)).join(' → ')+'</div>':'';
   return '<div class="hist" title="'+esc((labels||[]).join(' → '))+'">'+t+'</div>'+pl};
 const cell=(v,cls)=>'<td'+(cls?' class="'+cls+'"':'')+'>'+(v==null||v===''?'':esc(v))+'</td>';
 function m3(i,f,q){
-  const p=S.plans.get(i.code),o=S.orders.get(i.code),done=!!(o&&o.done),has=!!(p&&p.qty!=null);
+  const p=S.plans.get(i.code),o=S.orders.get(i.code),done=isDoneP(p,o),has=!!(p&&p.qty!=null);
   if(f==='bo'&&!i.bBO)return false;
   if(f==='empty'&&has)return false;if(f==='filled'&&!has)return false;
   if(f==='undone'&&!(has&&!done&&i.ordered==null))return false;if(f==='done'&&!(done||i.ordered!=null))return false;
-  if(f==='skip'&&!(o&&!o.done&&o.note))return false;
+  if(f==='skip'&&!isSkipP(p,o))return false;
   if(q){q=q.toLowerCase();if(!(i.code.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)))return false}
   return true;}
 const STL={done:'สั่งแล้ว',file:'สั่งแล้ว (ไฟล์)',skip:'ไม่สั่งตามแพลน',plan:'รอสั่ง',bo:'BO ไม่มี Plan'};
 function stateOf(i){const p=S.plans.get(i.code),o=S.orders.get(i.code),has=!!(p&&p.qty!=null);
-  if(o&&o.done)return'done';
-  if(o&&o.note)return'skip';
+  if(isDoneP(p,o))return'done';
+  if(isSkipP(p,o))return'skip';
   if(i.ordered!=null)return'file';
   if(has)return'plan';
   if(i.bBO)return'bo';
@@ -995,17 +1007,28 @@ function renderS3(){
     '<td>'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
     cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
     '<td class="n">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
-    '<td class="n ec"><input type="number" class="qty" min="0" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(i.code)+'" aria-label="Plan order '+esc(i.code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+lk+'>'+
-    (i.ordered!=null?'<span class="warn">สั่งไปแล้ว '+fmt(i.ordered)+' ตรวจก่อนกรอกซ้ำ</span>':'')+'</td>'+
+    '<td class="n ec" data-qc>'+qtyCell(i)+'</td>'+
     '<td class="ec"><input type="text" class="note" data-f="fnote" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุหน้าร้าน '+esc(i.code)+'" value="'+esc(p.note||'')+'" placeholder="ไม่บังคับ"'+lk+'></td>'+
-    '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(o.done?' checked':'')+dis+'></td>'+
-    '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(o.note||'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
+    '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(isDoneP(S.plans.get(i.code),S.orders.get(i.code))?' checked':'')+dis+'></td>'+
+    '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(oMatch(p,o)?o.note||'':'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
     cell(i.reason)+cell(i.desc)+cell(i.vol)+cell(i.freq)+cell(i.cv)+cell(fmt(i.stock),'n')+cell(i.wh)+cell(fmt(i.quota),'n')+'<td class="who" data-who></td></tr>'}).join('')
     :'<tr><td colspan="24" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
   fillWho();updateProg();renderOS();}
+function qtyCell(i){
+  const code=i.code,p=S.plans.get(code)||{},o=S.orders.get(code),lock=isLocked(S.run),done=isDoneP(p,o),base=pBase(p),tot=orderedTotal(p,o);
+  if(S.addCode===code&&done&&!lock)
+    return '<div class="addw"><span class="okb">สั่งแล้ว '+fmt(tot)+'</span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="จำนวนที่เพิ่ม">'+
+      '<div class="addb"><button type="button" class="btn sm primary" data-act="addok">เพิ่ม</button><button type="button" class="btn sm" data-act="addno">ยกเลิก</button></div></div>';
+  let h='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+(lock||done?' disabled':'')+'>';
+  if(done&&tot>0)h+='<span class="okb">สั่งแล้ว '+fmt(tot)+'</span>';
+  else if(base>0)h+='<span class="okb">สั่งแล้ว '+fmt(base)+'</span><span class="nm">เพิ่มรอสั่ง '+fmt(p.qty)+'</span>';
+  if(!lock&&done)h+='<button type="button" class="btn sm addbtn" data-act="add">+ เพิ่ม Plan</button>';
+  else if(!lock&&base>0)h+='<button type="button" class="btn sm addbtn" data-act="undoadd">ยกเลิกการเพิ่ม</button>';
+  if(i.ordered!=null)h+='<span class="warn">สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ</span>';
+  return h;}
 function updateProg(){
-  const n=S.rows.length,f=S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&p.qty!=null}).length,d=S.rows.filter(i=>{const o=S.orders.get(i.code);return o&&o.done}).length;
+  const n=S.rows.length,f=S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&p.qty!=null}).length,d=S.rows.filter(i=>isDoneC(i.code)).length;
   $('prog').style.width=(f?d/f*100:0)+'%';
   $('progTxt').textContent=n?('กรอก Plan แล้ว '+f+' จาก '+n+' รายการ · สั่งแล้ว '+d+' จาก '+f+' ที่กรอก'):'';}
 async function fillWho(){
@@ -1020,7 +1043,8 @@ function syncCells(){
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{
     const code=tr.dataset.code,p=S.plans.get(code)||{},o=S.orders.get(code)||{},it=S.rows.find(i=>i.code===code);
     const set=(f,v)=>{const el=tr.querySelector('[data-f="'+f+'"]');if(el&&document.activeElement!==el){if(el.type==='checkbox')el.checked=!!v;else el.value=v==null?'':v}};
-    set('qty',p.qty);set('fnote',p.note);set('done',o.done);set('onote',o.note);
+    set('fnote',p.note);set('done',isDoneP(S.plans.get(code),S.orders.get(code)));set('onote',oMatch(S.plans.get(code),S.orders.get(code))?o.note:'');
+    const qc=tr.querySelector('[data-qc]');if(qc&&it&&!qc.contains(document.activeElement)){const h=qtyCell(it);if(qc.dataset.h!==h){qc.innerHTML=h;qc.dataset.h=h}}
     if(it)applyState(tr,it);});
   fillWho();updateProg();}
 $('tb3').addEventListener('change',async e=>{
@@ -1035,19 +1059,45 @@ $('tb3').addEventListener('change',async e=>{
       const v=g('qty').value.trim(),note=g('fnote').value.trim();
       const qty=v===''?null:Math.max(0,Math.round(Number(v)));
       if(qty!=null&&!isFinite(qty)){g('qty').value='';return}
-      const id='plans/'+S.runId+'__'+safeId(code),prev=S.plans.get(code);
+      const id='plans/'+S.runId+'__'+safeId(code),prev=S.plans.get(code),base=pBase(prev);
+      if(isDoneP(prev,S.orders.get(code))&&f==='qty'){syncCells();return}
+      if(base>0&&f==='qty'&&!(qty>=1)){msg.textContent='จำนวนที่เพิ่มต้องอย่างน้อย 1 ถ้าไม่ต้องการเพิ่มแล้ว ให้กด "ยกเลิกการเพิ่ม"';g('qty').value=prev&&prev.qty!=null?prev.qty:'';return}
       undo=()=>{if(prev)S.plans.set(code,prev);else S.plans.delete(code)};
-      if(qty==null&&!note){S.plans.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
-      else{const rec={runId:S.runId,code,qty,note,by:S.uid,at:Date.now()};S.plans.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
+      if(qty==null&&!note&&!base){S.plans.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
+      else{const rec={runId:S.runId,code,qty,note,by:S.uid,at:Date.now()};if(prev&&prev.rev){rec.base=base;rec.rev=prev.rev;rec.steps=prev.steps||[]}
+        S.plans.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
     }else{
       const done=g('done').checked,note=g('onote').value.trim(),id='orders/'+S.runId+'__'+safeId(code),prev=S.orders.get(code);
       undo=()=>{if(prev)S.orders.set(code,prev);else S.orders.delete(code)};
+      const pl=S.plans.get(code);
       if(!done&&!note){S.orders.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
-      else{const rec={runId:S.runId,code,done,note,by:S.uid,at:Date.now()};S.orders.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
+      else{const rec={runId:S.runId,code,done,note,by:S.uid,at:Date.now(),rev:pRev(pl),qty:pl&&typeof pl.qty==='number'?pl.qty:null};S.orders.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
     }
     msg.textContent='บันทึกแล้ว ✓ '+code;clearTimeout(S.okT);S.okT=setTimeout(()=>{if(msg.textContent.startsWith('บันทึกแล้ว'))msg.textContent=''},2500);
   }catch(err){undo();msg.textContent='บันทึกไม่ได้ บัญชีนี้อาจไม่มีสิทธิ์ในช่องนี้ หรือการเชื่อมต่อมีปัญหา';syncCells();paint()}
   fillWho();updateProg();});
+/* "+ เพิ่ม Plan" on an item already ticked as ordered: only an extra quantity can be added, never less than what was ordered */
+function blurQc(){const a=document.activeElement;if(a&&a.closest&&a.closest('[data-qc]'))a.blur()}
+async function writePlan(code,rec,okText){
+  const msg=$('s3msg'),prev=S.plans.get(code);S.plans.set(code,rec);S.addCode=null;blurQc();syncCells();
+  try{if(S.db)await S.db.doc('plans/'+S.runId+'__'+safeId(code)).set(rec);msg.textContent=okText+' ✓ '+code}
+  catch(e){if(prev)S.plans.set(code,prev);else S.plans.delete(code);msg.textContent='บันทึกไม่ได้ ลองใหม่อีกครั้ง';syncCells()}}
+function addOk(tr){
+  const code=tr.dataset.code,inp=tr.querySelector('[data-add]'),v=Math.round(Number(inp&&inp.value));
+  if(!(v>=1)){$('s3msg').textContent='ใส่จำนวนที่จะเพิ่ม อย่างน้อย 1';if(inp)inp.focus();return}
+  const p=S.plans.get(code)||{},pq=typeof p.qty==='number'?p.qty:0;
+  writePlan(code,{runId:S.runId,code,qty:v,note:p.note||'',by:S.uid,at:Date.now(),base:pBase(p)+pq,rev:pRev(p)+1,steps:[...(p.steps||[]),pq]},'เพิ่ม Plan แล้ว');}
+$('tb3').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-act]');if(!b)return;const tr=b.closest('tr'),code=tr.dataset.code,act=b.dataset.act;
+  if(isLocked(S.run))return;
+  if(act==='add'){S.addCode=code;const qc=tr.querySelector('[data-qc]');const it=S.rows.find(i=>i.code===code);qc.innerHTML=qtyCell(it);qc.dataset.h='';const x=qc.querySelector('[data-add]');if(x)x.focus()}
+  else if(act==='addno'){S.addCode=null;blurQc();syncCells()}
+  else if(act==='addok')addOk(tr);
+  else if(act==='undoadd'){const p=S.plans.get(code);if(!p||!p.rev)return;const steps=(p.steps||[]).slice(),last=steps.length?steps.pop():0;
+    const rec={runId:S.runId,code,qty:last,note:p.note||'',by:S.uid,at:Date.now()};if(p.rev>1){rec.base=pBase(p)-last;rec.rev=p.rev-1;rec.steps=steps}
+    writePlan(code,rec,'ยกเลิกการเพิ่มแล้ว')}});
+$('tb3').addEventListener('keydown',e=>{const x=e.target.closest&&e.target.closest('[data-add]');if(!x)return;
+  if(e.key==='Enter'){e.preventDefault();addOk(x.closest('tr'))}else if(e.key==='Escape'){S.addCode=null;blurQc();syncCells()}});
 /* Enter saves the cell and drops to the same field on the next row, like a spreadsheet */
 $('tb3').addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;const el=e.target.closest&&e.target.closest('input[data-f]');if(!el||el.type==='checkbox')return;
@@ -1087,7 +1137,7 @@ $('q3').addEventListener('input',renderS3);
   apply();})();
 /* system staff press "บันทึกการสั่ง": every item the store planned but that was not ticked as ordered needs a reason (e.g. ตู้เต็ม) */
 const osPlanned=()=>S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&typeof p.qty==='number'&&p.qty>0});
-const osPending=()=>osPlanned().filter(i=>{const o=S.orders.get(i.code);return !(o&&o.done)&&!(o&&o.note)});
+const osPending=()=>osPlanned().filter(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code);return !isDoneP(p,o)&&!isSkipP(p,o)});
 function renderOS(){
   const b=$('saveOrder'),r=S.run;b.hidden=!S.canEdit;b.disabled=!r||isLocked(r);
   const o=r&&r.orderSaved;
@@ -1111,8 +1161,8 @@ $('osBody').addEventListener('click',e=>{
 async function commitOS(reasons){
   const msg=$('s3msg');closeOS();if(!S.run||isLocked(S.run))return;
   try{
-    for(const code of Object.keys(reasons)){const rec={runId:S.runId,code,done:false,note:reasons[code],by:S.uid,at:Date.now()};S.orders.set(code,rec);if(S.db)await S.db.doc('orders/'+S.runId+'__'+safeId(code)).set(rec)}
-    const pl=osPlanned(),done=pl.filter(i=>{const o=S.orders.get(i.code);return o&&o.done}).length;
+    for(const code of Object.keys(reasons)){const pl=S.plans.get(code);const rec={runId:S.runId,code,done:false,note:reasons[code],by:S.uid,at:Date.now(),rev:pRev(pl)};S.orders.set(code,rec);if(S.db)await S.db.doc('orders/'+S.runId+'__'+safeId(code)).set(rec)}
+    const pl=osPlanned(),done=pl.filter(i=>isDoneC(i.code)).length;
     const os={at:Date.now(),by:S.uid||null,planned:pl.length,done,skipped:pl.length-done};
     S.run.orderSaved=os;if(S.db&&S.runId!=='local')await S.db.doc('runs/'+S.runId).update({orderSaved:os});
     msg.textContent='บันทึกการสั่งแล้ว ✓';clearTimeout(S.okT);S.okT=setTimeout(()=>{if(msg.textContent.startsWith('บันทึกการสั่ง'))msg.textContent=''},3000);
@@ -1121,7 +1171,7 @@ async function commitOS(reasons){
 setInterval(()=>{if(S.run&&S.step===3&&isLocked(S.run)!==S.lockShown&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#tb3'))){renderRunSel();renderS3()}},30000);
 $('runSel').addEventListener('change',()=>selectRun($('runSel').value));
 async function selectRun(id){
-  S.runId=id||null;S.run=S.runs.find(r=>r.id===id)||null;S.plans=new Map();S.orders=new Map();S.rows=[];
+  S.runId=id||null;S.run=S.runs.find(r=>r.id===id)||null;S.addCode=null;S.plans=new Map();S.orders=new Map();S.rows=[];
   if(S.unsubPlans){S.unsubPlans();S.unsubPlans=null}if(S.unsubOrders){S.unsubOrders();S.unsubOrders=null}
   if(!S.run){renderS3();return}
   const mk=arr=>{const r=arr.map(rowObj);if(S.run&&S.run.first)r.forEach(o=>{o.cat='';o.delta=0});return r};
@@ -1151,11 +1201,11 @@ $('dlCompare').addEventListener('click',()=>{
     .concat(S.cmp.items.map(i=>[i.code,i.name,i.pack,-i.aBO,-i.bBO,i.delta,(S.first?'รอบแรก':CAT[i.cat][0]),i.ordered==null?'':i.ordered]));
   saveXlsx('เทียบ BO.xlsx',rows,[18,50,9,12,12,16,14,16],'เทียบ BO');});
 $('dlPlan').addEventListener('click',()=>{
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','BO ตอนนี้','Plan order','หมายเหตุหน้าร้าน','สั่งแล้ว (ระบบ)','หมายเหตุระบบ','สั่งแล้ว (ในไฟล์)']];
-  S.rows.forEach(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code);
-    if(p&&(p.qty>0||p.note)||o)rows.push([i.code,i.name,i.pack,i.bo<0?i.bo:'',p&&p.qty!=null?p.qty:'',p?p.note:'',o?(o.done?'สั่งแล้ว':'ยังไม่ได้สั่ง'):'',o?o.note:'',i.ordered==null?'':i.ordered])});
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','BO ตอนนี้','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะ (ระบบ)','สั่งแล้วสะสม (ระบบ)','หมายเหตุระบบ','สั่งแล้ว (ในไฟล์)']];
+  S.rows.forEach(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code),dn=isDoneP(p,o),sk=isSkipP(p,o),tot=orderedTotal(p,o);
+    if(p&&(p.qty>0||p.note||pBase(p))||o)rows.push([i.code,i.name,i.pack,i.bo<0?i.bo:'',p&&p.qty!=null?p.qty:'',p?p.note:'',dn?'สั่งแล้ว':sk?'ไม่สั่ง':(p&&p.qty>0?'รอสั่ง':''),tot||'',sk&&o?o.note:(dn&&o?o.note||'':''),i.ordered==null?'':i.ordered])});
   if(rows.length===1){$('s3msg').textContent='ยังไม่มีรายการที่กรอก Plan order';return}
-  saveXlsx('Plan order.xlsx',rows,[18,50,9,10,11,28,14,28,16],'Plan order');});
+  saveXlsx('Plan order.xlsx',rows,[18,50,9,10,14,28,12,16,28,16],'Plan order');});
 
 /* ---------- step 4: history (read-only) ---------- */
 const HF=[['all','ทั้งหมด'],['bo','มี BO'],['plan','มี Plan order'],['done','สั่งแล้ว'],['skip','ไม่สั่ง (มีเหตุผล)'],['wait','มี Plan ยังไม่ได้สั่ง']];
@@ -1212,7 +1262,7 @@ function renderHist(){
 $('histList').addEventListener('click',e=>{const c=e.target.closest('.hc');if(c)openHist(c.dataset.id)});
 $('hBack').addEventListener('click',()=>{S.hid=null;renderHist()});
 const hState=(i,H)=>{const p=H.plans.get(i.code),o=H.orders.get(i.code),has=!!(p&&typeof p.qty==='number'&&p.qty>0);
-  if(o&&o.done)return'done';if(o&&o.note)return'skip';if(has)return'wait';return''};
+  if(isDoneP(p,o))return'done';if(isSkipP(p,o))return'skip';if(has)return'wait';return''};
 async function openHist(id){
   const run=histRuns().find(r=>r.id===id)||S.runs.find(r=>r.id===id);if(!run)return;
   S.hid=id;S.hf='all';$('q4').value='';$('histListBox').hidden=true;$('histDetail').hidden=false;
@@ -1247,13 +1297,13 @@ function renderHistTable(){
     const who=[p.by?'หน้าร้าน: '+(S.names[p.by]||'')+' '+when(p.at):'',o.by?'ระบบ: '+(S.names[o.by]||'')+' '+when(o.at):''].filter(Boolean).map(esc).join('<br>');
     return '<tr class="'+(st?'hs-'+st:'')+'"><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+(i.bBO?bo(i.bBO):'<span class="hint">0</span>')+histHtml(i,H.run.rounds)+'</td>'+
       '<td>'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
-      '<td class="n">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(o.note||'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
+      '<td class="n">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
     :'<tr><td colspan="8" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';}
 $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','BO','Plan order','หมายเหตุหน้าร้าน','สถานะการสั่ง','หมายเหตุระบบ']];
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','BO','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ']];
   H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
-    rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',o?o.note||'':''])});
-  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,11,28,14,28],'ประวัติ');});
+    rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',oMatch(p,o)&&o?o.note||'':''])});
+  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,14,28,14,14,28],'ประวัติ');});
 
 /* ---------- navigation ---------- */
 function go(n){
