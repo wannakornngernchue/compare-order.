@@ -1061,7 +1061,7 @@ function qtyCell(i){
     return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+ เพิ่ม">'+
       '<button type="button" class="ib ok" data-act="addok" title="บันทึกจำนวนที่เพิ่ม" aria-label="บันทึกจำนวนที่เพิ่ม">'+ICON.ok+'</button><button type="button" class="ib" data-act="addno" title="ยกเลิก" aria-label="ยกเลิก">'+ICON.no+'</button></div>';
   let h='<div class="qc">'+warn;
-  if(done&&tot>0)h+='<span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span>';
+  if(done&&base>0)h+='<span class="okb" title="สั่งแล้วทั้งหมด (รวมที่เพิ่ม Plan)">สั่ง '+fmt(tot)+'</span>';
   else if(base>0)h+='<span class="okb" title="สั่งไปแล้ว '+fmt(base)+' · ที่กรอกคือจำนวนที่เพิ่ม รอสั่ง">สั่ง '+fmt(base)+' +</span>';
   h+='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+(lock||done?' disabled':'')+'>';
   if(!lock&&done)h+='<button type="button" class="ib" data-act="add" title="เพิ่ม Plan (สั่งเพิ่มจากที่สั่งไปแล้ว)" aria-label="เพิ่ม Plan '+esc(code)+'">'+ICON.pen+'</button>';
