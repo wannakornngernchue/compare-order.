@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>เทียบ BO สั่งตู้</title>
+<title>Plan order</title>
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -326,13 +326,20 @@ input[type=password]{font:inherit;color:var(--ink);background:var(--surface);bor
 .okb{display:inline-block;margin-top:4px;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;background:var(--ok-soft);color:var(--ok);white-space:nowrap}
 td[data-qc]{white-space:normal!important;overflow:visible!important}td[data-qc] .nm{display:block;font-size:12px}
 .addbtn{display:block;margin-top:6px;padding:3px 10px;font-size:12px;white-space:nowrap}.addw{display:flex;flex-direction:column;gap:4px;align-items:flex-end}.addb{display:flex;gap:4px}
+.tw table th,.tw table td{border-right:1px solid color-mix(in srgb,var(--muted) 35%,var(--line))}
+.tw table th:last-child,.tw table td:last-child{border-right:0}
+.tw table th{border-bottom:2px solid color-mix(in srgb,var(--c1) 35%,var(--line))}
+.tw table tbody tr td{border-bottom:1px solid color-mix(in srgb,var(--muted) 25%,var(--line))}
+th.sortable{cursor:pointer;user-select:none}th.sortable:hover{background:color-mix(in srgb,var(--c1s) 100%,var(--surface))}
+th .sa{margin-left:6px;font-size:11px;color:var(--muted);opacity:.55}th.sorted .sa{color:var(--c1);opacity:1}
+th.sorted{color:var(--c1)}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
 
 <div class="wrap">
   <div class="top">
-    <div><h1>เทียบ BO สั่งตู้</h1><p>อัปโหลดข้อมูลแต่ละรอบ ดูว่า BO เพิ่มเท่าไหร่ สั่งไปแล้วหรือยัง แล้วให้หน้าร้านกรอก Plan order</p></div>
+    <div><h1>Plan order</h1><p>อัปโหลดข้อมูลแต่ละรอบ ดูว่า BO เพิ่มเท่าไหร่ สั่งไปแล้วหรือยัง แล้วให้หน้าร้านกรอก Plan order</p></div>
     <div class="rail" id="rail">
       <button class="step" data-step="1"><b>1</b>อัปโหลดข้อมูล</button>
       <button class="step" data-step="2"><b>2</b>เทียบ BO</button>
@@ -928,11 +935,12 @@ function renderS2(){
   const FL=S.first?F2.filter(x=>['all','todo','done'].includes(x[0])):F2;chips($('chips2'),FL,S.f2,counts(S.cmp.items,FL),k=>{S.f2=k;renderS2()});
   const q=$('q2').value.trim(),rows=S.cmp.items.filter(i=>match(i,S.f2,q));
   $('tb2').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat];
-    return '<tr><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+fmt(i.pack)+'</td><td class="n">'+bo(i.aBO)+'</td><td class="n">'+bo(i.bBO)+'</td>'+
-    '<td>'+(S.first?'<span class="pill p-same">รอบแรก</span>':'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>')+'</td>'+
-    '<td class="n">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':(i.bBO?'<span class="hint">ยังไม่ได้สั่ง</span>':''))+'</td>'+
-    '<td class="n">'+histHtml(i,S.cmp.rounds)+'</td></tr>'}).join('')
-    :'<tr><td colspan="7" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';}
+    return '<tr><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+fmt(i.pack)+'</td><td class="n" data-s="'+(i.aBO||0)+'">'+bo(i.aBO)+'</td><td class="n" data-s="'+(i.bBO||0)+'">'+bo(i.bBO)+'</td>'+
+    '<td data-s="'+(S.first?'':(i.delta||0))+'">'+(S.first?'<span class="pill p-same">รอบแรก</span>':'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>')+'</td>'+
+    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':(i.bBO?'<span class="hint">ยังไม่ได้สั่ง</span>':''))+'</td>'+
+    '<td class="n" data-s="'+(i.bBO||0)+'">'+histHtml(i,S.cmp.rounds)+'</td></tr>'}).join('')
+    :'<tr><td colspan="7" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+  sortBody('tb2');}
 $('q2').addEventListener('input',renderS2);
 $('saveRun').addEventListener('click',async()=>{
   const msg=$('s2msg');if(!S.cmp)return;
@@ -1003,16 +1011,17 @@ function renderS3(){
   $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
     return '<tr data-code="'+esc(i.code)+'">'+
     '<td><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span><div class="nm">'+esc(i.name)+'</div></td>'+
-    cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
-    '<td>'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
+    cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n" data-s="'+(i.bBO?-i.bBO:(i.bo||0))+'">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
+    '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
     cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
-    '<td class="n">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
+    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
     '<td class="n ec" data-qc>'+qtyCell(i)+'</td>'+
     '<td class="ec"><input type="text" class="note" data-f="fnote" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุหน้าร้าน '+esc(i.code)+'" value="'+esc(p.note||'')+'" placeholder="ไม่บังคับ"'+lk+'></td>'+
     '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(isDoneP(S.plans.get(i.code),S.orders.get(i.code))?' checked':'')+dis+'></td>'+
     '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(oMatch(p,o)?o.note||'':'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
     cell(i.reason)+cell(i.desc)+cell(i.vol)+cell(i.freq)+cell(i.cv)+cell(fmt(i.stock),'n')+cell(i.wh)+cell(fmt(i.quota),'n')+'<td class="who" data-who></td></tr>'}).join('')
     :'<tr><td colspan="24" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+  sortBody('tb3');
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
   fillWho();updateProg();renderOS();}
 function qtyCell(i){
@@ -1295,15 +1304,57 @@ function renderHistTable(){
   $('tb4').innerHTML=rows.length?rows.map(i=>{const p=H.plans.get(i.code)||{},o=H.orders.get(i.code)||{},st=hState(i,H),c=CAT[i.cat];
     const stat=st==='done'?'<span class="pill p-down">สั่งแล้ว</span>':st==='skip'?'<span class="pill p-up">ไม่สั่ง</span>':st==='wait'?'<span class="pill p-ord">รอสั่ง</span>':'';
     const who=[p.by?'หน้าร้าน: '+(S.names[p.by]||'')+' '+when(p.at):'',o.by?'ระบบ: '+(S.names[o.by]||'')+' '+when(o.at):''].filter(Boolean).map(esc).join('<br>');
-    return '<tr class="'+(st?'hs-'+st:'')+'"><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+(i.bBO?bo(i.bBO):'<span class="hint">0</span>')+histHtml(i,H.run.rounds)+'</td>'+
-      '<td>'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
-      '<td class="n">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
-    :'<tr><td colspan="8" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';}
+    return '<tr class="'+(st?'hs-'+st:'')+'"><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n" data-s="'+(i.bBO||0)+'">'+(i.bBO?bo(i.bBO):'<span class="hint">0</span>')+histHtml(i,H.run.rounds)+'</td>'+
+      '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
+      '<td class="n" data-s="'+(p.qty!=null?p.qty:'')+'">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
+    :'<tr><td colspan="8" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+  sortBody('tb4');}
 $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
   const rows=[['รหัสสินค้า','ชื่อสินค้า','BO','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ']];
   H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
     rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',oMatch(p,o)&&o?o.note||'':''])});
   saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,14,28,14,14,28],'ประวัติ');});
+
+/* ---------- click a column header to sort: ▲ ascending → ▼ descending → back to normal order. Blanks always go last. ---------- */
+function sortVal(td){
+  if(!td)return null;
+  if(td.hasAttribute('data-s')){const v=td.getAttribute('data-s');return v===''?null:Number(v)}
+  const n=td.querySelector('input[type=number]');if(n)return n.value===''?null:Number(n.value);
+  const c=td.querySelector('input[type=checkbox]');if(c)return c.checked?1:0;
+  const t=td.querySelector('input[type=text]');let x=(t?t.value:td.textContent).trim();
+  if(!x||x==='–'||x==='-')return null;
+  const k=x.replace(/[,\s]/g,'').replace(/[−–]/g,'-');if(/^[+-]?\d+(\.\d+)?$/.test(k))return Number(k);
+  return x.toLowerCase();}
+function sortBody(id){
+  const st=(S.sort||{})[id],tb=$(id);if(!tb)return;paintSortHead(id);
+  if(!st)return;
+  const trs=[...tb.children].filter(tr=>tr.cells.length>1);if(trs.length<2)return;
+  const k=st.dir==='asc'?1:-1,keyed=trs.map((tr,ix)=>({tr,ix,v:sortVal(tr.cells[st.col])}));
+  keyed.sort((a,b)=>{const x=a.v,y=b.v;
+    if(x==null&&y==null)return a.ix-b.ix;if(x==null)return 1;if(y==null)return-1;
+    const nx=typeof x==='number',ny=typeof y==='number';
+    if(nx!==ny)return nx?-1:1;
+    const r=nx?x-y:String(x).localeCompare(String(y),'th',{numeric:true});
+    return r?r*k:a.ix-b.ix});
+  const fr=document.createDocumentFragment();keyed.forEach(o=>fr.appendChild(o.tr));tb.appendChild(fr);}
+function paintSortHead(id){
+  const tb=$(id);if(!tb)return;const th=tb.closest('table').tHead;if(!th)return;const st=(S.sort||{})[id];
+  [...th.rows[0].cells].forEach((c,i)=>{const a=c.querySelector('.sa');if(!a)return;
+    const on=st&&st.col===i;a.textContent=on?(st.dir==='asc'?'▲':'▼'):'⇅';c.classList.toggle('sorted',!!on);
+    c.setAttribute('aria-sort',on?(st.dir==='asc'?'ascending':'descending'):'none')});}
+S.sort={};
+[['tb2',()=>renderS2()],['tb3',()=>renderS3()],['tb4',()=>renderHistTable()]].forEach(([id,render])=>{
+  const tb=$(id);if(!tb)return;const head=tb.closest('table').tHead;if(!head)return;
+  [...head.rows[0].cells].forEach((c,i)=>{
+    if(id==='tb3'&&i===23)return;
+    c.classList.add('sortable');c.title='กดเพื่อเรียง';c.tabIndex=0;
+    const a=document.createElement('span');a.className='sa';a.setAttribute('aria-hidden','true');a.textContent='⇅';
+    const rz=c.querySelector('.rz');if(rz)c.insertBefore(a,rz);else c.appendChild(a);
+    const act=()=>{const cur=S.sort[id];
+      if(!cur||cur.col!==i)S.sort[id]={col:i,dir:'asc'};else if(cur.dir==='asc')S.sort[id]={col:i,dir:'desc'};else delete S.sort[id];
+      render()};
+    c.addEventListener('click',e=>{if(e.target.closest('.rz'))return;act()});
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act()}});});});
 
 /* ---------- navigation ---------- */
 function go(n){
