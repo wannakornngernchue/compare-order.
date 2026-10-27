@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>เทียบ BO สั่งตู้</title>
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: one working column under a quiet header. A segmented 3-step switch sits top-right (นำเข้า → เทียบ → กรอก); every step is a single soft card holding controls, then a table. Cool paper ground, white cards with long soft shadows, one deep-teal accent, red kept for BO only. */
+:root{
+  --bg:#EEF2F2; --surface:#FFFFFF; --surface2:#F6F8F8; --ink:#112028; --muted:#5E6E75; --line:#E1E8E7;
+  --accent:#0B6670; --accent-ink:#FFFFFF; --accent-soft:#DCF0F1; --accent-2:#0A8F8A;
+  --bo:#C7382C; --bo-soft:#FDE9E6; --warn:#946000; --warn-soft:#FFF3D6; --ok:#23764A; --ok-soft:#DFF4E8;
+  --shadow:0 1px 2px rgba(17,32,40,.05),0 8px 24px -8px rgba(17,32,40,.12);
+  --font:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif; --display:"Anuphan","IBM Plex Sans Thai",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1418; --surface:#142128; --surface2:#1A2A32; --ink:#E8F0F0; --muted:#94A7AD; --line:#26373F;
+  --accent:#4DB8C0; --accent-ink:#04171A; --accent-soft:#17363B; --accent-2:#6FD1C9;
+  --bo:#FF8175; --bo-soft:#3A1F1E; --warn:#F2B84B; --warn-soft:#3A2E12; --ok:#6FD39A; --ok-soft:#173326;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -8px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1418; --surface:#142128; --surface2:#1A2A32; --ink:#E8F0F0; --muted:#94A7AD; --line:#26373F;
+  --accent:#4DB8C0; --accent-ink:#04171A; --accent-soft:#17363B; --accent-2:#6FD1C9;
+  --bo:#FF8175; --bo-soft:#3A1F1E; --warn:#F2B84B; --warn-soft:#3A2E12; --ok:#6FD39A; --ok-soft:#173326;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -8px rgba(0,0,0,.5); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;
+  padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-size:26px;margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+h2{font-family:var(--display);font-size:17px;margin:0;font-weight:600;letter-spacing:-.01em}
+.top{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between}
+.top p{margin:4px 0 0;color:var(--muted);max-width:52ch}
+.rail{display:flex;gap:2px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);max-width:100%;overflow-x:auto}
+.step{appearance:none;font:inherit;font-weight:500;border:0;background:transparent;color:var(--muted);padding:8px 14px;border-radius:9px;cursor:pointer;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.step b{font-family:var(--mono);font-weight:500;font-size:12px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:var(--surface2);color:var(--muted)}
+.step:hover:not(:disabled){color:var(--ink)}
+.step[aria-current="true"]{background:var(--accent);color:var(--accent-ink)}
+.step[aria-current="true"] b{background:rgba(255,255,255,.22);color:inherit}
+.step:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:18px;min-width:0;box-shadow:var(--shadow)}
+.notice{padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:13px}
+.drop{border:1.5px dashed var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:10px;min-width:0;background:var(--surface2);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop.ok{border-style:solid;border-color:var(--accent-2)}
+.drop.err{border-color:var(--bo)}
+.tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.drop .pick{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stat{color:var(--muted);font-size:13px}
+.drop.ok .stat{color:var(--ok)} .drop.err .stat{color:var(--bo)}
+input[type=file]{font:inherit;font-size:13px;color:var(--muted)}
+input[type=file]::file-selector-button{font:inherit;font-weight:500;border:0;background:var(--accent);color:var(--accent-ink);padding:8px 16px;border-radius:10px;margin-right:12px;cursor:pointer}
+select,input[type=text],input[type=search],input[type=number]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0}
+select:hover,input:hover{border-color:var(--muted)}
+.segs{display:inline-flex;gap:2px;padding:4px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;align-self:flex-start;max-width:100%;flex-wrap:wrap}
+.segb{appearance:none;font:inherit;font-weight:500;border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:9px;cursor:pointer}
+.segb[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.pastes{display:flex;flex-direction:column;gap:14px}
+.gwrap{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.grid{outline:0}
+.grid:focus-within{box-shadow:0 0 0 3px var(--accent-soft)}
+table.gt{border-collapse:separate;border-spacing:0;min-width:2100px;width:100%;font-size:12.5px;user-select:none}
+.gt th{position:sticky;top:0;z-index:1;padding:6px 8px;background:var(--surface2);border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:normal;min-width:70px;font-size:11.5px}
+.gt th.rn,.gt td.rn{position:sticky;left:0;z-index:2;min-width:38px;width:38px;text-align:center;background:var(--surface2);color:var(--muted)}
+.gt th.rn{z-index:3}
+.gt td{padding:4px 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;height:28px;max-width:320px;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums;cursor:cell}
+.gt td.sel{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
+.gt td.bad{background:var(--bo-soft);color:var(--bo)}
+.gt td[contenteditable="true"]{user-select:text;text-overflow:clip;outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
+.pv{display:none}
+.paste{width:100%;font-family:var(--mono);font-size:12px;line-height:1.4;resize:vertical;min-height:110px;white-space:pre;overflow:auto;color:var(--ink);background:var(--surface);border:1px dashed var(--muted);border-radius:10px;padding:10px}
+.paste:focus{border-style:solid;border-color:var(--accent);outline:0;box-shadow:0 0 0 3px var(--accent-soft)}
+.pv{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.pv:empty{display:none}
+.pv table{min-width:0;font-size:12px}.pv th,.pv td{padding:4px 8px;white-space:nowrap}
+.btn.sm{padding:4px 12px;font-size:12.5px;align-self:flex-start}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.mode{appearance:none;font:inherit;text-align:left;border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:3px;transition:border-color .15s,background .15s}
+.mode b{font-family:var(--display);font-weight:600}
+.mode span{font-size:12.5px;color:var(--muted)}
+.mode:hover{border-color:var(--muted)}
+.mode[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.mode[aria-pressed="true"] b{color:var(--accent)}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
+.vs.one{grid-template-columns:minmax(0,520px)}
+.vsl{display:flex;flex-direction:column;gap:8px;min-width:0;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
+.vsl select{width:100%}
+.vsb{font-family:var(--display);font-weight:700;font-size:13px;color:var(--muted);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line)}
+.vsl .stat.ok{color:var(--ok)} .vsl .stat.err{color:var(--bo)}
+@media (max-width:640px){.vs{grid-template-columns:1fr}.vsb{justify-self:center}}
+.btn{appearance:none;font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 18px;border-radius:10px;cursor:pointer;transition:background .15s,transform .05s}
+.btn:hover:not(:disabled){background:var(--surface2)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 6px 16px -8px var(--accent)}
+.btn.primary:hover:not(:disabled){background:var(--accent);filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;background:var(--surface2);border:1px solid var(--line)}
+.tile .k{font-size:12.5px;color:var(--muted)}
+.tile .v{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .s{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tile.hot{background:var(--bo-soft);border-color:transparent}
+.tile.hot .v{color:var(--bo)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.bar .grow{flex:1 1 220px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:5px 14px;cursor:pointer;transition:background .15s,color .15s}
+.chip:hover{color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.tw{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:720px}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface2);position:sticky;top:0;z-index:1;white-space:nowrap}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:var(--surface2)}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.code{font-family:var(--mono);font-size:12.5px;font-weight:500;white-space:nowrap}
+.nm{color:var(--muted);font-size:12.5px;margin-top:1px}
+.bo{color:var(--bo);font-weight:600}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-new{background:var(--bo-soft);color:var(--bo)} .p-up{background:var(--warn-soft);color:var(--warn)}
+.p-down,.p-gone{background:var(--ok-soft);color:var(--ok)} .p-same{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.p-ord{background:var(--accent-soft);color:var(--accent)}
+.qty{width:96px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.qty:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:0}
+.warn{display:block;color:var(--warn);font-size:12px;margin-top:2px}
+.empty{color:var(--muted);padding:36px 8px;text-align:center}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.prog{height:8px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0;border-radius:999px}
+.tw.wide{max-height:70vh}
+/* step 3 runs edge to edge like a desktop grid: full width, table fills the rest of the window */
+body.full{padding-block:14px 16px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+body.full .wrap{max-width:none;gap:12px}
+body.full .top p{display:none}
+body.full h1{font-size:20px}
+body.full #s3{padding:14px;gap:10px;border-radius:12px}
+body.full .tiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+body.full .tile{padding:8px 12px;flex-direction:row;align-items:baseline;gap:10px;flex-wrap:wrap}
+body.full .tile .v{font-size:20px}
+body.full .tw.wide{max-height:none;height:calc(100vh - 330px);min-height:360px;border-radius:10px}
+body.full .t3 th{padding:8px 10px;font-size:12px}
+body.full .t3 td{padding:6px 10px;font-size:13px}
+@media (max-width:760px){body.full .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}body.full .tw.wide{height:70vh}}
+.t3{min-width:2300px}
+.t3 th:first-child,.t3 td:first-child{position:sticky;left:0;background:var(--surface);z-index:2;min-width:260px;max-width:300px;box-shadow:1px 0 0 var(--line)}
+.t3 th:first-child{background:var(--surface2);z-index:4}
+.t3 tbody tr:hover td:first-child{background:var(--surface2)}
+.t3 th.eh{color:var(--accent);background:var(--accent-soft)}
+.t3 td.ec{background:color-mix(in srgb,var(--accent-soft) 35%,transparent)}
+.t3 tr.st-done td,.t3 tr.st-done td.ec{background:color-mix(in srgb,var(--ok) 26%,var(--surface))}
+.t3 tr.st-file td,.t3 tr.st-file td.ec{background:color-mix(in srgb,var(--ok) 11%,var(--surface))}
+.t3 tr.st-skip td,.t3 tr.st-skip td.ec{background:color-mix(in srgb,var(--warn) 26%,var(--surface))}
+.t3 tr.st-plan td,.t3 tr.st-plan td.ec{background:color-mix(in srgb,var(--accent) 13%,var(--surface))}
+.t3 tr.st-bo td,.t3 tr.st-bo td.ec{background:color-mix(in srgb,var(--bo) 9%,var(--surface))}
+.t3 tr[class^="st-"]:hover td{filter:brightness(.97)}
+.st{display:inline-block;margin-left:8px;border-radius:999px;padding:0 9px;font-size:11.5px;font-weight:600;vertical-align:1px}
+.st:empty{display:none}
+.st.s-done{background:var(--ok);color:var(--surface)} .st.s-file{background:var(--ok-soft);color:var(--ok)}
+.st.s-skip{background:var(--warn);color:var(--surface)} .st.s-plan{background:var(--accent);color:var(--accent-ink)}
+.st.s-bo{background:var(--bo-soft);color:var(--bo)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid var(--line)}
+.t3 td.ck,.t3 th.ck{text-align:center}
+.tick{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.note{width:200px}
+.t3 td{font-size:13px}
+.t3 td:first-child .code{font-size:17px;font-weight:700;letter-spacing:.01em;color:var(--ink)}
+.t3 td:first-child .nm{font-size:12.5px;margin-top:2px}
+.t3 th:first-child,.t3 td:first-child{min-width:300px}
+.t3 th{white-space:normal;min-width:84px}
+.t3 td:nth-child(17){min-width:180px}
+.who{font-size:12px;color:var(--muted);white-space:nowrap}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:no-preference){.prog i{transition:width .35s}}
+@media (max-width:520px){.panel{padding:16px;border-radius:14px}h1{font-size:22px}}
+/* ===== v15 skin: colourful, airy, easier to read ===== */
+:root{
+  --bg:#F1F3FB; --line:#E3E7F3; --surface2:#F6F7FD; --ink:#16192F; --muted:#5F6683;
+  --accent:#4F46E5; --accent-ink:#fff; --accent-soft:#E7E6FD; --accent-2:#7C3AED;
+  --c1:#4F46E5; --c1s:#E7E6FD; --c2:#0891B2; --c2s:#D9F3F8; --c3:#DB2777; --c3s:#FDE4EF; --c4:#D97706; --c4s:#FFEFD0;
+  --bo:#DC2626; --bo-soft:#FEE4E2; --ok:#15803D; --ok-soft:#D8F5E2; --warn:#A16207; --warn-soft:#FFF0C2;
+  --shadow:0 1px 2px rgba(30,30,80,.06),0 12px 28px -12px rgba(50,50,140,.22);
+  --font:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1022; --surface:#171A33; --surface2:#1E2240; --ink:#EEF0FF; --muted:#A3A9CC; --line:#2B3058;
+  --accent:#8B85FF; --accent-ink:#0E1022; --accent-soft:#2A2A62; --accent-2:#B794FF;
+  --c1:#8B85FF; --c1s:#2A2A62; --c2:#4FD1E8; --c2s:#133846; --c3:#FF7EB6; --c3s:#47203A; --c4:#FBBF4A; --c4s:#46330F;
+  --bo:#FF8A80; --bo-soft:#45201F; --ok:#6EE7A0; --ok-soft:#14352A; --warn:#F7C95B; --warn-soft:#3F3210}}
+:root[data-theme="dark"]{
+  --bg:#0E1022; --surface:#171A33; --surface2:#1E2240; --ink:#EEF0FF; --muted:#A3A9CC; --line:#2B3058;
+  --accent:#8B85FF; --accent-ink:#0E1022; --accent-soft:#2A2A62; --accent-2:#B794FF;
+  --c1:#8B85FF; --c1s:#2A2A62; --c2:#4FD1E8; --c2s:#133846; --c3:#FF7EB6; --c3s:#47203A; --c4:#FBBF4A; --c4s:#46330F;
+  --bo:#FF8A80; --bo-soft:#45201F; --ok:#6EE7A0; --ok-soft:#14352A; --warn:#F7C95B; --warn-soft:#3F3210}
+body{font-size:15px;background:radial-gradient(900px 380px at 12% -80px,color-mix(in srgb,var(--c1) 16%,transparent),transparent),radial-gradient(700px 320px at 95% -60px,color-mix(in srgb,var(--c3) 12%,transparent),transparent),var(--bg)}
+h1{font-size:28px;background:linear-gradient(90deg,var(--c1),var(--accent-2) 55%,var(--c3));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:19px}
+.panel{border-radius:20px;border-top:4px solid var(--c1);padding:24px}
+#s2{border-top-color:var(--c2)} #s3{border-top-color:var(--c3)}
+.rail{border-radius:16px;padding:5px;gap:4px}
+.step{padding:9px 16px;border-radius:12px;font-weight:600}
+.step[data-step="1"] b{background:var(--c1s);color:var(--c1)} .step[data-step="2"] b{background:var(--c2s);color:var(--c2)} .step[data-step="3"] b{background:var(--c3s);color:var(--c3)}
+.step[aria-current="true"][data-step="1"]{background:linear-gradient(135deg,var(--c1),var(--accent-2))}
+.step[aria-current="true"][data-step="2"]{background:linear-gradient(135deg,var(--c2),#0E7490)}
+.step[aria-current="true"][data-step="3"]{background:linear-gradient(135deg,var(--c3),#BE185D)}
+.step[aria-current="true"]{color:#fff;box-shadow:0 8px 18px -8px rgba(0,0,0,.4)}
+.step[aria-current="true"] b{background:rgba(255,255,255,.25);color:#fff}
+.mode{border-radius:16px;padding:14px 16px;border-width:1.5px;border-left-width:5px}
+.mode[data-mode="first"]{border-left-color:var(--c4)} .mode[data-mode="sheets"]{border-left-color:var(--c1)} .mode[data-mode="saved"]{border-left-color:var(--c2)}
+.mode[data-mode="first"][aria-pressed="true"]{background:var(--c4s);border-color:var(--c4)} .mode[data-mode="first"][aria-pressed="true"] b{color:var(--c4)}
+.mode[data-mode="sheets"][aria-pressed="true"]{background:var(--c1s);border-color:var(--c1)} .mode[data-mode="sheets"][aria-pressed="true"] b{color:var(--c1)}
+.mode[data-mode="saved"][aria-pressed="true"]{background:var(--c2s);border-color:var(--c2)} .mode[data-mode="saved"][aria-pressed="true"] b{color:var(--c2)}
+.mode b{font-size:15.5px} .mode span{font-size:13px}
+.segs{border-radius:14px} .segb{font-weight:600} .segb[aria-pressed="true"]{background:var(--c1);color:#fff;box-shadow:0 6px 14px -8px var(--c1)}
+.drop{border-radius:16px;border-color:color-mix(in srgb,var(--c1) 45%,var(--line));background:color-mix(in srgb,var(--c1s) 40%,var(--surface))}
+.vsl{border-radius:16px}
+#blkA,#blkPA{border-top:4px solid var(--c4)} #blkB,#blkPB{border-top:4px solid var(--c1)} #blkR{border-top:4px solid var(--c2)}
+.vsb{background:linear-gradient(135deg,var(--c1),var(--c3));color:#fff;border:0;box-shadow:0 8px 18px -8px var(--c3)}
+.tag{font-weight:600;color:var(--accent);letter-spacing:.06em}
+.btn{border-radius:12px;font-weight:600;padding:10px 20px}
+.btn.primary{background:linear-gradient(135deg,var(--c1),var(--accent-2));border:0;color:#fff;box-shadow:0 10px 20px -10px var(--c1)}
+#saveRun{background:linear-gradient(135deg,var(--c3),#BE185D);box-shadow:0 10px 20px -10px var(--c3)}
+#dlCompare{border-color:var(--c2);color:var(--c2)}
+.tiles{gap:14px}
+.tile{border-radius:18px;padding:16px 18px;border:0;position:relative;overflow:hidden}
+.tile:nth-child(1){background:var(--c1s)} .tile:nth-child(1) .v{color:var(--c1)}
+.tile:nth-child(2){background:var(--c2s)} .tile:nth-child(2) .v{color:var(--c2)}
+.tile:nth-child(3){background:var(--c4s)} .tile:nth-child(3) .v{color:var(--c4)}
+.tile:nth-child(4){background:var(--c3s)} .tile:nth-child(4) .v{color:var(--c3)}
+.tile.hot{background:var(--bo-soft)} .tile.hot .v{color:var(--bo)}
+.tile .k{font-weight:600;color:var(--ink);opacity:.8} .tile .v{font-size:28px}
+.chip{padding:6px 16px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--c1);color:#fff;font-weight:600;box-shadow:0 6px 14px -8px var(--c1)}
+.tw{border-radius:16px}
+th{background:color-mix(in srgb,var(--c1s) 70%,var(--surface));color:var(--ink);font-weight:700}
+.t3 th.eh{background:var(--c3s);color:var(--c3)}
+th,td{padding:11px 14px}
+tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface2) 55%,transparent)}
+tbody tr:hover td{background:var(--c1s)}
+.pill{padding:2px 12px;font-weight:700}
+.p-new{background:var(--bo-soft);color:var(--bo)} .p-up{background:var(--c4s);color:var(--c4)} .p-ord{background:var(--c1s);color:var(--c1)}
+.code{font-weight:600;color:var(--c1)}
+.t3 td:first-child .code{color:var(--c1);font-size:18px}
+.prog{height:12px} .prog i{background:linear-gradient(90deg,var(--c2),var(--c1),var(--c3))}
+.legend{padding:10px 14px;background:var(--surface2);border-radius:12px;gap:8px 18px}
+.legend i{width:16px;height:16px;border-radius:5px}
+.notice{border-radius:12px;font-weight:500}
+.t3 tr.st-done td,.t3 tr.st-done td.ec{background:color-mix(in srgb,var(--ok) 30%,var(--surface))}
+.t3 tr.st-plan td,.t3 tr.st-plan td.ec{background:color-mix(in srgb,var(--c1) 14%,var(--surface))}
+.t3 tr.st-skip td,.t3 tr.st-skip td.ec{background:color-mix(in srgb,var(--c4) 30%,var(--surface))}
+.t3 tr.st-bo td,.t3 tr.st-bo td.ec{background:color-mix(in srgb,var(--bo) 11%,var(--surface))}
+.st.s-plan{background:var(--c1);color:#fff} .st.s-skip{background:var(--c4);color:#fff}
+.tick{width:22px;height:22px;accent-color:var(--ok)}
+.qty:focus,.paste:focus,select:focus,input:focus{border-color:var(--c1);box-shadow:0 0 0 3px var(--c1s)}
+.gt th{background:color-mix(in srgb,var(--c1s) 70%,var(--surface))}
+body.full h1{font-size:22px}
+.hist{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:600;color:var(--bo);white-space:nowrap;margin-top:2px}
+.nohist th:nth-child(7),.nohist td:nth-child(7){display:none}
+#extraBox{border-top:4px solid var(--c2);gap:8px}
+.xl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.xsel{width:100%}
+.xo{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer}
+.xo input{accent-color:var(--c2);width:16px;height:16px}
+#s3msg{position:fixed;right:16px;bottom:16px;z-index:20;background:var(--surface);color:var(--ok);border:1px solid var(--line);box-shadow:var(--shadow);padding:8px 16px;border-radius:12px;font-weight:600}
+#s3msg:empty{display:none}
+.wrap{max-width:1360px}
+.gwrap{max-height:none;height:max(460px,62vh);resize:vertical;min-height:300px}
+table.gt{font-size:14px}
+.gt th{font-size:12.5px;padding:8px 10px}
+.gt td{height:34px;padding:6px 10px}
+.gt th.rn,.gt td.rn{min-width:46px;width:46px}
+.shtabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--line);padding-bottom:0}
+.shtab{appearance:none;font:inherit;font-weight:600;border:1px solid var(--line);border-bottom:0;background:var(--surface2);color:var(--muted);padding:9px 14px;border-radius:12px 12px 0 0;cursor:pointer;display:inline-flex;gap:8px;align-items:center;margin-bottom:-2px}
+.shtab[aria-selected="true"]{background:var(--surface);color:var(--c1);border-color:var(--c1);border-bottom:2px solid var(--surface)}
+.shtab.add{color:var(--c2);border-style:dashed}
+.shn{font-size:12px;font-weight:500;color:var(--muted)}
+.shx{font-size:16px;line-height:1;padding:0 4px;border-radius:6px;color:var(--muted)}.shx:hover{background:var(--bo-soft);color:var(--bo)}
+#baseBox{gap:8px;border-top:4px solid var(--c2)}#baseSel{display:flex;flex-direction:column;gap:8px}
+#shName{min-width:220px}
+#blkPA.over{outline:2px dashed var(--c1)}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(10,12,30,.55);display:grid;place-items:center;padding:16px}
+.ovb{background:var(--surface);border-radius:20px;border-top:4px solid var(--c3);box-shadow:var(--shadow);padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.osl{display:flex;flex-direction:column;gap:8px}
+.osr{display:grid;grid-template-columns:1fr auto minmax(180px,220px);gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.osr .note{width:100%}
+.t3{min-width:0!important;table-layout:fixed}
+.t3 th,.t3 td{min-width:0!important}
+.t3 td:first-child,.t3 th:first-child{max-width:none!important}
+.t3 td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t3 td:first-child{white-space:normal}
+.t3 .qty,.t3 .note{width:100%;min-width:50px}
+.t3 th{position:sticky;overflow:hidden}
+.rz{position:absolute;right:0;top:0;bottom:0;width:9px;cursor:col-resize;touch-action:none}
+.rz:hover,.rz:active{background:var(--c1);opacity:.45}
+.colmenu{position:relative}
+.colmenu summary{list-style:none;cursor:pointer}.colmenu summary::-webkit-details-marker{display:none}
+.colpop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:310px;max-height:60vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px;display:flex;flex-direction:column;gap:6px}
+.xo2{display:flex;gap:8px;align-items:center;padding:3px 4px;cursor:pointer}.xo2 input{accent-color:var(--c1);width:16px;height:16px}
+.step[aria-current="true"][data-step="4"]{background:linear-gradient(135deg,var(--c4),#B45309)}
+.step[data-step="4"] b{background:var(--c4s);color:var(--c4)}
+#s4{border-top-color:var(--c4)}
+.hl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.hc{appearance:none;font:inherit;text-align:left;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-left:5px solid var(--c4);border-radius:16px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:transform .1s,box-shadow .15s}
+.hc:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.hct{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.hct b{font-family:var(--display);font-size:15.5px}
+.hcs{display:flex;gap:14px;font-variant-numeric:tabular-nums}
+#tb4 tr.hs-done td{background:color-mix(in srgb,var(--ok) 22%,var(--surface))}
+#tb4 tr.hs-skip td{background:color-mix(in srgb,var(--c4) 24%,var(--surface))}
+#tb4 tr.hs-wait td{background:color-mix(in srgb,var(--c1) 12%,var(--surface))}
+.dbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface2);margin-block:6px}
+.drange{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.drange input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.hday{grid-column:1/-1;font-family:var(--display);font-weight:600;font-size:14px;color:var(--c4);margin-top:6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+#histListBox{display:flex;flex-direction:column;gap:10px}
+.lform{display:flex;flex-direction:column;gap:8px}.lform[hidden]{display:none!important}.lform label{font-weight:600;font-size:13px}.lform input{width:100%}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.uf{display:flex;flex-direction:column;gap:4px;min-width:0}.uf input,.uf select{width:100%}
+.ut{min-width:640px}.ut td{vertical-align:middle}.ut tr.off td{opacity:.55}
+.step[aria-current="true"][data-step="5"]{background:linear-gradient(135deg,var(--c2),#0E7490)}.step[data-step="5"] b{background:var(--c2s);color:var(--c2)}#s5{border-top-color:var(--c2)}
+input[type=password]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0}
+.ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
+#localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div><h1>เทียบ BO สั่งตู้</h1><p>อัปโหลดข้อมูลแต่ละรอบ ดูว่า BO เพิ่มเท่าไหร่ สั่งไปแล้วหรือยัง แล้วให้หน้าร้านกรอก Plan order</p></div>
+    <div class="rail" id="rail">
+      <button class="step" data-step="1"><b>1</b>อัปโหลดข้อมูล</button>
+      <button class="step" data-step="2"><b>2</b>เทียบ BO</button>
+      <button class="step" data-step="3"><b>3</b>กรอก Plan order</button>
+      <button class="step" data-step="4"><b>4</b>ประวัติ</button>
+      <button class="step" data-step="5" hidden><b>5</b>จัดการผู้ใช้</button>
+    </div>
+  </div>
+  <div class="ubar" id="ubar" hidden><span id="uName"></span><span class="pill p-ord" id="uRole"></span><button type="button" class="btn sm" id="chgPw">เปลี่ยนรหัสผ่าน</button><button type="button" class="btn sm" id="signOut">ออกจากระบบ</button></div>
+  <div class="ov" id="loginOv" hidden><div class="ovb login">
+    <form id="loginForm" class="lform">
+      <h2>เข้าสู่ระบบ</h2>
+      <label for="lgUser">ชื่อผู้ใช้</label><input type="text" id="lgUser" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      <label for="lgPw">รหัสผ่าน</label><input type="password" id="lgPw" autocomplete="current-password" required>
+      <p class="hint" id="loginMsg">ใช้ชื่อผู้ใช้และรหัสผ่านที่แอดมินสร้างให้ ลืมรหัสผ่านให้ติดต่อแอดมิน</p>
+      <div class="bar"><button type="submit" class="btn primary" id="signIn">เข้าสู่ระบบ</button><button type="button" class="btn" id="signOut2" hidden>ออกจากระบบ</button></div>
+    </form>
+    <form id="setupForm" class="lform" hidden>
+      <h2>ตั้งค่าแอดมินคนแรก</h2>
+      <p class="hint">ระบบยังไม่มีผู้ใช้ สร้างบัญชีแอดมินของคุณก่อน หน้านี้จะขึ้นครั้งเดียว หลังจากนี้แอดมินจะเพิ่มผู้ใช้คนอื่นในเมนู "จัดการผู้ใช้"</p>
+      <label for="suName">ชื่อที่แสดง</label><input type="text" id="suName" placeholder="เช่น ณัฐวุฒิ (ฝ่ายระบบ)" required>
+      <label for="suUser">ชื่อผู้ใช้</label><input type="text" id="suUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ตัวพิมพ์เล็ก ตัวเลข . _ - อย่างน้อย 3 ตัว" required>
+      <label for="suPw">รหัสผ่าน</label><input type="password" id="suPw" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัว" required>
+      <label for="suPw2">ยืนยันรหัสผ่าน</label><input type="password" id="suPw2" autocomplete="new-password" required>
+      <p class="hint" id="setupMsg"></p>
+      <div class="bar"><button type="submit" class="btn primary">สร้างบัญชีแอดมิน</button></div>
+    </form>
+  </div></div>
+  <div class="ov" id="pwOv" hidden><div class="ovb login">
+    <form id="pwForm" class="lform">
+      <h2>เปลี่ยนรหัสผ่าน</h2>
+      <label for="pwCur">รหัสผ่านปัจจุบัน</label><input type="password" id="pwCur" autocomplete="current-password" required>
+      <label for="pwNew">รหัสผ่านใหม่</label><input type="password" id="pwNew" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัว" required>
+      <label for="pwNew2">ยืนยันรหัสผ่านใหม่</label><input type="password" id="pwNew2" autocomplete="new-password" required>
+      <p class="hint" id="pwMsg"></p>
+      <div class="bar"><button type="submit" class="btn primary">บันทึกรหัสผ่านใหม่</button><button type="button" class="btn" id="pwCancel">ยกเลิก</button></div>
+    </form>
+  </div></div>
+  <div class="notice" id="localNote" hidden><b>ยังไม่ได้เชื่อมที่เก็บข้อมูลร่วม</b> ใช้งานได้แต่ข้อมูลจะหายเมื่อปิดหน้านี้ และหน้าร้านจะยังไม่เห็นรอบที่บันทึก
+  <div id="whyNote" class="why"></div>
+  <div class="bar"><button type="button" class="btn sm" id="retryDb">เชื่อมต่ออีกครั้ง</button><button type="button" class="btn sm" id="permDb" hidden>เปิดการตั้งค่าสิทธิ์</button><span id="retryMsg"></span></div></div>
+
+  <section class="panel" id="s1">
+    <h2>อัปโหลดข้อมูล</h2>
+    <p class="hint">วางข้อมูลจากแอปต้นทางหรือนำเข้าไฟล์ Excel ลงตาราง 1 ชีทต่อ 1 รอบ กด "+ เพิ่มชีท" เมื่อมีรอบใหม่ แอปจะเทียบชีทล่าสุดกับชีทก่อนหน้าให้อัตโนมัติ (เพิ่มได้สูงสุด 4 ชีท)</p>
+    <div class="shtabs" id="shTabs" role="tablist" aria-label="ชีทข้อมูลแต่ละรอบ"></div>
+    <div class="bar">
+      <label class="btn sm" for="file" style="cursor:pointer">นำเข้าไฟล์ Excel</label><input type="file" id="file" accept=".xlsx,.xls" hidden aria-label="ไฟล์ Excel">
+      <span class="stat" id="stat"></span>
+    </div>
+    <div class="vsl" id="blkPA">
+      <div class="gwrap"><div class="grid" id="gridA" tabindex="0" aria-label="ตารางข้อมูลของชีทที่เลือก"></div></div>
+      <span class="stat" id="statPA"></span>
+      <div class="bar"><button type="button" class="btn sm" data-more="A">เพิ่ม 100 แถว</button><button type="button" class="btn sm" data-clear="A">ล้างตาราง</button></div>
+    </div>
+    <p class="hint">คลิกช่องซ้ายบนของตาราง (ช่อง # แถวแรก) แล้วกด Ctrl+V วางข้อมูลที่คัดลอกจากแอปต้นทางได้ทั้งหน้า (Ctrl+A) หรือเฉพาะตาราง แอปจะจัดข้อมูลลงคอลัมน์ให้ตรงหัวตารางและต่อท้ายข้อมูลเดิม (รหัสที่ซ้ำจะถูกเขียนทับแถวเดิม) ดับเบิลคลิกเพื่อแก้ค่าในช่อง กด Delete เพื่อล้างช่อง</p>
+    <div class="vsl" id="baseBox">
+      <span class="tag">เทียบกับ</span>
+      <div class="hint" id="autoTxt"></div>
+      <div id="baseSel" hidden>
+        <select id="baseRun" aria-label="รอบก่อนหน้าที่บันทึกไว้"></select><span class="stat" id="statR"></span>
+        <details id="extraDet" hidden><summary>เทียบย้อนหลังเพิ่ม (ไม่บังคับ) · เช่น ตู้ที่สั่งไว้ยังไม่ได้รับ</summary><div id="extraBox"></div></details>
+      </div>
+    </div>
+    <div class="bar"><button class="btn primary" id="goCompare" disabled>เทียบข้อมูล</button><span class="hint" id="s1msg"></span></div>
+  </section>
+
+  <section class="panel" id="s2" hidden>
+    <div class="tiles" id="tiles"></div>
+    <p class="hint" id="roundsInfo" hidden></p>
+    <div class="bar">
+      <div class="chips" id="chips2"></div>
+      <input type="search" class="grow" id="q2" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
+    </div>
+    <div class="tw"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Pack key</th><th class="n">BO รอบแรก</th><th class="n">BO รอบใหม่</th><th>เปลี่ยนแปลง</th><th class="n">สั่งแล้ว (ในไฟล์)</th><th class="n">ประวัติ BO ทุกรอบ</th></tr></thead><tbody id="tb2"></tbody></table></div>
+    <div class="bar">
+      <input type="text" id="runLabel" aria-label="ชื่อรอบ" placeholder="ชื่อรอบ เช่น BO 21.10">
+      <button class="btn primary" id="saveRun">บันทึกรอบนี้ให้หน้าร้านกรอก Plan order</button>
+      <button class="btn" id="dlCompare">ดาวน์โหลดสรุปเทียบ (.xlsx)</button>
+      <span class="hint" id="s2msg"></span>
+    </div>
+  </section>
+
+  <section class="panel" id="s3" hidden>
+    <div class="bar">
+      <label for="runSel" class="hint">รอบ</label><select id="runSel"></select>
+      <span class="hint" id="runMeta"></span>
+      <button class="btn primary" id="saveOrder" type="button">บันทึกการสั่ง</button><span class="hint" id="osInfo"></span>
+    </div>
+    <div class="prog"><i id="prog"></i></div>
+    <div class="bar"><span id="progTxt" class="hint"></span></div>
+    <div class="bar">
+      <div class="chips" id="chips3"></div>
+      <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
+      <details class="colmenu" id="colMenu"><summary class="btn sm">⚙ คอลัมน์</summary><div class="colpop" id="colPop"></div></details>
+    </div>
+    <p class="hint" id="roleHint"></p>
+    <div class="legend" aria-label="คำอธิบายสี">
+      <span><i style="background:color-mix(in srgb,var(--ok) 26%,var(--surface))"></i>สั่งแล้ว (ติ๊กแล้ว)</span>
+      <span><i style="background:color-mix(in srgb,var(--ok) 11%,var(--surface))"></i>สั่งแล้ว (จากไฟล์)</span>
+      <span><i style="background:color-mix(in srgb,var(--warn) 26%,var(--surface))"></i>ไม่สั่งตามแพลน (มีหมายเหตุ)</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 13%,var(--surface))"></i>มี Plan รอสั่ง</span>
+      <span><i style="background:color-mix(in srgb,var(--bo) 9%,var(--surface))"></i>BO ยังไม่มี Plan</span>
+    </div>
+    <div class="tw wide"><table class="t3"><thead><tr>
+      <th>รหัส / สินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n">On hand</th><th class="n">BO ตอนนี้</th><th>เทียบรอบก่อน</th>
+      <th class="n">Pack key</th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n">สั่งแล้ว (ในไฟล์)</th>
+      <th class="n eh">Plan order (หน้าร้าน)</th><th class="eh">หมายเหตุหน้าร้าน (ไม่บังคับ)</th><th class="eh ck">สั่งแล้ว (ระบบ)</th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
+      <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
+    </tr></thead><tbody id="tb3"></tbody></table></div>
+    <div class="bar"><button class="btn" id="dlPlan">ดาวน์โหลด Plan order (.xlsx)</button><span class="hint" id="s3msg"></span></div>
+    <datalist id="osReasons"><option value="ตู้เต็ม"></option></datalist>
+    <div class="ov" id="osPanel" hidden role="dialog" aria-modal="true" aria-label="บันทึกการสั่ง"><div class="ovb" id="osBody"></div></div>
+  </section>
+
+  <section class="panel" id="s4" hidden>
+    <div id="histListBox">
+      <h2>ประวัติแต่ละรอบ</h2>
+      <p class="hint">ดูย้อนหลังอย่างเดียว รอบที่ผ่านเที่ยงคืนแล้วแก้ไขไม่ได้ เลือกช่วงวันที่เพื่อดูรอบที่เก่ากว่านี้</p>
+      <div class="dbar">
+        <div class="chips" id="hQuick">
+          <button type="button" class="chip" data-q="today" aria-pressed="false">วันนี้</button>
+          <button type="button" class="chip" data-q="7" aria-pressed="false">7 วันล่าสุด</button>
+          <button type="button" class="chip" data-q="30" aria-pressed="false">30 วันล่าสุด</button>
+          <button type="button" class="chip" data-q="month" aria-pressed="false">เดือนนี้</button>
+          <button type="button" class="chip" data-q="all" aria-pressed="true">ล่าสุดทั้งหมด</button>
+        </div>
+        <div class="drange">
+          <label for="hFrom" class="hint">ตั้งแต่</label><input type="date" id="hFrom">
+          <label for="hTo" class="hint">ถึง</label><input type="date" id="hTo">
+          <button type="button" class="btn sm" id="hClear">ล้างวันที่</button>
+        </div>
+      </div>
+      <p class="hint" id="hCount"></p>
+      <div class="hl" id="histList"></div>
+    </div>
+    <div id="histDetail" hidden>
+      <div class="bar"><button type="button" class="btn sm" id="hBack">← กลับรายการ</button><h2 id="hTitle"></h2><span class="hint" id="hMeta"></span></div>
+      <div class="bar"><span class="hint" id="hLock"></span><button type="button" class="btn sm" id="hOpen" hidden>เปิดในหน้ากรอก Plan order</button></div>
+      <div class="bar"><div class="chips" id="chips4"></div><input type="search" class="grow" id="q4" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา"><button type="button" class="btn sm" id="hDl">ดาวน์โหลด (.xlsx)</button></div>
+      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">BO</th><th>เทียบรอบก่อน</th><th class="n">Plan order</th><th>หมายเหตุหน้าร้าน</th><th>สถานะการสั่ง</th><th>หมายเหตุระบบ</th><th>บันทึกโดย</th></tr></thead><tbody id="tb4"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="s5" hidden>
+    <h2>จัดการผู้ใช้</h2>
+    <p class="hint">แอดมินสร้างบัญชีให้พนักงาน แล้วแจ้งชื่อผู้ใช้กับรหัสผ่านให้เขาเอง พนักงานเปลี่ยนรหัสผ่านของตัวเองได้จากปุ่มมุมขวาบน</p>
+    <form class="vsl" id="addUser">
+      <span class="tag">เพิ่มผู้ใช้</span>
+      <div class="ugrid">
+        <div class="uf"><label for="nuName" class="hint">ชื่อที่แสดง</label><input type="text" id="nuName" placeholder="เช่น สาขานิมมาน" required></div>
+        <div class="uf"><label for="nuUser" class="hint">ชื่อผู้ใช้</label><input type="text" id="nuUser" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="เช่น store01" required></div>
+        <div class="uf"><label for="nuPw" class="hint">รหัสผ่านเริ่มต้น</label><input type="text" id="nuPw" autocomplete="off" placeholder="อย่างน้อย 6 ตัว" required></div>
+        <div class="uf"><label for="nuRole" class="hint">สิทธิ์</label><select id="nuRole"><option value="store">หน้าร้าน</option><option value="admin">ฝ่ายระบบ (แอดมิน)</option></select></div>
+      </div>
+      <div class="bar"><button type="submit" class="btn primary" id="nuBtn">สร้างบัญชี</button><span class="hint" id="nuMsg"></span></div>
+    </form>
+    <div class="tw"><table class="ut"><thead><tr><th>ชื่อที่แสดง</th><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th>สถานะ</th><th>สร้างเมื่อ</th><th></th></tr></thead><tbody id="tb5"></tbody></table></div>
+    <p class="hint">ปิดใช้งานแล้ว คนนั้นจะเข้าแอปไม่ได้ทันที แต่ชื่อยังแสดงในช่อง "บันทึกโดย" ของรอบเก่า ถ้าพนักงานลืมรหัสผ่าน ดูวิธีตั้งใหม่ในคู่มือหัวข้อการใช้งานประจำ</p>
+  </section>
+</div>
+
+<script>
+/*CORE*/
+const num=v=>typeof v==='number'&&isFinite(v)?v:null;
+const txt=v=>{const t=v==null?'':String(v).trim();return t==='-'?'':t};
+function findHeader(rows){let h=-1;for(let i=0;i<Math.min(rows.length,8);i++){const r=rows[i];if(r&&String(r[6]==null?'':r[6]).trim()==='Product name')h=i}return h}
+function parseRows(rows){
+  const h=findHeader(rows);if(h<0)return null;
+  const H={};(rows[h]||[]).forEach((v,i)=>{if(typeof v==='string'&&!(v.trim() in H))H[v.trim()]=i});
+  const ix=(n,d)=>H[n]!=null?H[n]:d;
+  const c={owner:ix('Owner',3),safety:ix('Safety stock cover day',5),onhand:ix('On hand',7),pack:ix('Packkey',9),rop:ix('ROP',10),order:ix('Order',11),plan:ix('Plan order',13),
+    reason:ix('Reason/Comments',14),desc:ix('Description',15),vol:ix('Sales volume class',16),freq:ix('Frequency class',17),cv:ix('CV class',18),
+    stock:ix('Stock \u0e04\u0e25\u0e31\u0e07\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07',19),wh:ix('\u0e04\u0e25\u0e31\u0e07\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07',20),quota:ix('Remaining quota (Case)',21)};
+  const out=new Map();
+  for(let i=h+1;i<rows.length;i++){const r=rows[i];if(!r)continue;
+    const code=r[2],bo=r[8];
+    if(typeof code!=='string'||!code.trim()||typeof bo!=='number')continue;
+    const k=code.trim(),nm=String(r[6]==null?'':r[6]);
+    out.set(k,{code:k,name:nm.startsWith(k+'-')?nm.slice(k.length+1):nm,pack:num(r[c.pack]),bo:bo,plan:num(r[c.plan]),
+      owner:txt(r[c.owner]),safety:num(r[c.safety]),onhand:num(r[c.onhand]),rop:num(r[c.rop]),order:txt(r[c.order]),need:num(r[12]),
+      reason:txt(r[c.reason]),desc:txt(r[c.desc]),vol:txt(r[c.vol]),freq:txt(r[c.freq]),cv:txt(r[c.cv]),stock:num(r[c.stock]),wh:txt(r[c.wh]),quota:num(r[c.quota])});}
+  return out;}
+/* ---- paste from the source app: tab-separated text copied from its table, header row included ---- */
+function parseTSV(t,d){d=d||'\t';
+  const rows=[];let row=[],cur='',q=false;t=t.replace(/\r\n?/g,'\n');
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"'&&cur==='')q=true;
+    else if(c===d){row.push(cur);cur=''}
+    else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+    else cur+=c;}
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows;}
+const ALIAS={code:['brand code','brandcode','รหัสสินค้า','sku','code'],name:['product name','ชื่อสินค้า','product'],bo:['stock forecast','stock forecast (bo)','back order','bo'],onhand:['on hand'],pack:['packkey','pack key'],rop:['rop'],order:['order'],
+  need:['suggested order (case)','suggested order'],plan:['plan order (case)','plan order','plan'],reason:['reason/comments'],desc:['description'],vol:['sales volume class'],freq:['frequency class'],cv:['cv class'],
+  stock:['stock คลังต้นทาง'],wh:['คลังต้นทาง'],quota:['remaining quota (case)'],e:['safety stock'],safety:['safety stock cover day'],owner:['owner'],no:['#']};
+function numOf(v){if(v==null)return null;let t=String(v).replace(/[,\s\u00a0]/g,'').replace(/[\u2212\u2013]/g,'-');if(t===''||t==='-')return null;const n=Number(t);return isFinite(n)?n:null}
+/* whole-page copy (Ctrl+A) from the source app: every cell on its own line, 21 lines per product starting at the 6-8 digit row id */
+function parsePageText(text){
+  const L=text.replace(/\r\n?/g,'\n').split('\n').map(x=>x.trim());const map=new Map();
+  for(let i=0;i+20<L.length;i++){
+    if(!/^\d{6,8}$/.test(L[i])||!L[i+1]||!/^[A-Za-z]{3,10}$/.test(L[i+2]))continue;
+    const f=L.slice(i,i+21),bo=numOf(f[7]);
+    if(bo==null||numOf(f[4])==null)continue;
+    const code=f[1],tx=v=>v==='-'?'':v;
+    map.set(code,{code,name:f[5].startsWith(code+'-')?f[5].slice(code.length+1):f[5],pack:numOf(f[8]),bo,plan:numOf(f[12]),
+      owner:f[2],safety:numOf(f[4]),onhand:numOf(f[6]),rop:numOf(f[9]),order:tx(f[10]),need:numOf(f[11]),
+      reason:tx(f[13]),desc:tx(f[14]),vol:f[15],freq:f[16],cv:f[17],stock:numOf(f[18]),wh:f[19],quota:numOf(f[20])});
+    i+=20;}
+  return map;}
+const GK=['no','code','owner','e','safety','name','onhand','bo','pack','rop','order','need','plan','reason','desc','vol','freq','cv','stock','wh','quota'];
+const GN=['#','Brand code','Owner','Safety stock','Safety stock cover day','Product name','On hand','Stock forecast (BO)','Packkey','ROP','Order','Suggested order (case)','Plan order (case)','Reason/Comments','Description','Sales volume class','Frequency class','CV class','Stock คลังต้นทาง','คลังต้นทาง','Remaining quota (Case)'];
+const nz=x=>String(x==null?'':x).trim();
+function pageRecords(text){
+  /* Whole-page copy: one cell per line. A product starts at its 6-8 digit row id; the first 12 cells are fixed
+     (# .. Suggested order) then one always-blank cell, then an OPTIONAL Plan order line (an empty plan cell gives no line at all),
+     then Reason, Description, Sales/Frequency/CV class, Stock, คลังต้นทาง, Remaining quota. The tail is read from the warehouse line backwards. */
+  const L=text.replace(/\r\n?/g,'\n').split('\n').map(x=>x.trim());const out=[];
+  for(let i=0;i+13<L.length;i++){
+    if(!/^\d{6,8}$/.test(L[i])||!L[i+1]||!/^[A-Za-z]{3,10}$/.test(L[i+2]))continue;
+    if(numOf(L[i+4])==null||numOf(L[i+7])==null)continue;
+    let k=-1;for(let j=i+13;j<=i+24&&j<L.length;j++){if(/^คลัง/.test(L[j])){k=j;break}}
+    if(k<0||k-6<i+13)continue;
+    const plan=k-7>=i+13?L[k-7]:'';
+    const f=L.slice(i,i+12).concat([plan,L[k-6],L[k-5],L[k-4],L[k-3],L[k-2],L[k-1],L[k],L[k+1]===undefined?'':L[k+1]]);
+    out.push(f);i=k+1;}
+  return out;}
+/* returns the new grid rows (array of 21-string arrays) for pasted text; selection (r0,c0) is used only for a plain block paste */
+/* new product rows go after the last filled row; a code that is already in the grid is overwritten in place, so pasting twice never duplicates */
+function mergeRows(rows,add){
+  const out=rows.map(r=>r.slice()),blank=r=>!r.some(x=>nz(x)!=='');
+  const idx=new Map();out.forEach((r,i)=>{if(nz(r[1]))idx.set(nz(r[1]),i)});
+  let last=-1;out.forEach((r,i)=>{if(!blank(r))last=i});
+  add.forEach(r=>{const k=nz(r[1]);
+    if(k&&idx.has(k)){out[idx.get(k)]=r;return}
+    last++;if(last<out.length)out[last]=r;else out.push(r);
+    if(k)idx.set(k,last)});
+  return out;}
+/* ---- smart paste: works out the table layout from whatever was copied (tab / csv / spaces / one cell per line, with or without header rows, full or partial columns) ---- */
+let LASTINFO='';
+function lastInfo(){return LASTINFO}
+const NORM=x=>nz(x).toLowerCase().replace(/\s+/g,' ');
+function headerField(c){const k=NORM(c);if(!k)return null;
+  for(const f in ALIAS)if(ALIAS[f].includes(k))return f;
+  let best=null,bl=0;for(const f in ALIAS)for(const a of ALIAS[f])if(a.length>=6&&a.length>bl&&k.includes(a)){best=f;bl=a.length}
+  return best;}
+function tableOf(text){
+  if(/\t/.test(text))return parseTSV(text);
+  const lines=text.replace(/\r\n?/g,'\n').split('\n');
+  const first=lines.find(l=>l.trim())||'';
+  if((first.match(/,/g)||[]).length>=3)return parseTSV(text,',');
+  const sp=lines.map(l=>l.trim()).filter(Boolean);
+  if(sp.some(l=>/\s{2,}|\|/.test(l)))return sp.map(l=>l.split(/\s{2,}|\|/).map(x=>x.trim()));
+  let h=-1,n=0;
+  for(let i=0;i<sp.length;i++){if(!headerField(sp[i]))continue;let j=i;while(j<sp.length&&headerField(sp[j]))j++;if(j-i>=3){h=i;n=j-i;break}i=j}
+  if(h>=0){const out=[sp.slice(h,h+n)];let i=h+n;
+    while(i<sp.length){let hd=i+n<=sp.length;for(let k=0;hd&&k<n;k++)if(!headerField(sp[i+k]))hd=false;
+      if(hd){i+=n;continue}
+      out.push(sp.slice(i,i+n));i+=n}
+    return out}
+  return sp.map(l=>[l]);}
+function fieldScore(f,v){
+  const n=v.length;if(!n)return .15;const fr=p=>v.filter(p).length/n,isN=x=>numOf(x)!=null;
+  switch(f){
+    case 'code':return fr(x=>/^[A-Za-z0-9][A-Za-z0-9._\/-]{3,24}$/.test(x)&&/\d/.test(x)&&/[A-Za-z]/.test(x))*1.2;
+    case 'owner':return fr(x=>/^[A-Za-z]{3,12}$/.test(x))*1.0;
+    case 'name':return fr(x=>x.length>12&&/[^\d\s]/.test(x)&&/\s|-/.test(x))*.9;
+    case 'vol':case 'freq':return fr(x=>/^[A-Ea-e]$/.test(x))*1.1;
+    case 'cv':return fr(x=>/^[X-Zx-z]$/.test(x))*1.2;
+    case 'wh':return fr(x=>/^คลัง/.test(x))*1.2;
+    case 'reason':case 'desc':return fr(x=>x==='-'||(!isN(x)&&!/^[A-Za-z]$/.test(x)&&!/^คลัง/.test(x)))*.6;
+    case 'bo':return fr(isN)*.5+(v.filter(x=>numOf(x)<0).length/n>.15?.5:0);
+    case 'no':return fr(x=>/^\d{1,4}$/.test(x))*.4;
+    case 'order':return .3;
+    default:return fr(isN)*.5;}}
+function inferStart(cols,c0){
+  const n=Math.min(cols.length,GK.length);let best=-1,bs=-1;
+  for(let o=0;o+n<=GK.length;o++){let t=0;for(let i=0;i<n;i++)t+=fieldScore(GK[o+i],cols[i]);
+    if(t>bs+1e-9||(Math.abs(t-bs)<1e-9&&o===c0)){bs=t;best=o}}
+  return best<0?0:best;}
+/* source apps often leave some header cells blank (Brand code, BO, Suggested/Plan order...): a blank column between two known ones takes the field that fits between them */
+function fillHeaderGaps(m){
+  const out=m.slice(),used=new Set(m.filter(x=>x>=0));
+  for(let i=0;i<m.length;i++){if(m[i]>=0)continue;
+    let l=i-1;while(l>=0&&m[l]<0)l--;let r=i+1;while(r<m.length&&m[r]<0)r++;
+    const cl=l>=0?m[l]+(i-l):-1,cr=r<m.length?m[r]-(r-i):-1;
+    const ok=v=>v>=0&&v<GK.length&&!used.has(v);
+    let v=-1;if(ok(cl)&&(cr<0||cl===cr))v=cl;else if(ok(cr)&&cl<0)v=cr;
+    if(v>=0){out[i]=v;used.add(v)}}
+  return out;}
+function gridFromText(text,rows,r0,c0){
+  LASTINFO='';
+  const recs=pageRecords(text);if(recs.length){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่าน '+recs.length+' รายการ';return mergeRows(rows,recs)}
+  const t=tableOf(text).map(r=>r.map(nz)).filter(r=>r.some(x=>x!==''));if(!t.length)return rows;
+  const isH=r=>r.filter(c=>headerField(c)).length>=2;let hdr=null;const body=[];
+  t.forEach(r=>{if(isH(r)){if(!hdr)hdr=r}else body.push(r)});
+  if(!body.length)return rows;
+  let colMap,how;
+  if(hdr){colMap=fillHeaderGaps(hdr.map(c=>{const f=headerField(c);return f?GK.indexOf(f):-1}));how='จากหัวตาราง'}
+  else{const w=Math.max(...body.map(r=>r.length));
+    const cols=Array.from({length:w},(_,i)=>body.map(r=>r[i]).filter(x=>x!=null&&x!==''));
+    const o=inferStart(cols,c0);colMap=cols.map((_,i)=>o+i<GK.length?o+i:-1);how='AI ตรวจจากเนื้อหาข้อมูล'}
+  const used=colMap.filter(x=>x>=0);if(!used.length)return rows;
+  const out=rows.map(r=>r.slice()),blankRow=()=>GK.map(()=>''),ensure=i=>{while(out.length<=i)out.push(blankRow())};
+  const ci=colMap.indexOf(1),isBlank=r=>!r.some(x=>nz(x)!=='');
+  const put=(ri,r)=>colMap.forEach((f,i)=>{if(f>=0)out[ri][f]=r[i]===undefined?'':r[i]});
+  let mode;
+  if(ci>=0){
+    const idx=new Map();out.forEach((r,i)=>{if(nz(r[1]))idx.set(nz(r[1]),i)});
+    let last=-1;out.forEach((r,i)=>{if(!isBlank(r))last=i});
+    body.forEach(r=>{const k=r[ci];if(!k)return;let ri=idx.get(k);
+      if(ri==null){last++;ri=last;ensure(ri);idx.set(k,ri)}put(ri,r)});
+    mode='จับคู่ตามรหัสสินค้า';
+  }else{
+    const have=out.filter(r=>nz(r[1])).length;
+    body.forEach((r,j)=>{ensure(r0+j);put(r0+j,r)});
+    mode='ใส่ตามลำดับแถว เริ่มแถว '+(r0+1)+'–'+(r0+body.length)+(have&&have!==body.length?' (ระวัง: จำนวนแถวไม่เท่ากับรายการที่มีอยู่ '+have+' แถว)':'');
+  }
+  const names=used.map(f=>GN[f]);
+  LASTINFO=how+' · '+used.length+' คอลัมน์ ('+names[0]+(names.length>1?' → '+names[names.length-1]:'')+') · '+body.length+' แถว · '+mode;
+  return out;}
+function gridToMap(rows){
+  const map=new Map(),bad=new Set();const tx=v=>v==='-'?'':v;
+  rows.forEach((r,i)=>{
+    if(!r.some(x=>nz(x)!==''))return;
+    const code=nz(r[1]),bo=numOf(nz(r[7]));
+    if(!code||bo==null){bad.add(i);return}
+    const nm=nz(r[5]);
+    map.set(code,{code,name:nm.startsWith(code+'-')?nm.slice(code.length+1):nm,pack:numOf(r[8]),bo,plan:numOf(r[12]),
+      owner:tx(nz(r[2])),safety:numOf(r[4]),onhand:numOf(r[6]),rop:numOf(r[9]),order:tx(nz(r[10])),need:numOf(r[11]),
+      reason:tx(nz(r[13])),desc:tx(nz(r[14])),vol:tx(nz(r[15])),freq:tx(nz(r[16])),cv:tx(nz(r[17])),stock:numOf(r[18]),wh:tx(nz(r[19])),quota:numOf(r[20])})});
+  return{map,bad};}
+function parsePasted(text){
+  const rows=parseTSV(text);let h=-1;
+  for(let i=0;i<Math.min(rows.length,6);i++){if(rows[i].some(c=>String(c).trim().toLowerCase()==='product name'))h=i}
+  if(h<0){const pm=parsePageText(text);
+    if(pm.size)return{map:pm};
+    return{error:'อ่านข้อมูลไม่ได้ ให้คัดลอกตารางรวมแถวหัวตาราง (Product name) หรือคัดลอกทั้งหน้าจากแอปต้นทาง'}}
+  const H={};rows[h].forEach((c,i)=>{const k=String(c).trim().toLowerCase();if(k&&!(k in H))H[k]=i});
+  const ix={};for(const f in ALIAS){ix[f]=-1;for(const a of ALIAS[f]){if(H[a]!=null){ix[f]=H[a];break}}}
+  if(ix.code<0||ix.bo<0)return{error:'ไม่พบคอลัมน์ Brand code หรือ Stock forecast (BO) ในข้อมูลที่วาง'};
+  const at=(r,f)=>ix[f]>=0&&ix[f]<r.length?String(r[ix[f]]).trim():'';
+  const tx=v=>v==='-'?'':v;const map=new Map();
+  for(let i=h+1;i<rows.length;i++){const r=rows[i];const code=at(r,'code'),bo=numOf(at(r,'bo'));
+    if(!code||bo==null)continue;
+    const nm=at(r,'name');
+    map.set(code,{code,name:nm.startsWith(code+'-')?nm.slice(code.length+1):nm,pack:numOf(at(r,'pack')),bo,plan:numOf(at(r,'plan')),
+      owner:tx(at(r,'owner')),safety:numOf(at(r,'safety')),onhand:numOf(at(r,'onhand')),rop:numOf(at(r,'rop')),order:tx(at(r,'order')),need:numOf(at(r,'need')),
+      reason:tx(at(r,'reason')),desc:tx(at(r,'desc')),vol:tx(at(r,'vol')),freq:tx(at(r,'freq')),cv:tx(at(r,'cv')),stock:numOf(at(r,'stock')),wh:tx(at(r,'wh')),quota:numOf(at(r,'quota'))});}
+  if(!map.size)return{error:'ไม่พบแถวสินค้าในข้อมูลที่วาง'};
+  return{map};}
+const catOf=(a,b)=>!a&&!b?'':!a?'new':!b?'gone':b>a?'up':b<a?'down':'same';
+function compare(A,B,older){
+  older=older||[];const rounds=[...older,A,B],multi=older.length>0;
+  const bo0=(m,k)=>{const x=m.get(k);return x&&x.bo<0?-x.bo:0},pl0=(m,k)=>{const x=m.get(k);return x&&x.plan!=null?x.plan:null};
+  const lastPlan=k=>{for(let i=rounds.length-1;i>=0;i--){const p=pl0(rounds[i],k);if(p!=null)return p}return null};
+  const items=[];const keys=new Set([...A.keys(),...B.keys()]);
+  for(const k of keys){const a=A.get(k),b=B.get(k);
+    const aBO=a&&a.bo<0?-a.bo:0,bBO=b&&b.bo<0?-b.bo:0;
+    if(!aBO&&!bBO)continue;
+    const ref=b||a;
+    const it={code:k,name:ref.name,pack:ref.pack,aBO,bBO,delta:bBO-aBO,cat:catOf(aBO,bBO),ordered:lastPlan(k)};
+    if(multi){it.hist=rounds.map(m=>bo0(m,k));it.hplan=rounds.map(m=>pl0(m,k))}
+    items.push(it);}
+  items.sort((x,y)=>y.bBO-x.bBO||y.aBO-x.aBO||(x.code<y.code?-1:1));
+  const sum=f=>items.reduce((s,i)=>s+f(i),0);
+  const totals={aCount:items.filter(i=>i.aBO).length,bCount:items.filter(i=>i.bBO).length,aSum:sum(i=>i.aBO),bSum:sum(i=>i.bBO)};
+  /* rows: every product in the new sheet, BO first (worst first), packed as arrays to keep the saved run small; the last two cells hold the BO / plan per round when more than two rounds are compared */
+  const rows=[...B.values()].map(b=>{const a=A.get(b.code),aBO=a&&a.bo<0?-a.bo:0;
+    return[b.code,b.name,b.owner,b.safety,b.onhand,b.bo,b.pack,b.rop,b.order,b.need,lastPlan(b.code),b.reason,b.desc,b.vol,b.freq,b.cv,b.stock,b.wh,b.quota,aBO,
+      multi?rounds.map(m=>bo0(m,b.code)):null,multi?rounds.map(m=>pl0(m,b.code)):null]});
+  const w=r=>r[5]<0?r[5]:1e9;
+  rows.sort((x,y)=>w(x)-w(y));
+  return{items,totals,rows};}
+const ROWKEYS=['code','name','owner','safety','onhand','bo','pack','rop','order','need','ordered','reason','desc','vol','freq','cv','stock','wh','quota','aBO','hist','hplan'];
+function rowObj(a){const o={};ROWKEYS.forEach((k,i)=>o[k]=a[i]);o.bBO=o.bo<0?-o.bo:0;o.cat=catOf(o.aBO,o.bBO);o.delta=o.bBO-o.aBO;return o}
+/*ENDCORE*/
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n==null?'':Number(n).toLocaleString('th-TH');
+const bo=n=>n?'<span class="bo">−'+fmt(n)+'</span>':'<span class="hint">–</span>';
+const CAT={new:['BO ใหม่','p-new'],up:['เพิ่มขึ้น','p-up'],same:['เท่าเดิม','p-same'],down:['ลดลง','p-down'],gone:['หายไป','p-gone']};
+const S={src:'file',pp:{A:null,B:null},cur:null,mode:'sheets',first:false,baseMap:null,step:1,book:null,parsed:{A:null,B:null},cmp:null,db:null,user:null,dl:null,uid:null,canEdit:true,
+  runs:[],runId:null,run:null,plans:new Map(),unsubPlans:null,f2:'all',f3:'all',names:{}};
+
+/* ---------- file import ---------- */
+function readBook(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{try{res(XLSX.read(fr.result,{type:'array'}))}catch(e){rej(e)}};fr.onerror=()=>rej(fr.error);fr.readAsArrayBuffer(file)})}
+/* always read from column A / row 1, even when the sheet's used range starts later (empty column A) */
+function sheetRows(ws){const rg=XLSX.utils.decode_range(ws['!ref']||'A1');rg.s.c=0;rg.s.r=0;return XLSX.utils.sheet_to_json(ws,{header:1,defval:null,range:rg})}
+function sheetsWithHeader(wb){return wb.SheetNames.filter(n=>findHeader(sheetRows(wb.Sheets[n]))>=0)}
+const PI={A:'',B:''};const G={A:[],B:[]},GS={A:{r:0,c:0},B:{r:0,c:0}},GROWS=15;
+const emptyRows=n=>Array.from({length:n},()=>GK.map(()=>''));
+let gBad={A:new Set(),B:new Set()};
+function gridRender(sd){
+  const el=$('grid'+sd),wrap=el.parentNode,st=[wrap.scrollTop,wrap.scrollLeft],sel=GS[sd];
+  el.innerHTML='<table class="gt"><thead><tr><th class="rn">แถว</th>'+GN.map(n=>'<th>'+esc(n)+'</th>').join('')+'</tr></thead><tbody>'+
+    G[sd].map((r,i)=>'<tr><td class="rn">'+(i+1)+'</td>'+r.map((v,c)=>'<td data-r="'+i+'" data-c="'+c+'" class="'+(sel.r===i&&sel.c===c?'sel':'')+(gBad[sd].has(i)&&(c===1||c===7)?' bad':'')+'" title="'+esc(v)+'">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+  wrap.scrollTop=st[0];wrap.scrollLeft=st[1];}
+function gridChanged(sd){
+  const r=gridToMap(G[sd]),st=$('statP'+sd);gBad[sd]=r.bad;
+  const filled=G[sd].some(row=>row.some(x=>nz(x)!==''));
+  if(!r.map.size){S.pp[sd]=null;st.className='stat'+(filled?' err':'');st.textContent=filled?'ยังอ่านแถวสินค้าไม่ได้ ตรวจว่าช่อง Brand code และ Stock forecast (BO) มีค่า'+(PI[sd]?' — '+PI[sd]:''):''}
+  else{
+    const v=[...r.map.values()];
+    S.pp[sd]={map:r.map,sheet:'วาง-'+sd,file:'ข้อมูลที่วาง ('+(sd==='A'?'รอบแรก':'รอบใหม่')+')'};
+    st.className='stat ok';
+    st.textContent='อ่านได้ '+fmt(v.length)+' รายการ · BO '+fmt(v.filter(x=>x.bo<0).length)+' · มี Plan order '+fmt(v.filter(x=>x.plan!=null).length)+(r.bad.size?' · อ่านไม่ได้ '+r.bad.size+' แถว (ไฮไลต์แดง)':'')+(PI[sd]?' — '+PI[sd]:'');}
+  gridRender(sd);refreshGo();}
+function gridSelect(sd,r,c){
+  const el=$('grid'+sd),n=G[sd].length;r=Math.max(0,Math.min(n-1,r));c=Math.max(0,Math.min(GK.length-1,c));
+  const old=el.querySelector('td.sel');if(old)old.classList.remove('sel');
+  GS[sd]={r,c};const td=el.querySelector('td[data-r="'+r+'"][data-c="'+c+'"]');
+  if(td){td.classList.add('sel');td.scrollIntoView({block:'nearest',inline:'nearest'})}}
+function gridEdit(sd,td){
+  const r=+td.dataset.r,c=+td.dataset.c;td.textContent=G[sd][r][c];td.contentEditable='true';td.focus();
+  const rg=document.createRange();rg.selectNodeContents(td);const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);
+  let done=false;const fin=ok=>{if(done)return;done=true;td.contentEditable='false';if(ok){G[sd][r][c]=td.textContent.trim();gridChanged(sd)}else gridRender(sd);$('grid'+sd).focus()};
+  td.addEventListener('blur',()=>fin(true),{once:true});
+  td.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();e.stopPropagation();fin(true)}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fin(false)}else e.stopPropagation()});}
+['A'].forEach(sd=>{
+  const el=$('grid'+sd);
+  G[sd]=emptyRows(GROWS);gridRender(sd);
+  el.addEventListener('click',e=>{const td=e.target.closest('td[data-r]');if(!td||td.isContentEditable)return;gridSelect(sd,+td.dataset.r,+td.dataset.c);el.focus()});
+  el.addEventListener('dblclick',e=>{const td=e.target.closest('td[data-r]');if(td)gridEdit(sd,td)});
+  el.addEventListener('paste',e=>{
+    if(e.target.isContentEditable)return;
+    const text=(e.clipboardData&&e.clipboardData.getData('text/plain'))||'';if(!text.trim())return;
+    e.preventDefault();
+    let rows=gridFromText(text,G[sd],GS[sd].r,GS[sd].c);
+    while(rows.length<GROWS)rows.push(GK.map(()=>''));
+    G[sd]=rows;PI[sd]=lastInfo();gridChanged(sd);});
+  el.addEventListener('keydown',e=>{
+    if(e.target.isContentEditable)return;const s0=GS[sd];
+    const mv={ArrowDown:[1,0],ArrowUp:[-1,0],ArrowLeft:[0,-1],ArrowRight:[0,1],Tab:[0,1]}[e.key];
+    if(mv){e.preventDefault();gridSelect(sd,s0.r+mv[0]*(e.shiftKey&&e.key==='Tab'?1:1),s0.c+(e.key==='Tab'&&e.shiftKey?-1:mv[1]));return}
+    if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();G[sd][s0.r][s0.c]='';gridChanged(sd);return}
+    if(e.key==='Enter'||e.key==='F2'){e.preventDefault();const td=el.querySelector('td.sel');if(td)gridEdit(sd,td)}});
+});
+document.querySelectorAll('[data-clear]').forEach(b=>b.addEventListener('click',()=>{const sd=b.dataset.clear;G[sd]=emptyRows(GROWS);GS[sd]={r:0,c:0};PI[sd]='';gridChanged(sd)}));
+document.querySelectorAll('[data-more]').forEach(b=>b.addEventListener('click',()=>{const sd=b.dataset.more;G[sd]=G[sd].concat(emptyRows(100));gridRender(sd)}));
+/* ---------- step 1: one upload tab, one sheet per round ---------- */
+const MAXSH=4,SH=[{name:'',rows:null,info:'',stamp:''}];
+const stampNow=()=>new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',','');let SHI=0;
+const mapToRows=m=>[...m.values()].map(o=>{const t=v=>v==null?'':String(v);
+  return['',o.code,t(o.owner),'',t(o.safety),t(o.name),t(o.onhand),t(o.bo),t(o.pack),t(o.rop),t(o.order),t(o.need),t(o.plan),t(o.reason),t(o.desc),t(o.vol),t(o.freq),t(o.cv),t(o.stock),t(o.wh),t(o.quota)]});
+const padRows=r=>{const o=r.slice();while(o.length<GROWS)o.push(GK.map(()=>''));return o};
+function shMap(i){const rows=i===SHI?G.A:SH[i].rows;if(!rows)return null;const r=gridToMap(rows);return r.map.size?r.map:null}
+const shIdx=()=>SH.map((_,i)=>i).filter(i=>shMap(i));
+const shName=i=>(SH[i].name||'').trim()||SH[i].stamp||'ชีทใหม่ (ว่าง)';
+function shSave(){SH[SHI].rows=G.A;SH[SHI].info=PI.A}
+function shLoad(){G.A=SH[SHI].rows?padRows(SH[SHI].rows):emptyRows(GROWS);GS.A={r:0,c:0};PI.A=SH[SHI].info||'';gridChanged('A')}
+function shSelect(i){shSave();SHI=i;shLoad()}
+function renderTabs(){
+  $('shTabs').innerHTML=SH.map((s,i)=>{const m=shMap(i);
+    return '<button type="button" class="shtab" role="tab" aria-selected="'+(i===SHI)+'" data-i="'+i+'">'+esc(shName(i))+'<span class="shn">'+(m?m.size+' รายการ':'ว่าง')+'</span>'+(SH.length>1?'<span class="shx" data-del="'+i+'" title="ลบชีท" aria-label="ลบชีท">×</span>':'')+'</button>'}).join('')+
+    (SH.length<MAXSH?'<button type="button" class="shtab add" id="shAdd">+ เพิ่มชีท</button>':'');}
+$('shTabs').addEventListener('click',e=>{
+  const d=e.target.closest('[data-del]');
+  if(d){const i=+d.dataset.del;if(SH.length<=1)return;shSave();SH.splice(i,1);if(i<SHI)SHI--;else if(i===SHI)SHI=Math.min(i,SH.length-1);shLoad();return}
+  if(e.target.closest('#shAdd')){shSave();SH.push({name:'',rows:null,info:'',stamp:''});SHI=SH.length-1;shLoad();return}
+  const t=e.target.closest('.shtab[data-i]');if(t&&+t.dataset.i!==SHI)shSelect(+t.dataset.i)});
+S.book=null;
+async function loadFile(file){
+  const st=$('stat');st.className='stat';st.textContent='กำลังอ่านไฟล์…';S.book=null;
+  try{
+    const wb=await readBook(file);const ok=sheetsWithHeader(wb);
+    if(!ok.length){st.className='stat err';st.textContent='ไม่พบชีทที่มีคอลัมน์ Product name';return}
+    S.book={wb,name:file.name,sheets:ok};
+    const mk=n=>({name:n,rows:mapToRows(parseRows(sheetRows(wb.Sheets[n]))||new Map()),info:'นำเข้าจาก '+file.name+' ['+n+']'});
+    if(ok.length===1){const o=mk(ok[0]);SH[SHI]=o;shLoad();st.className='stat ok';st.textContent=file.name+' · นำเข้าลงชีทนี้แล้ว';return}
+    const use=ok.slice(-MAXSH);SH.length=0;use.forEach(n=>SH.push(mk(n)));SHI=SH.length-1;shLoad();
+    st.className='stat ok';st.textContent=file.name+' · นำเข้า '+use.length+' ชีทเป็นแท็บ'+(ok.length>use.length?' (เอา '+use.length+' ชีทล่าสุด)':'')+' แทนข้อมูลเดิม';
+  }catch(e){st.className='stat err';st.textContent='อ่านไฟล์ไม่ได้ ลองบันทึกเป็น .xlsx แล้วเลือกใหม่'}}
+$('file').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f);e.target.value=''});
+(()=>{const d=$('blkPA');
+  d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over')});
+  d.addEventListener('dragleave',()=>d.classList.remove('over'));
+  d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');const f=e.dataTransfer.files[0];if(f)loadFile(f)});})();
+function refreshGo(){
+  SH.forEach((x,i)=>{if(!x.stamp&&shMap(i))x.stamp=stampNow()});
+  renderTabs();
+  const idx=shIdx(),n=idx.length,txt=$('autoTxt'),bs=$('baseSel'),sel=$('baseRun').value;let ok=n>0,msg='',label='ตรวจสอบข้อมูล';
+  if(n>=2){label='เทียบข้อมูล';bs.hidden=true;
+    txt.textContent='เทียบอัตโนมัติ: '+shName(idx[n-1])+' (ใหม่ล่าสุด) เทียบกับ '+shName(idx[n-2])+(n>2?' · ประวัติย้อนหลัง '+idx.slice(0,n-2).map(shName).join(', '):'')}
+  else if(n===1){bs.hidden=false;
+    if(sel){label='เทียบข้อมูล';txt.textContent='มีชีทเดียว: เทียบกับรอบที่บันทึกไว้ล่าสุดอัตโนมัติ เลือกรอบอื่นหรือไม่เทียบได้ด้านล่าง';if(!S.baseMap)ok=false}
+    else txt.textContent='ยังไม่เทียบกับรอบก่อน (จะเป็นรอบแรก) · เพิ่มชีทใหม่เพื่อเทียบ หรือเลือกรอบที่บันทึกไว้ด้านล่าง'}
+  else{bs.hidden=true;txt.textContent='';msg='วางข้อมูลหรือนำเข้าไฟล์ก่อน'}
+  $('goCompare').textContent=label;$('goCompare').disabled=!ok;$('s1msg').textContent=msg;}
+S.extra=new Set();
+function renderExtra(){
+  const det=$('extraDet'),box=$('extraBox'),pid=$('baseRun').value;
+  const opts=pid?S.runs.filter(r=>r.id!==pid&&r.id!=='local').slice().sort((a,b)=>a.createdAt-b.createdAt).map(r=>[r.id,r.label+' · '+when(r.createdAt)]):[];
+  const keep=[...S.extra].filter(id=>opts.some(o=>o[0]===id)).slice(0,2);S.extra=new Set(keep);
+  det.hidden=!opts.length;if(!opts.length){box.innerHTML='';return}
+  const sel=(n,cur)=>'<select class="xsel" data-x="'+n+'" aria-label="รอบย้อนหลังที่ '+n+'"><option value="">— ไม่เลือก —</option>'+opts.map(([v,t])=>'<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>';
+  box.innerHTML='<div class="xl">'+sel(1,keep[0])+sel(2,keep[1])+'</div><span class="hint">เลือกย้อนหลังได้สูงสุด 2 รอบ รวมแล้วเทียบได้สูงสุด 4 รอบ</span>';
+  syncExtra();}
+function syncExtra(){
+  const ss=[...$('extraBox').querySelectorAll('select.xsel')];S.extra=new Set(ss.map(x=>x.value).filter(Boolean));
+  ss.forEach(x=>[...x.options].forEach(o=>{o.disabled=!!o.value&&o.value!==x.value&&S.extra.has(o.value)}));}
+$('extraBox').addEventListener('change',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('xsel'))syncExtra()});
+/* with a single sheet the previous round is the latest saved run, unless the user picks another or none */
+function fillBaseRuns(){
+  const sel=$('baseRun'),cur=sel.value;
+  sel.innerHTML='<option value="">— ไม่เทียบ (เริ่มเป็นรอบแรก) —</option>'+S.runs.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.label)+' · '+when(r.createdAt)+'</option>').join('');
+  const want=S.baseTouched?cur:(S.runs[0]?S.runs[0].id:'');
+  sel.value=S.runs.some(r=>r.id===want)?want:'';
+  loadBase(sel.value);renderExtra();}
+async function runRows(run){
+  if(run.rows)return run.rows;
+  if(!S.db)return[];
+  const snap=await S.db.collection('runs/'+run.id+'/chunks').get();
+  return [...snap.docs].sort((x,y)=>x.id<y.id?-1:1).flatMap(d=>decRows(d.data().rows));}
+async function runMap(run){
+  const rows=await runRows(run);let plans=new Map();
+  if(S.db&&run.id!=='local'){const ps=await S.db.collection('plans').where('runId','==',run.id).get();ps.docs.forEach(d=>{const x=d.data();if(x)plans.set(x.code,x)})}
+  const m=new Map();
+  rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=p&&p.qty!=null&&typeof p.qty==='number'?p.qty:(typeof o.ordered==='number'?o.ordered:null);
+    m.set(o.code,{code:o.code,name:o.name,pack:o.pack,bo:o.bo,plan:q,planTxt:null})});
+  return m;}
+async function loadBase(id){
+  const st=$('statR');S.baseMap=null;refreshGo();
+  const run=S.runs.find(r=>r.id===id);
+  if(!run){st.className='stat';st.textContent=S.runs.length?'':'บันทึกรอบแรกในแอปก่อน แล้วจึงเลือกที่นี่';return}
+  st.className='stat';st.textContent='กำลังโหลดรอบที่เลือก…';
+  try{
+    const rows=await runRows(run);
+    let plans=new Map();
+    if(S.db&&run.id!=='local'){const ps=await S.db.collection('plans').where('runId','==',run.id).get();ps.docs.forEach(d=>{const x=d.data();if(x)plans.set(x.code,x)})}
+    if($('baseRun').value!==id)return;
+    const m=new Map();let np=0;
+    rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=p&&p.qty!=null&&typeof p.qty==='number'?p.qty:(typeof o.ordered==='number'?o.ordered:null);
+      if(q!=null)np++;m.set(o.code,{code:o.code,name:o.name,pack:o.pack,bo:o.bo,plan:q,planTxt:null})});
+    S.baseMap=m;st.className='stat ok';
+    st.textContent='พบ '+fmt(m.size)+' รายการ · BO '+fmt([...m.values()].filter(r=>r.bo<0).length)+' · มี Plan order '+fmt(np);
+  }catch(e){st.className='stat err';st.textContent='โหลดรอบนี้ไม่ได้'}
+  refreshGo();}
+$('baseRun').addEventListener('change',()=>{S.baseTouched=true;loadBase($('baseRun').value);renderExtra()});
+$('goCompare').addEventListener('click',async()=>{
+  const idx=shIdx();if(!idx.length)return;shSave();
+  const maps=idx.map(shMap),B=maps[maps.length-1],last=idx[idx.length-1];
+  let A=new Map(),aLabel='',aShort='',older=[],oLabels=[];S.first=false;
+  if(idx.length>=2){A=maps[maps.length-2];aShort=shName(idx[idx.length-2]);aLabel=aShort;older=maps.slice(0,-2);oLabels=idx.slice(0,-2).map(shName)}
+  else{const r=S.runs.find(x=>x.id===$('baseRun').value);
+    if(r&&S.baseMap){A=S.baseMap;aLabel='รอบที่บันทึก: '+r.label;aShort=r.label;
+      const runs=[...S.extra].map(id=>S.runs.find(x=>x.id===id)).filter(Boolean).sort((x,y)=>x.createdAt-y.createdAt);
+      if(runs.length){$('goCompare').disabled=true;$('s1msg').textContent='กำลังโหลดรอบย้อนหลัง…';
+        try{for(const x of runs){older.push(await runMap(x));oLabels.push(x.label)}}
+        catch(e){refreshGo();$('s1msg').textContent='โหลดรอบย้อนหลังไม่ได้';return}
+        refreshGo()}}
+    else S.first=true}
+  S.cur={A:null,B:{file:'ข้อมูลที่อัปโหลด ['+shName(last)+']',sheet:shName(last)}};
+  S.srcA=aLabel;
+  S.cmp=compare(A,B,older);
+  S.cmp.rounds=older.length?[...oLabels,aShort,shName(last)]:null;
+  $('runLabel').value=$('runLabel').value||((S.first?'BO รอบแรก ':'BO ')+new Date().toLocaleDateString('th-TH',{day:'numeric',month:'numeric'}));
+  S.f2='all';go(2);});
+
+/* ---------- step 2: compare ---------- */
+const F2=[['all','ทั้งหมด'],['new','BO ใหม่'],['up','เพิ่มขึ้น'],['same','เท่าเดิม'],['down','ลดลง'],['gone','หายไป'],['todo','ยังไม่ได้สั่ง'],['done','สั่งแล้ว']];
+function match(i,f,q){
+  if(f==='todo'&&!(i.bBO&&i.ordered==null))return false;
+  if(f==='done'&&i.ordered==null)return false;
+  if(CAT[f]&&i.cat!==f)return false;
+  if(q){q=q.toLowerCase();if(!(i.code.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)))return false}
+  return true;}
+function chips(el,list,cur,counts,onPick){
+  el.innerHTML=list.map(([k,l])=>'<button class="chip" data-k="'+k+'" aria-pressed="'+(cur===k)+'">'+l+' '+(counts[k]!=null?'('+counts[k]+')':'')+'</button>').join('');
+  el.onclick=e=>{const b=e.target.closest('.chip');if(b)onPick(b.dataset.k)};}
+function counts(items,list){const c={};list.forEach(([k])=>c[k]=items.filter(i=>match(i,k,'')).length);return c}
+function renderTiles(){
+  if(S.first){const it=S.cmp.items,t=S.cmp.totals,np=it.filter(i=>i.bBO&&i.ordered!=null),nn=it.filter(i=>i.bBO&&i.ordered==null);
+    $('tiles').innerHTML=
+     '<div class="tile"><span class="k">BO รอบนี้ (รอบแรก)</span><span class="v">'+fmt(t.bCount)+' รายการ</span><span class="s">รวม −'+fmt(t.bSum)+'</span></div>'+
+     '<div class="tile"><span class="k">มี Plan order ในไฟล์แล้ว</span><span class="v">'+fmt(np.length)+' รายการ</span><span class="s">รวม −'+fmt(np.reduce((s,i)=>s+i.bBO,0))+'</span></div>'+
+     '<div class="tile '+(nn.length?'hot':'')+'"><span class="k">BO ที่ยังไม่มี Plan order</span><span class="v">'+fmt(nn.length)+' รายการ</span><span class="s">รวม −'+fmt(nn.reduce((s,i)=>s+i.bBO,0))+'</span></div>';return}
+  const t=S.cmp.totals,items=S.cmp.items,net=t.bSum-t.aSum;
+  const nNew=items.filter(i=>i.cat==='new').length,nUp=items.filter(i=>i.cat==='up').length,nGone=items.filter(i=>i.cat==='gone').length;
+  const todo=items.filter(i=>i.bBO&&i.ordered==null);
+  $('tiles').innerHTML=
+   '<div class="tile"><span class="k">BO รอบแรก</span><span class="v">'+fmt(t.aCount)+' รายการ</span><span class="s">รวม −'+fmt(t.aSum)+'</span></div>'+
+   '<div class="tile"><span class="k">BO รอบใหม่</span><span class="v">'+fmt(t.bCount)+' รายการ</span><span class="s">รวม −'+fmt(t.bSum)+'</span></div>'+
+   '<div class="tile '+(net>0?'hot':'')+'"><span class="k">BO เพิ่มขึ้นสุทธิ</span><span class="v">'+(net>0?'+':net<0?'−':'')+fmt(Math.abs(net))+'</span><span class="s">ใหม่ '+nNew+' · เพิ่ม '+nUp+' · หาย '+nGone+'</span></div>'+
+   '<div class="tile '+(todo.length?'hot':'')+'"><span class="k">BO ที่ยังไม่ได้สั่ง</span><span class="v">'+fmt(todo.length)+' รายการ</span><span class="s">รวม −'+fmt(todo.reduce((s,i)=>s+i.bBO,0))+'</span></div>';}
+function renderS2(){
+  if(!S.cmp)return;renderTiles();
+  const ri=$('roundsInfo'),rd=S.cmp.rounds;ri.hidden=!rd;
+  if(rd)ri.textContent='เทียบ '+rd.length+' รอบ: '+rd.join(' → ')+' · คอลัมน์ "BO รอบแรก/รอบใหม่" คือรอบก่อนหน้าล่าสุดเทียบกับรอบใหม่ ส่วนประวัติทุกรอบอยู่คอลัมน์ขวาสุด · ยอดสั่งแล้วนับจากรอบล่าสุดที่มี Plan order';
+  $('tb2').parentNode.classList.toggle('nohist',!rd);
+  const FL=S.first?F2.filter(x=>['all','todo','done'].includes(x[0])):F2;chips($('chips2'),FL,S.f2,counts(S.cmp.items,FL),k=>{S.f2=k;renderS2()});
+  const q=$('q2').value.trim(),rows=S.cmp.items.filter(i=>match(i,S.f2,q));
+  $('tb2').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat];
+    return '<tr><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+fmt(i.pack)+'</td><td class="n">'+bo(i.aBO)+'</td><td class="n">'+bo(i.bBO)+'</td>'+
+    '<td>'+(S.first?'<span class="pill p-same">รอบแรก</span>':'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>')+'</td>'+
+    '<td class="n">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':(i.bBO?'<span class="hint">ยังไม่ได้สั่ง</span>':''))+'</td>'+
+    '<td class="n">'+histHtml(i,S.cmp.rounds)+'</td></tr>'}).join('')
+    :'<tr><td colspan="7" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';}
+$('q2').addEventListener('input',renderS2);
+$('saveRun').addEventListener('click',async()=>{
+  const msg=$('s2msg');if(!S.cmp)return;
+  const label=$('runLabel').value.trim()||'รอบ '+new Date().toLocaleDateString('th-TH');
+  const meta={label,createdAt:Date.now(),by:S.uid,fileA:S.first?'':(S.srcA||''),fileB:(S.cur?S.cur.B.file:S.parsed.B.file),first:S.first,totals:S.cmp.totals,count:S.cmp.rows.length};if(S.cmp.rounds)meta.rounds=S.cmp.rounds;
+  if(!S.db){S.runs=[{id:'local',...meta,rows:S.cmp.rows}];S.runId='local';S.run=S.runs[0];msg.textContent='บันทึกในหน้านี้แล้ว (ยังไม่ได้เชื่อมที่เก็บข้อมูลร่วม)';go(3);return}
+  $('saveRun').disabled=true;msg.textContent='กำลังบันทึก…';
+  try{
+    const ref=S.db.collection('runs').doc(),CH=40,n=Math.ceil(S.cmp.rows.length/CH);
+    for(let k=0;k<n;k++)await ref.collection('chunks').doc('c'+String(k).padStart(3,'0')).set({rows:JSON.stringify(S.cmp.rows.slice(k*CH,(k+1)*CH))});
+    meta.chunks=n;await ref.set(meta);S.runId=ref.id;msg.textContent='';go(3);
+  }catch(e){msg.textContent=e&&e.code==='permission-denied'?'บัญชีนี้ไม่มีสิทธิ์บันทึกรอบ ต้องอยู่ในรายชื่อฝ่ายระบบ':'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'}
+  $('saveRun').disabled=false;});
+
+/* ---------- step 3: plan order (front store) + ordered tick (system staff) ---------- */
+const F3=[['all','ทั้งหมด'],['bo','มี BO'],['empty','ยังไม่กรอก Plan'],['filled','กรอก Plan แล้ว'],['undone','มี Plan รอสั่ง'],['done','สั่งแล้ว'],['skip','ไม่สั่งตามแพลน']];
+S.rows=[];S.orders=new Map();S.unsubOrders=null;
+const histHtml=(i,labels)=>{if(!i.hist)return'';
+  const t=i.hist.map(v=>v?'−'+fmt(v):'0').join(' → ');
+  const pl=(i.hplan||[]).some(v=>v!=null)?'<div class="nm">สั่ง: '+i.hplan.map(v=>v==null?'–':fmt(v)).join(' → ')+'</div>':'';
+  return '<div class="hist" title="'+esc((labels||[]).join(' → '))+'">'+t+'</div>'+pl};
+const cell=(v,cls)=>'<td'+(cls?' class="'+cls+'"':'')+'>'+(v==null||v===''?'':esc(v))+'</td>';
+function m3(i,f,q){
+  const p=S.plans.get(i.code),o=S.orders.get(i.code),done=!!(o&&o.done),has=!!(p&&p.qty!=null);
+  if(f==='bo'&&!i.bBO)return false;
+  if(f==='empty'&&has)return false;if(f==='filled'&&!has)return false;
+  if(f==='undone'&&!(has&&!done&&i.ordered==null))return false;if(f==='done'&&!(done||i.ordered!=null))return false;
+  if(f==='skip'&&!(o&&!o.done&&o.note))return false;
+  if(q){q=q.toLowerCase();if(!(i.code.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)))return false}
+  return true;}
+const STL={done:'สั่งแล้ว',file:'สั่งแล้ว (ไฟล์)',skip:'ไม่สั่งตามแพลน',plan:'รอสั่ง',bo:'BO ไม่มี Plan'};
+function stateOf(i){const p=S.plans.get(i.code),o=S.orders.get(i.code),has=!!(p&&p.qty!=null);
+  if(o&&o.done)return'done';
+  if(o&&o.note)return'skip';
+  if(i.ordered!=null)return'file';
+  if(has)return'plan';
+  if(i.bBO)return'bo';
+  return'';}
+function applyState(tr,i){const st=stateOf(i);tr.className=st?'st-'+st:'';const b=tr.querySelector('[data-st]');if(b){b.className='st'+(st?' s-'+st:'');b.textContent=st?STL[st]:''}}
+function when(t){return t?new Date(t).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):''}
+/* a saved round can be edited only on the (Bangkok) calendar day it was saved; after midnight it is read-only history that still feeds later comparisons */
+const dayKey=t=>new Date(t).toLocaleDateString('en-CA',{timeZone:'Asia/Bangkok'});
+const isLocked=r=>!!(r&&r.createdAt&&dayKey(r.createdAt)!==dayKey(Date.now()));
+function renderRunSel(){
+  const sel=$('runSel');sel.innerHTML=S.runs.length?S.runs.map(r=>'<option value="'+esc(r.id)+'">'+(isLocked(r)?'🔒 ':'')+esc(r.label)+' · '+when(r.createdAt)+'</option>').join(''):'<option value="">ยังไม่มีรอบที่บันทึก</option>';
+  if(S.runId)sel.value=S.runId;}
+function renderS3(){
+  const items=S.rows,q=$('q3').value.trim();
+  $('runMeta').textContent=S.run?(S.run.first?('รอบแรก · '+S.run.fileB):(S.run.fileA+'  VS  '+S.run.fileB)):'';
+  $('roleHint').textContent=S.run?('หน้าร้านกรอก Plan order และหมายเหตุ · พนักงานระบบติ๊ก "สั่งแล้ว"'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')+' และใส่หมายเหตุเมื่อไม่สั่งตามแพลน · ช่องหมายเหตุไม่บังคับ'):'';
+  const cts={};F3.forEach(([k])=>cts[k]=items.filter(i=>m3(i,k,'')).length);
+  chips($('chips3'),F3,S.f3,cts,k=>{S.f3=k;renderS3()});
+  if(!S.run)renderOS();
+  if(!S.run){$('tb3').innerHTML='<tr><td colspan="24" class="empty">ยังไม่มีรอบที่บันทึก ให้ฝ่ายนำเข้าไฟล์ เทียบ BO และกดบันทึกรอบก่อน</td></tr>';updateProg();return}
+  const rows=items.filter(i=>m3(i,S.f3,q));
+  const lock=isLocked(S.run),lk=lock?' disabled':'',dis=(S.canEdit&&!lock)?'':' disabled';
+  S.lockShown=lock;$('roleHint').classList.toggle('notice',lock);
+  if(lock)$('roleHint').textContent='🔒 รอบนี้บันทึกเมื่อ '+when(S.run.createdAt)+' และผ่านเที่ยงคืนแล้ว จึงดูได้อย่างเดียว แก้ไขไม่ได้ · ข้อมูลยังใช้เทียบกับรอบถัดไปได้ตามปกติ';
+  $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
+    return '<tr data-code="'+esc(i.code)+'">'+
+    '<td><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span><div class="nm">'+esc(i.name)+'</div></td>'+
+    cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
+    '<td>'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
+    cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
+    '<td class="n">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
+    '<td class="n ec"><input type="number" class="qty" min="0" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(i.code)+'" aria-label="Plan order '+esc(i.code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+lk+'>'+
+    (i.ordered!=null?'<span class="warn">สั่งไปแล้ว '+fmt(i.ordered)+' ตรวจก่อนกรอกซ้ำ</span>':'')+'</td>'+
+    '<td class="ec"><input type="text" class="note" data-f="fnote" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุหน้าร้าน '+esc(i.code)+'" value="'+esc(p.note||'')+'" placeholder="ไม่บังคับ"'+lk+'></td>'+
+    '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(o.done?' checked':'')+dis+'></td>'+
+    '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(o.note||'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
+    cell(i.reason)+cell(i.desc)+cell(i.vol)+cell(i.freq)+cell(i.cv)+cell(fmt(i.stock),'n')+cell(i.wh)+cell(fmt(i.quota),'n')+'<td class="who" data-who></td></tr>'}).join('')
+    :'<tr><td colspan="24" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+  document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
+  fillWho();updateProg();renderOS();}
+function updateProg(){
+  const n=S.rows.length,f=S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&p.qty!=null}).length,d=S.rows.filter(i=>{const o=S.orders.get(i.code);return o&&o.done}).length;
+  $('prog').style.width=(f?d/f*100:0)+'%';
+  $('progTxt').textContent=n?('กรอก Plan แล้ว '+f+' จาก '+n+' รายการ · สั่งแล้ว '+d+' จาก '+f+' ที่กรอก'):'';}
+async function fillWho(){
+  const ids=[...new Set([...S.plans.values(),...S.orders.values()].map(p=>p.by).filter(Boolean))].filter(id=>!(id in S.names));
+  if(ids.length&&S.user&&S.user.profiles){try{const ps=await S.user.profiles(ids);ids.forEach(id=>S.names[id]=(ps[id]&&ps[id].name)||'ผู้ใช้')}catch(e){ids.forEach(id=>S.names[id]='ผู้ใช้')}}
+  document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const p=S.plans.get(tr.dataset.code),o=S.orders.get(tr.dataset.code),w=tr.querySelector('[data-who]');
+    if(!w)return;const l=[];
+    if(p)l.push('หน้าร้าน: '+((S.names[p.by]||'')+' '+when(p.at)).trim());
+    if(o)l.push('ระบบ: '+((S.names[o.by]||'')+' '+when(o.at)).trim());
+    w.textContent=l.join(' | ');});}
+function syncCells(){
+  document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{
+    const code=tr.dataset.code,p=S.plans.get(code)||{},o=S.orders.get(code)||{},it=S.rows.find(i=>i.code===code);
+    const set=(f,v)=>{const el=tr.querySelector('[data-f="'+f+'"]');if(el&&document.activeElement!==el){if(el.type==='checkbox')el.checked=!!v;else el.value=v==null?'':v}};
+    set('qty',p.qty);set('fnote',p.note);set('done',o.done);set('onote',o.note);
+    if(it)applyState(tr,it);});
+  fillWho();updateProg();}
+$('tb3').addEventListener('change',async e=>{
+  const el=e.target.closest('[data-f]');if(!el)return;
+  if(isLocked(S.run)){$('s3msg').textContent='รอบนี้ผ่านเที่ยงคืนแล้ว แก้ไขไม่ได้';renderS3();return}
+  const tr=el.closest('tr'),code=tr.dataset.code,msg=$('s3msg'),f=el.dataset.f;
+  const g=k=>tr.querySelector('[data-f="'+k+'"]');
+  const paint=()=>{const it=S.rows.find(i=>i.code===code);if(it)applyState(tr,it);updateProg()};
+  let undo=()=>{};
+  try{
+    if(f==='qty'||f==='fnote'){
+      const v=g('qty').value.trim(),note=g('fnote').value.trim();
+      const qty=v===''?null:Math.max(0,Math.round(Number(v)));
+      if(qty!=null&&!isFinite(qty)){g('qty').value='';return}
+      const id='plans/'+S.runId+'__'+safeId(code),prev=S.plans.get(code);
+      undo=()=>{if(prev)S.plans.set(code,prev);else S.plans.delete(code)};
+      if(qty==null&&!note){S.plans.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
+      else{const rec={runId:S.runId,code,qty,note,by:S.uid,at:Date.now()};S.plans.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
+    }else{
+      const done=g('done').checked,note=g('onote').value.trim(),id='orders/'+S.runId+'__'+safeId(code),prev=S.orders.get(code);
+      undo=()=>{if(prev)S.orders.set(code,prev);else S.orders.delete(code)};
+      if(!done&&!note){S.orders.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
+      else{const rec={runId:S.runId,code,done,note,by:S.uid,at:Date.now()};S.orders.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
+    }
+    msg.textContent='บันทึกแล้ว ✓ '+code;clearTimeout(S.okT);S.okT=setTimeout(()=>{if(msg.textContent.startsWith('บันทึกแล้ว'))msg.textContent=''},2500);
+  }catch(err){undo();msg.textContent='บันทึกไม่ได้ บัญชีนี้อาจไม่มีสิทธิ์ในช่องนี้ หรือการเชื่อมต่อมีปัญหา';syncCells();paint()}
+  fillWho();updateProg();});
+/* Enter saves the cell and drops to the same field on the next row, like a spreadsheet */
+$('tb3').addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;const el=e.target.closest&&e.target.closest('input[data-f]');if(!el||el.type==='checkbox')return;
+  e.preventDefault();const tr=el.closest('tr'),f=el.dataset.f;el.blur();
+  let n=tr.nextElementSibling;while(n){const nx=n.querySelector('[data-f="'+f+'"]');if(nx&&!nx.disabled){nx.focus();if(nx.select)nx.select();nx.scrollIntoView({block:'nearest'});break}n=n.nextElementSibling}});
+$('q3').addEventListener('input',renderS3);
+/* ---- resizable / hideable columns of the plan-order table (kept per viewer in the browser) ---- */
+(()=>{
+  const T3=document.querySelector('table.t3'),TH=[...T3.querySelectorAll('thead th')];
+  const names=TH.map(th=>th.textContent.trim().replace(/\s+/g,' '));
+  const CW0=[300,90,100,90,90,150,80,80,80,110,130,150,220,90,220,200,200,110,110,110,120,170,130,130];
+  const MAIN=new Set([0,3,4,5,6,9,10,11,12,13,14,23]);
+  let CW=CW0.slice(),CH=new Set();
+  try{const v=JSON.parse(localStorage.getItem('bo.cols.v1')||'null');
+    if(v&&Array.isArray(v.w)&&v.w.length===CW.length){CW=v.w.map((x,i)=>Math.max(50,+x||CW0[i]));CH=new Set((v.h||[]).filter(i=>i>0&&i<CW.length))}}catch(e){}
+  const save=()=>{try{localStorage.setItem('bo.cols.v1',JSON.stringify({w:CW,h:[...CH]}))}catch(e){}};
+  T3.insertAdjacentHTML('afterbegin','<colgroup>'+CW.map(()=>'<col>').join('')+'</colgroup>');
+  const COLS=[...T3.querySelectorAll('colgroup col')];
+  TH.forEach((th,i)=>{const h=document.createElement('span');h.className='rz';h.dataset.i=i;h.title='ลากเพื่อปรับความกว้าง · ดับเบิลคลิกเพื่อรีเซ็ต';th.appendChild(h)});
+  const pop=$('colPop');
+  pop.innerHTML='<div class="bar"><button type="button" class="btn sm" data-p="all">แสดงทั้งหมด</button><button type="button" class="btn sm" data-p="main">เฉพาะคอลัมน์หลัก</button><button type="button" class="btn sm" data-p="w">รีเซ็ตความกว้าง</button></div>'+
+    names.map((n,i)=>'<label class="xo2"><input type="checkbox" data-c="'+i+'"'+(i===0?' disabled':'')+'> '+esc(n)+'</label>').join('');
+  function apply(){
+    COLS.forEach((c,i)=>{c.style.width=CW[i]+'px';c.style.visibility=CH.has(i)?'collapse':''});
+    T3.style.width=CW.reduce((s,w,i)=>CH.has(i)?s:s+w,0)+'px';
+    pop.querySelectorAll('input[data-c]').forEach(x=>x.checked=!CH.has(+x.dataset.c));}
+  pop.addEventListener('change',e=>{const x=e.target;if(x.dataset.c==null)return;const i=+x.dataset.c;if(x.checked)CH.delete(i);else CH.add(i);apply();save()});
+  pop.addEventListener('click',e=>{const p=e.target.dataset&&e.target.dataset.p;if(!p)return;
+    if(p==='all')CH=new Set();else if(p==='main')CH=new Set(CW.map((_,i)=>i).filter(i=>!MAIN.has(i)));else CW=CW0.slice();
+    apply();save()});
+  let drag=null;
+  T3.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.rz');if(!h)return;e.preventDefault();const i=+h.dataset.i;drag={i,x:e.clientX,w:CW[i]};h.setPointerCapture(e.pointerId)});
+  T3.addEventListener('pointermove',e=>{if(!drag)return;CW[drag.i]=Math.max(50,Math.round(drag.w+e.clientX-drag.x));apply()});
+  T3.addEventListener('pointerup',()=>{if(drag){drag=null;save()}});
+  T3.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.rz');if(h){CW[+h.dataset.i]=CW0[+h.dataset.i];apply();save()}});
+  document.addEventListener('click',e=>{const m=$('colMenu');if(m.open&&!m.contains(e.target))m.open=false});
+  apply();})();
+/* system staff press "บันทึกการสั่ง": every item the store planned but that was not ticked as ordered needs a reason (e.g. ตู้เต็ม) */
+const osPlanned=()=>S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&typeof p.qty==='number'&&p.qty>0});
+const osPending=()=>osPlanned().filter(i=>{const o=S.orders.get(i.code);return !(o&&o.done)&&!(o&&o.note)});
+function renderOS(){
+  const b=$('saveOrder'),r=S.run;b.hidden=!S.canEdit;b.disabled=!r||isLocked(r);
+  const o=r&&r.orderSaved;
+  $('osInfo').textContent=o?('บันทึกการสั่งแล้ว '+when(o.at)+' · สั่ง '+o.done+' จาก '+o.planned+' รายการ'+(o.skipped?' · ไม่สั่ง '+o.skipped+' (มีเหตุผล)':'')):(r?'ยังไม่ได้บันทึกการสั่ง':'');}
+function closeOS(){$('osPanel').hidden=true}
+function openOS(){
+  if(!S.run||!S.canEdit||isLocked(S.run))return;
+  const pend=osPending();if(!pend.length){commitOS({});return}
+  $('osBody').innerHTML='<h2>ยังสั่งไม่ครบตามที่หน้าร้านกรอก</h2><p class="hint">มี '+pend.length+' รายการที่มี Plan order แต่ยังไม่ได้ติ๊กสั่งแล้ว กรุณาใส่เหตุผลทุกรายการก่อนบันทึก</p>'+
+    '<div class="bar"><button type="button" class="btn sm" id="osAll">ใส่ "ตู้เต็ม" ทุกรายการ</button></div>'+
+    '<div class="osl">'+pend.map(i=>{const p=S.plans.get(i.code);return '<div class="osr"><div><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></div><div class="n">Plan '+fmt(p.qty)+'</div><input type="text" class="note" list="osReasons" data-os="'+esc(i.code)+'" placeholder="เหตุผล (บังคับ)" aria-label="เหตุผล '+esc(i.code)+'"></div>'}).join('')+'</div>'+
+    '<div class="bar"><button type="button" class="btn primary" id="osOk" disabled>บันทึกการสั่ง</button><button type="button" class="btn" id="osNo">ยกเลิก</button></div>';
+  $('osPanel').hidden=false;}
+function osCheck(){const ins=[...$('osBody').querySelectorAll('input[data-os]')];$('osOk').disabled=!ins.every(x=>x.value.trim())}
+$('saveOrder').addEventListener('click',openOS);
+$('osBody').addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.os!=null)osCheck()});
+$('osBody').addEventListener('click',e=>{
+  if(e.target.id==='osNo')closeOS();
+  else if(e.target.id==='osAll'){$('osBody').querySelectorAll('input[data-os]').forEach(x=>{if(!x.value.trim())x.value='ตู้เต็ม'});osCheck()}
+  else if(e.target.id==='osOk'){const r={};$('osBody').querySelectorAll('input[data-os]').forEach(x=>r[x.dataset.os]=x.value.trim());commitOS(r)}});
+async function commitOS(reasons){
+  const msg=$('s3msg');closeOS();if(!S.run||isLocked(S.run))return;
+  try{
+    for(const code of Object.keys(reasons)){const rec={runId:S.runId,code,done:false,note:reasons[code],by:S.uid,at:Date.now()};S.orders.set(code,rec);if(S.db)await S.db.doc('orders/'+S.runId+'__'+safeId(code)).set(rec)}
+    const pl=osPlanned(),done=pl.filter(i=>{const o=S.orders.get(i.code);return o&&o.done}).length;
+    const os={at:Date.now(),by:S.uid||null,planned:pl.length,done,skipped:pl.length-done};
+    S.run.orderSaved=os;if(S.db&&S.runId!=='local')await S.db.doc('runs/'+S.runId).update({orderSaved:os});
+    msg.textContent='บันทึกการสั่งแล้ว ✓';clearTimeout(S.okT);S.okT=setTimeout(()=>{if(msg.textContent.startsWith('บันทึกการสั่ง'))msg.textContent=''},3000);
+  }catch(e){msg.textContent=e&&e.code==='permission-denied'?'บัญชีนี้ไม่มีสิทธิ์บันทึกการสั่ง':'บันทึกการสั่งไม่สำเร็จ ลองใหม่อีกครั้ง'}
+  syncCells();renderOS();}
+setInterval(()=>{if(S.run&&S.step===3&&isLocked(S.run)!==S.lockShown&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#tb3'))){renderRunSel();renderS3()}},30000);
+$('runSel').addEventListener('change',()=>selectRun($('runSel').value));
+async function selectRun(id){
+  S.runId=id||null;S.run=S.runs.find(r=>r.id===id)||null;S.plans=new Map();S.orders=new Map();S.rows=[];
+  if(S.unsubPlans){S.unsubPlans();S.unsubPlans=null}if(S.unsubOrders){S.unsubOrders();S.unsubOrders=null}
+  if(!S.run){renderS3();return}
+  const mk=arr=>{const r=arr.map(rowObj);if(S.run&&S.run.first)r.forEach(o=>{o.cat='';o.delta=0});return r};
+  if(S.run.rows)S.rows=mk(S.run.rows);
+  else if(S.db){$('tb3').innerHTML='<tr><td colspan="24" class="empty">กำลังโหลดรายการ…</td></tr>';
+    try{const snap=await S.db.collection('runs/'+id+'/chunks').get();if(S.runId!==id)return;
+      S.rows=mk([...snap.docs].sort((x,y)=>x.id<y.id?-1:1).flatMap(d=>decRows(d.data().rows)))}
+    catch(e){$('s3msg').textContent='โหลดรายการของรอบนี้ไม่ได้'}}
+  renderS3();
+  if(S.db&&id!=='local'){
+    const bad=()=>{$('s3msg').textContent='อ่านข้อมูล Plan order ไม่ได้ในขณะนี้'};
+    S.unsubPlans=S.db.collection('plans').where('runId','==',id).onSnapshot(snap=>{const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x)m.set(x.code,x)});S.plans=m;syncCells()},bad);
+    S.unsubOrders=S.db.collection('orders').where('runId','==',id).onSnapshot(snap=>{const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x)m.set(x.code,x)});S.orders=m;syncCells()},bad);}}
+
+/* ---------- downloads ---------- */
+async function saveXlsx(filename,rows,widths,sheet){
+  const msg=S.step===2?$('s2msg'):$('s3msg');
+  if(!S.dl){msg.textContent='หน้านี้ยังดาวน์โหลดไฟล์ไม่ได้ในมุมมองนี้';return}
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=widths.map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,sheet);
+  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  try{await S.dl.save({filename,data:new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})});msg.textContent=''}
+  catch(e){msg.textContent=e&&e.code==='declined'?'':'ดาวน์โหลดไม่สำเร็จ'}}
+$('dlCompare').addEventListener('click',()=>{
+  if(!S.cmp)return;
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','BO รอบแรก','BO รอบใหม่','ส่วนต่าง (+ = BO เพิ่ม)','การเปลี่ยนแปลง','สั่งแล้ว (ในไฟล์)']]
+    .concat(S.cmp.items.map(i=>[i.code,i.name,i.pack,-i.aBO,-i.bBO,i.delta,(S.first?'รอบแรก':CAT[i.cat][0]),i.ordered==null?'':i.ordered]));
+  saveXlsx('เทียบ BO.xlsx',rows,[18,50,9,12,12,16,14,16],'เทียบ BO');});
+$('dlPlan').addEventListener('click',()=>{
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','BO ตอนนี้','Plan order','หมายเหตุหน้าร้าน','สั่งแล้ว (ระบบ)','หมายเหตุระบบ','สั่งแล้ว (ในไฟล์)']];
+  S.rows.forEach(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code);
+    if(p&&(p.qty>0||p.note)||o)rows.push([i.code,i.name,i.pack,i.bo<0?i.bo:'',p&&p.qty!=null?p.qty:'',p?p.note:'',o?(o.done?'สั่งแล้ว':'ยังไม่ได้สั่ง'):'',o?o.note:'',i.ordered==null?'':i.ordered])});
+  if(rows.length===1){$('s3msg').textContent='ยังไม่มีรายการที่กรอก Plan order';return}
+  saveXlsx('Plan order.xlsx',rows,[18,50,9,10,11,28,14,28,16],'Plan order');});
+
+/* ---------- step 4: history (read-only) ---------- */
+const HF=[['all','ทั้งหมด'],['bo','มี BO'],['plan','มี Plan order'],['done','สั่งแล้ว'],['skip','ไม่สั่ง (มีเหตุผล)'],['wait','มี Plan ยังไม่ได้สั่ง']];
+S.hid=null;S.hf='all';
+async function nameOf(ids){
+  ids=[...new Set(ids.filter(Boolean))].filter(id=>!(id in S.names));
+  if(ids.length&&S.user&&S.user.profiles){try{const ps=await S.user.profiles(ids);ids.forEach(id=>S.names[id]=(ps[id]&&ps[id].name)||'ผู้ใช้')}catch(e){ids.forEach(id=>S.names[id]='ผู้ใช้')}}}
+/* date filter: Bangkok calendar days. No range → the 30 latest runs (live). A range → query the store for every run in it. */
+S.hr={from:'',to:'',q:'all',list:null,loading:false,err:''};
+const bkkDay=t=>dayKey(t);
+const dayStart=d=>Date.parse(d+'T00:00:00+07:00');
+const addDays=(d,n)=>dayKey(dayStart(d)+n*864e5);
+function histRuns(){return S.hr.list||S.runs}
+async function loadHistRange(){
+  const {from,to}=S.hr;S.hr.err='';
+  if(!from&&!to){S.hr.list=null;renderHist();return}
+  const lo=from?dayStart(from):0,hi=to?dayStart(to)+864e5:Date.now()+864e5;
+  if(!S.db){S.hr.list=S.runs.filter(r=>r.createdAt>=lo&&r.createdAt<hi);renderHist();return}
+  S.hr.loading=true;renderHist();const key=from+'|'+to;
+  try{
+    let q=S.db.collection('runs');if(from)q=q.where('createdAt','>=',lo);q=q.where('createdAt','<',hi);
+    const snap=await q.orderBy('createdAt','desc').limit(500).get();
+    if(S.hr.from+'|'+S.hr.to!==key)return;
+    S.hr.list=snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){S.hr.err='โหลดรอบในช่วงวันที่นี้ไม่ได้ ลองใหม่อีกครั้ง';S.hr.list=[]}
+  S.hr.loading=false;renderHist();}
+function setRange(from,to,q){
+  if(from&&to&&from>to)[from,to]=[to,from];
+  S.hr.from=from;S.hr.to=to;S.hr.q=q;$('hFrom').value=from;$('hTo').value=to;
+  document.querySelectorAll('#hQuick .chip').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.q===q)));
+  loadHistRange();}
+$('hQuick').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const t=bkkDay(Date.now()),k=c.dataset.q;
+  if(k==='today')setRange(t,t,k);else if(k==='7')setRange(addDays(t,-6),t,k);else if(k==='30')setRange(addDays(t,-29),t,k);
+  else if(k==='month')setRange(t.slice(0,8)+'01',t,k);else setRange('','','all')});
+$('hFrom').addEventListener('change',()=>setRange($('hFrom').value,$('hTo').value,''));
+$('hTo').addEventListener('change',()=>setRange($('hFrom').value,$('hTo').value,''));
+$('hClear').addEventListener('click',()=>setRange('','','all'));
+const dayLabel=d=>new Date(dayStart(d)).toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok',weekday:'long',day:'numeric',month:'long',year:'numeric'});
+function renderHist(){
+  const box=$('histList');$('histListBox').hidden=!!S.hid;$('histDetail').hidden=!S.hid;if(S.hid)return;
+  const list=histRuns(),ranged=!!S.hr.list,cnt=$('hCount');
+  const rng=S.hr.from||S.hr.to?(S.hr.from?dayLabel(S.hr.from):'เริ่มต้น')+' – '+(S.hr.to?dayLabel(S.hr.to):'วันนี้'):'';
+  if(S.hr.loading){cnt.textContent='กำลังโหลดรอบในช่วง '+rng+'…';box.innerHTML='';return}
+  cnt.textContent=S.hr.err||(ranged?'พบ '+list.length+' รอบ · '+rng:'แสดง '+list.length+' รอบล่าสุด (สูงสุด 30 รอบ)');
+  if(!list.length){box.innerHTML='<div class="empty">'+(ranged?'ไม่มีรอบที่บันทึกในช่วงวันที่นี้':'ยังไม่มีรอบที่บันทึก')+'</div>';return}
+  let last='';
+  box.innerHTML=list.map(r=>{const t=r.totals||{},lk=isLocked(r),o=r.orderSaved,d=bkkDay(r.createdAt);
+    const head=d!==last?'<div class="hday">'+esc(dayLabel(d))+'</div>':'';last=d;
+    return head+'<button type="button" class="hc" data-id="'+esc(r.id)+'"><div class="hct"><b>'+esc(r.label)+'</b><span class="pill '+(lk?'p-same':'p-ord')+'">'+(lk?'🔒 ดูอย่างเดียว':'แก้ไขได้วันนี้')+'</span></div>'+
+      '<div class="nm">'+esc(when(r.createdAt))+' · '+fmt(r.count)+' รายการ</div>'+
+      '<div class="hcs"><span>BO <b class="bo">'+fmt(t.bCount)+'</b> รายการ</span><span>รวม <b class="bo">−'+fmt(t.bSum)+'</b></span></div>'+
+      '<div class="nm">'+(r.first?'รอบแรก':esc((r.fileA||'')+' → '+(r.fileB||'')))+'</div>'+
+      '<div class="nm">'+(o?'บันทึกการสั่งแล้ว: สั่ง '+o.done+' จาก '+o.planned+(o.skipped?' · ไม่สั่ง '+o.skipped:''):'ยังไม่ได้บันทึกการสั่ง')+'</div></button>'}).join('');}
+$('histList').addEventListener('click',e=>{const c=e.target.closest('.hc');if(c)openHist(c.dataset.id)});
+$('hBack').addEventListener('click',()=>{S.hid=null;renderHist()});
+const hState=(i,H)=>{const p=H.plans.get(i.code),o=H.orders.get(i.code),has=!!(p&&typeof p.qty==='number'&&p.qty>0);
+  if(o&&o.done)return'done';if(o&&o.note)return'skip';if(has)return'wait';return''};
+async function openHist(id){
+  const run=histRuns().find(r=>r.id===id)||S.runs.find(r=>r.id===id);if(!run)return;
+  S.hid=id;S.hf='all';$('q4').value='';$('histListBox').hidden=true;$('histDetail').hidden=false;
+  $('hTitle').textContent=run.label;$('hMeta').textContent='กำลังโหลด…';$('tb4').innerHTML='';
+  try{
+    const rows=(await runRows(run)).map(rowObj);if(run.first)rows.forEach(o=>{o.cat='';o.delta=0});
+    let plans=new Map(),orders=new Map();
+    if(S.db&&id!=='local'){
+      const [a,b]=await Promise.all([S.db.collection('plans').where('runId','==',id).get(),S.db.collection('orders').where('runId','==',id).get()]);
+      a.docs.forEach(d=>{const x=d.data();if(x)plans.set(x.code,x)});b.docs.forEach(d=>{const x=d.data();if(x)orders.set(x.code,x)});
+    }else{plans=S.plans;orders=S.orders}
+    await nameOf([...plans.values(),...orders.values()].map(x=>x.by));
+    if(S.hid!==id)return;
+    S.H={run,rows,plans,orders};
+  }catch(e){$('hMeta').textContent='โหลดประวัติรอบนี้ไม่ได้';return}
+  const lk=isLocked(run);
+  $('hMeta').textContent=when(run.createdAt)+' · '+(run.first?'รอบแรก':(run.fileA||'')+' → '+(run.fileB||''));
+  $('hLock').textContent=lk?'🔒 รอบนี้ผ่านเที่ยงคืนแล้ว ดูอย่างเดียว ข้อมูลยังใช้เทียบรอบถัดไปได้':'รอบนี้ยังแก้ไขได้ภายในวันนี้';
+  $('hOpen').hidden=lk;
+  renderHistTable();}
+$('hOpen').addEventListener('click',()=>{if(S.hid){S.runId=S.hid;go(3)}});
+$('q4').addEventListener('input',()=>{if(S.H)renderHistTable()});
+function renderHistTable(){
+  const H=S.H;if(!H)return;const q=$('q4').value.trim().toLowerCase();
+  const ok=(i,f)=>{const st=hState(i,H),p=H.plans.get(i.code);
+    return f==='all'||(f==='bo'&&i.bBO)||(f==='plan'&&p&&p.qty!=null)||(f==='done'&&st==='done')||(f==='skip'&&st==='skip')||(f==='wait'&&st==='wait')};
+  const cts={};HF.forEach(([k])=>cts[k]=H.rows.filter(i=>ok(i,k)).length);
+  chips($('chips4'),HF,S.hf,cts,k=>{S.hf=k;renderHistTable()});
+  const rows=H.rows.filter(i=>ok(i,S.hf)&&(!q||i.code.toLowerCase().includes(q)||String(i.name).toLowerCase().includes(q)));
+  $('tb4').innerHTML=rows.length?rows.map(i=>{const p=H.plans.get(i.code)||{},o=H.orders.get(i.code)||{},st=hState(i,H),c=CAT[i.cat];
+    const stat=st==='done'?'<span class="pill p-down">สั่งแล้ว</span>':st==='skip'?'<span class="pill p-up">ไม่สั่ง</span>':st==='wait'?'<span class="pill p-ord">รอสั่ง</span>':'';
+    const who=[p.by?'หน้าร้าน: '+(S.names[p.by]||'')+' '+when(p.at):'',o.by?'ระบบ: '+(S.names[o.by]||'')+' '+when(o.at):''].filter(Boolean).map(esc).join('<br>');
+    return '<tr class="'+(st?'hs-'+st:'')+'"><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+(i.bBO?bo(i.bBO):'<span class="hint">0</span>')+histHtml(i,H.run.rounds)+'</td>'+
+      '<td>'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
+      '<td class="n">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(o.note||'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
+    :'<tr><td colspan="8" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';}
+$('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','BO','Plan order','หมายเหตุหน้าร้าน','สถานะการสั่ง','หมายเหตุระบบ']];
+  H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
+    rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',o?o.note||'':''])});
+  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,11,28,14,28],'ประวัติ');});
+
+/* ---------- navigation ---------- */
+function go(n){
+  S.step=n;document.body.classList.toggle('full',n===3);
+  ['s1','s2','s3','s4','s5'].forEach((id,k)=>$(id).hidden=(k+1)!==n);
+  if(n===4){S.hid=null;renderHist()}
+  if(n===5)renderUsers();
+  document.querySelectorAll('.step').forEach(b=>{const k=+b.dataset.step;b.setAttribute('aria-current',String(k===n));
+    b.disabled=(k===1&&!S.canEdit)||(k===2&&(!S.canEdit||!S.cmp))||(k===5&&!(S.canEdit&&S.me));if(k===5)b.hidden=!(S.canEdit&&S.me)});
+  if(n===1&&S.db)fillBaseRuns();
+  if(n===2)renderS2();
+  if(n===3){renderRunSel();selectRun(S.runId||(S.runs[0]&&S.runs[0].id)||null)}}
+$('rail').addEventListener('click',e=>{const b=e.target.closest('.step');if(b&&!b.disabled)go(+b.dataset.step)});
+
+/* ---------- start: Firebase (username + password, data in Firestore) ---------- */
+/* ↓↓↓ วาง firebaseConfig จาก Firebase console (ขั้นที่ 4 ในคู่มือ) แทนค่านี้ ↓↓↓ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDRbrQaIdt4lIY5mh8o1_HQzOcL5Yzaepk",
+  authDomain: "comapare-order.firebaseapp.com",
+  projectId: "comapare-order",
+  storageBucket: "comapare-order.firebasestorage.app",
+  messagingSenderId: "377497257042",
+  appId: "1:377497257042:web:941f1b204e7c73ed5a4b8b"
+};
+/* ↑↑↑ ---------------------------------------------------------------- ↑↑↑ */
+/* ชื่อผู้ใช้ถูกแปลงเป็นอีเมลภายใน (Firebase บังคับรูปแบบอีเมล) ไม่มีการส่งอีเมลจริง ห้ามเปลี่ยนค่านี้หลังเริ่มใช้งาน */
+const USER_DOMAIN = "@bo-order.app";
+const safeId=c=>String(c).replace(/[\/]/g,'%2F').replace(/^\.+$/,'_');
+function decRows(v){if(typeof v==='string'){try{return JSON.parse(v)}catch(e){return[]}}return Array.isArray(v)?v:[]}
+S.canEdit=true;shLoad();fillBaseRuns();go(1);
+S.dl={save:async({filename,data})=>{const u=URL.createObjectURL(data),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}};
+let runsUnsub=null,memUnsub=null,fdb=null,fauth=null;S.members=[];S.me=null;S.settingUp=false;
+const normUser=v=>String(v||'').trim().toLowerCase();
+const okUser=u=>/^[a-z0-9._-]{3,30}$/.test(u);
+const toEmail=u=>normUser(u)+USER_DOMAIN;
+const ROLE_TH={admin:'ฝ่ายระบบ',store:'หน้าร้าน'};
+const AUTH_TH={'auth/invalid-credential':'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','auth/wrong-password':'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','auth/user-not-found':'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง','auth/invalid-email':'ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ -',
+  'auth/too-many-requests':'ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่','auth/email-already-in-use':'ชื่อผู้ใช้นี้มีคนใช้แล้ว','auth/weak-password':'รหัสผ่านต้องมีอย่างน้อย 6 ตัว',
+  'auth/network-request-failed':'เชื่อมต่ออินเทอร์เน็ตไม่ได้','auth/operation-not-allowed':'ยังไม่ได้เปิดการล็อกอินแบบ Email/Password ใน Firebase (ขั้นที่ 3 ในคู่มือ)','permission-denied':'ไม่มีสิทธิ์ทำรายการนี้ ตรวจกฎความปลอดภัย (ขั้นที่ 5)'};
+const errTh=e=>AUTH_TH[e&&e.code]||('ทำรายการไม่สำเร็จ ('+(e&&e.code||'error')+')');
+function showNote(html){$('localNote').hidden=false;$('whyNote').innerHTML=html;$('retryDb').hidden=true;$('permDb').hidden=true}
+function startRuns(){
+  if(runsUnsub)return;
+  runsUnsub=S.db.collection('runs').orderBy('createdAt','desc').limit(30).onSnapshot(snap=>{
+    $('localNote').hidden=true;
+    S.runs=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.step===1)fillBaseRuns();if(S.step===4&&!S.hid&&!S.hr.list)renderHist();
+    if(S.step===3){const keep=S.runs.some(r=>r.id===S.runId)?S.runId:(S.runs[0]&&S.runs[0].id);renderRunSel();if(keep!==S.runId||!S.run)selectRun(keep);else{S.run=S.runs.find(r=>r.id===S.runId);$('runSel').value=S.runId;renderOS()}}
+  },e=>{showNote('อ่านข้อมูลไม่ได้ ('+esc(e&&e.code||'error')+') ตรวจว่าวางกฎความปลอดภัยครบ (ขั้นที่ 5) แล้วรีเฟรชหน้า')});}
+function stopAll(){if(runsUnsub){runsUnsub();runsUnsub=null}if(memUnsub){memUnsub();memUnsub=null}}
+async function showLogin(msg){
+  $('loginOv').hidden=false;$('ubar').hidden=true;
+  let setup=true;try{setup=(await fdb.doc('config/setup').get()).exists}catch(e){}
+  $('setupForm').hidden=setup;$('loginForm').hidden=!setup;
+  if(msg)$('loginMsg').textContent=msg;}
+async function onUser(u){
+  if(S.settingUp)return;
+  stopAll();
+  if(!u){S.db=null;S.user=null;S.uid=null;S.me=null;S.members=[];if(S.step===5)go(1);$('signOut2').hidden=true;showLogin();return}
+  let m=null;try{const d=await fdb.doc('members/'+u.uid).get();m=d.exists?d.data():null}catch(e){}
+  if(!m||m.active===false){
+    $('loginOv').hidden=false;$('loginForm').hidden=false;$('setupForm').hidden=true;$('signOut2').hidden=false;$('ubar').hidden=true;
+    $('loginMsg').textContent=m?'บัญชีนี้ถูกปิดใช้งาน ติดต่อแอดมิน':'บัญชีนี้ยังไม่ได้รับสิทธิ์ ติดต่อแอดมิน';return}
+  const admin=m.role==='admin';S.me=m;
+  $('loginOv').hidden=true;$('uName').textContent=(m.name||m.username)+' · '+m.username;$('uRole').textContent=ROLE_TH[m.role]||m.role;$('ubar').hidden=false;
+  S.db=fdb;S.uid=u.uid;S.canEdit=admin;
+  S.user={id:async()=>u.uid,canEdit:async()=>admin,
+    profiles:async ids=>{const o={};await Promise.all(ids.map(async id=>{const hit=S.members.find(x=>x.id===id);if(hit){o[id]={name:hit.name||hit.username};return}
+      try{const d=await fdb.doc('members/'+id).get();o[id]={name:d.exists?(d.data().name||d.data().username||''):''}}catch(e){o[id]={name:''}}}));return o}};
+  memUnsub=fdb.collection('members').onSnapshot(sn=>{S.members=sn.docs.map(d=>({id:d.id,...d.data()}));if(S.step===5)renderUsers()},()=>{});
+  startRuns();
+  if(!S.canEdit)go(3);else go(S.step===2&&!S.cmp?1:S.step);}
+/* ---- user management (admins) ---- */
+function renderUsers(){
+  const tb=$('tb5');if(!tb)return;
+  const list=[...S.members].sort((a,b)=>(a.active===false)-(b.active===false)||String(a.username).localeCompare(String(b.username)));
+  tb.innerHTML=list.length?list.map(m=>{const me=m.id===S.uid,off=m.active===false;
+    return '<tr class="'+(off?'off':'')+'" data-id="'+esc(m.id)+'"><td>'+esc(m.name||'')+(me?' <span class="pill p-ord">คุณ</span>':'')+'</td><td class="code">'+esc(m.username||'')+'</td>'+
+      '<td>'+(me?esc(ROLE_TH[m.role]||m.role):'<select data-act="role" aria-label="สิทธิ์ของ '+esc(m.username)+'"><option value="store"'+(m.role==='store'?' selected':'')+'>หน้าร้าน</option><option value="admin"'+(m.role==='admin'?' selected':'')+'>ฝ่ายระบบ</option></select>')+'</td>'+
+      '<td><span class="pill '+(off?'p-same':'p-down')+'">'+(off?'ปิดใช้งาน':'ใช้งานอยู่')+'</span></td>'+
+      '<td class="nm">'+esc(m.createdAt?when(m.createdAt):'')+'</td>'+
+      '<td>'+(me?'':'<button type="button" class="btn sm" data-act="toggle">'+(off?'เปิดใช้งาน':'ปิดใช้งาน')+'</button>')+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty">ยังไม่มีผู้ใช้</td></tr>';}
+$('tb5').addEventListener('change',async e=>{const sel=e.target.closest('select[data-act="role"]');if(!sel)return;const id=sel.closest('tr').dataset.id;
+  try{await fdb.doc('members/'+id).update({role:sel.value});$('nuMsg').textContent='เปลี่ยนสิทธิ์แล้ว'}catch(er){$('nuMsg').textContent=errTh(er);renderUsers()}});
+$('tb5').addEventListener('click',async e=>{const b=e.target.closest('button[data-act="toggle"]');if(!b)return;const id=b.closest('tr').dataset.id,m=S.members.find(x=>x.id===id);if(!m)return;
+  b.disabled=true;try{await fdb.doc('members/'+id).update({active:m.active===false})}catch(er){$('nuMsg').textContent=errTh(er);b.disabled=false}});
+$('addUser').addEventListener('submit',async e=>{e.preventDefault();const msg=$('nuMsg'),btn=$('nuBtn');
+  const name=$('nuName').value.trim(),user=normUser($('nuUser').value),pw=$('nuPw').value,role=$('nuRole').value;
+  if(!okUser(user)){msg.textContent='ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–30 ตัว';return}
+  if(pw.length<6){msg.textContent='รหัสผ่านต้องมีอย่างน้อย 6 ตัว';return}
+  btn.disabled=true;msg.textContent='กำลังสร้างบัญชี…';
+  try{
+    const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(FIREBASE_CONFIG,'sec');const sa=sec.auth();
+    try{await sa.setPersistence(firebase.auth.Auth.Persistence.NONE)}catch(_){}
+    const cred=await sa.createUserWithEmailAndPassword(toEmail(user),pw);const uid=cred.user.uid;await sa.signOut();
+    await fdb.doc('members/'+uid).set({username:user,name:name||user,role,active:true,createdAt:Date.now(),createdBy:S.uid});
+    msg.textContent='สร้างบัญชี '+user+' แล้ว แจ้งชื่อผู้ใช้และรหัสผ่านให้พนักงาน';$('addUser').reset();
+  }catch(er){msg.textContent=errTh(er)}
+  btn.disabled=false;});
+/* ---- change own password ---- */
+$('chgPw').addEventListener('click',()=>{$('pwForm').reset();$('pwMsg').textContent='';$('pwOv').hidden=false;$('pwCur').focus()});
+$('pwCancel').addEventListener('click',()=>{$('pwOv').hidden=true});
+$('pwForm').addEventListener('submit',async e=>{e.preventDefault();const m=$('pwMsg'),n=$('pwNew').value;
+  if(n.length<6){m.textContent='รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว';return}
+  if(n!==$('pwNew2').value){m.textContent='รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน';return}
+  try{const u=fauth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,$('pwCur').value));await u.updatePassword(n);
+    m.textContent='เปลี่ยนรหัสผ่านแล้ว';setTimeout(()=>{$('pwOv').hidden=true},900)}
+  catch(er){m.textContent=er&&(er.code==='auth/invalid-credential'||er.code==='auth/wrong-password')?'รหัสผ่านปัจจุบันไม่ถูกต้อง':errTh(er)}});
+(function init(){
+  if(!window.firebase||!FIREBASE_CONFIG.apiKey){
+    showNote('ยังไม่ได้ใส่ firebaseConfig ในไฟล์นี้ (ขั้นที่ 7 ในคู่มือ) ตอนนี้ใช้งานได้แบบชั่วคราว ข้อมูลไม่ถูกบันทึก');return}
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fauth=firebase.auth();fdb=firebase.firestore();
+  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('loginMsg'),user=normUser($('lgUser').value);
+    if(!okUser(user)){msg.textContent='ชื่อผู้ใช้ไม่ถูกต้อง';return}
+    msg.textContent='กำลังเข้าสู่ระบบ…';$('signIn').disabled=true;
+    try{await fauth.signInWithEmailAndPassword(toEmail(user),$('lgPw').value);$('lgPw').value=''}catch(er){msg.textContent=errTh(er)}
+    $('signIn').disabled=false});
+  $('setupForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('setupMsg');
+    const name=$('suName').value.trim(),user=normUser($('suUser').value),pw=$('suPw').value;
+    if(!okUser(user)){msg.textContent='ชื่อผู้ใช้ใช้ได้เฉพาะ a-z 0-9 . _ - ยาว 3–30 ตัว';return}
+    if(pw.length<6){msg.textContent='รหัสผ่านต้องมีอย่างน้อย 6 ตัว';return}
+    if(pw!==$('suPw2').value){msg.textContent='รหัสผ่านทั้งสองช่องไม่ตรงกัน';return}
+    msg.textContent='กำลังสร้างบัญชีแอดมิน…';S.settingUp=true;
+    try{
+      const cred=await fauth.createUserWithEmailAndPassword(toEmail(user),pw);const uid=cred.user.uid;
+      const bt=fdb.batch();
+      bt.set(fdb.doc('members/'+uid),{username:user,name:name||user,role:'admin',active:true,createdAt:Date.now(),createdBy:uid});
+      bt.set(fdb.doc('config/setup'),{owner:uid,at:Date.now()});
+      await bt.commit();
+      S.settingUp=false;onUser(fauth.currentUser);
+    }catch(er){S.settingUp=false;msg.textContent=errTh(er);if(fauth.currentUser)fauth.signOut()}});
+  const out=()=>fauth.signOut();$('signOut').addEventListener('click',out);$('signOut2').addEventListener('click',out);
+  fauth.onAuthStateChanged(onUser);})();
+</script>
+
+</body></html>
