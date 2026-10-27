@@ -318,6 +318,31 @@ table.gt{font-size:14px}
 .drange input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
 .hday{grid-column:1/-1;font-family:var(--display);font-weight:600;font-size:14px;color:var(--c4);margin-top:6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
 #histListBox{display:flex;flex-direction:column;gap:10px}
+/* ===== compact sheet-style tables (v5) ===== */
+.tw table{font-size:13px}
+.tw table th{background:var(--surface2);color:var(--ink);font-weight:600;font-size:12px;line-height:1.3;padding:9px 10px;vertical-align:bottom;white-space:normal}
+.tw table td{padding:7px 10px;line-height:1.35;vertical-align:middle}
+tbody tr:nth-child(even) td{background:transparent}
+tbody tr:hover td{background:color-mix(in srgb,var(--c1s) 55%,transparent)}
+.tw .code{font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:0}
+.t3 td:first-child .code{font-size:13px;font-weight:600;color:var(--c1);letter-spacing:0}
+.t3 td:first-child{white-space:nowrap}
+.t3 td.pn{color:var(--ink)}
+.t3 td .hist,.t3 td .nm{display:inline;margin:0 0 0 6px;font-size:11.5px}
+.t3 .pill{padding:0 8px;font-size:11.5px}
+.t3 .st{font-size:10.5px;padding:0 7px;margin-left:6px}
+.t3 .qty,.t3 .note{height:28px;padding:3px 8px;border-radius:8px;font-size:13px}
+.t3 .tick{width:18px;height:18px}
+body.full .t3 th{padding:9px 10px;font-size:12px}
+body.full .t3 td{padding:5px 10px;font-size:13px}
+td[data-qc]{overflow:hidden!important}
+.qc{display:flex;align-items:center;justify-content:flex-end;gap:4px;white-space:nowrap}
+.qc .qty{width:68px!important;min-width:0;flex:none}
+.ib{appearance:none;flex:none;width:24px;height:24px;display:inline-grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--c1);cursor:pointer;padding:0}
+.ib:hover{background:var(--c1s)}.ib.ok{color:var(--ok)}.ib:focus-visible{outline:2px solid var(--c1);outline-offset:1px}
+.ib-sp{width:24px;flex:none}
+.okb{margin:0;padding:0 7px;font-size:11px;font-weight:700;line-height:18px}
+.fw{color:var(--warn);font-size:13px;cursor:help}
 .lform{display:flex;flex-direction:column;gap:8px}.lform[hidden]{display:none!important}.lform label{font-weight:600;font-size:13px}.lform input{width:100%}
 .ugrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.uf{display:flex;flex-direction:column;gap:4px;min-width:0}.uf input,.uf select{width:100%}
 .ut{min-width:640px}.ut td{vertical-align:middle}.ut tr.off td{opacity:.55}
@@ -445,7 +470,7 @@ th.sorted{color:var(--c1)}
       <span><i style="background:color-mix(in srgb,var(--bo) 9%,var(--surface))"></i>BO ยังไม่มี Plan</span>
     </div>
     <div class="tw wide"><table class="t3"><thead><tr>
-      <th>รหัส / สินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n">On hand</th><th class="n">BO ตอนนี้</th><th>เทียบรอบก่อน</th>
+      <th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n">On hand</th><th class="n">BO ตอนนี้</th><th>เทียบรอบก่อน</th>
       <th class="n">Pack key</th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n">สั่งแล้ว (ในไฟล์)</th>
       <th class="n eh">Plan order (หน้าร้าน)</th><th class="eh">หมายเหตุหน้าร้าน (ไม่บังคับ)</th><th class="eh ck">สั่งแล้ว (ระบบ)</th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
       <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
@@ -1003,14 +1028,14 @@ function renderS3(){
   const cts={};F3.forEach(([k])=>cts[k]=items.filter(i=>m3(i,k,'')).length);
   chips($('chips3'),F3,S.f3,cts,k=>{S.f3=k;renderS3()});
   if(!S.run)renderOS();
-  if(!S.run){$('tb3').innerHTML='<tr><td colspan="24" class="empty">ยังไม่มีรอบที่บันทึก ให้ฝ่ายนำเข้าไฟล์ เทียบ BO และกดบันทึกรอบก่อน</td></tr>';updateProg();return}
+  if(!S.run){$('tb3').innerHTML='<tr><td colspan="25" class="empty">ยังไม่มีรอบที่บันทึก ให้ฝ่ายนำเข้าไฟล์ เทียบ BO และกดบันทึกรอบก่อน</td></tr>';updateProg();return}
   const rows=items.filter(i=>m3(i,S.f3,q));
   const lock=isLocked(S.run),lk=lock?' disabled':'',dis=(S.canEdit&&!lock)?'':' disabled';
   S.lockShown=lock;$('roleHint').classList.toggle('notice',lock);
   if(lock)$('roleHint').textContent='🔒 รอบนี้บันทึกเมื่อ '+when(S.run.createdAt)+' และผ่านเที่ยงคืนแล้ว จึงดูได้อย่างเดียว แก้ไขไม่ได้ · ข้อมูลยังใช้เทียบกับรอบถัดไปได้ตามปกติ';
   $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
     return '<tr data-code="'+esc(i.code)+'">'+
-    '<td><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span><div class="nm">'+esc(i.name)+'</div></td>'+
+    '<td><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span></td><td class="pn" title="'+esc(i.name)+'">'+esc(i.name)+'</td>'+
     cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n" data-s="'+(i.bBO?-i.bBO:(i.bo||0))+'">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
     '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
     cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
@@ -1020,22 +1045,29 @@ function renderS3(){
     '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(isDoneP(S.plans.get(i.code),S.orders.get(i.code))?' checked':'')+dis+'></td>'+
     '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(oMatch(p,o)?o.note||'':'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
     cell(i.reason)+cell(i.desc)+cell(i.vol)+cell(i.freq)+cell(i.cv)+cell(fmt(i.stock),'n')+cell(i.wh)+cell(fmt(i.quota),'n')+'<td class="who" data-who></td></tr>'}).join('')
-    :'<tr><td colspan="24" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+    :'<tr><td colspan="25" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb3');
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
   fillWho();updateProg();renderOS();}
+const ICON={
+  pen:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M11.3 1.7a1.5 1.5 0 0 1 2.1 0l.9.9a1.5 1.5 0 0 1 0 2.1L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 3l3 3" stroke="currentColor" stroke-width="1.5"/></svg>',
+  ok:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  no:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  undo:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.5L2 6.5l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 6.5H10a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'};
 function qtyCell(i){
   const code=i.code,p=S.plans.get(code)||{},o=S.orders.get(code),lock=isLocked(S.run),done=isDoneP(p,o),base=pBase(p),tot=orderedTotal(p,o);
+  const warn=i.ordered!=null?'<span class="fw" title="สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ">⚠</span>':'';
   if(S.addCode===code&&done&&!lock)
-    return '<div class="addw"><span class="okb">สั่งแล้ว '+fmt(tot)+'</span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="จำนวนที่เพิ่ม">'+
-      '<div class="addb"><button type="button" class="btn sm primary" data-act="addok">เพิ่ม</button><button type="button" class="btn sm" data-act="addno">ยกเลิก</button></div></div>';
-  let h='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+(lock||done?' disabled':'')+'>';
-  if(done&&tot>0)h+='<span class="okb">สั่งแล้ว '+fmt(tot)+'</span>';
-  else if(base>0)h+='<span class="okb">สั่งแล้ว '+fmt(base)+'</span><span class="nm">เพิ่มรอสั่ง '+fmt(p.qty)+'</span>';
-  if(!lock&&done)h+='<button type="button" class="btn sm addbtn" data-act="add">+ เพิ่ม Plan</button>';
-  else if(!lock&&base>0)h+='<button type="button" class="btn sm addbtn" data-act="undoadd">ยกเลิกการเพิ่ม</button>';
-  if(i.ordered!=null)h+='<span class="warn">สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ</span>';
-  return h;}
+    return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+ เพิ่ม">'+
+      '<button type="button" class="ib ok" data-act="addok" title="บันทึกจำนวนที่เพิ่ม" aria-label="บันทึกจำนวนที่เพิ่ม">'+ICON.ok+'</button><button type="button" class="ib" data-act="addno" title="ยกเลิก" aria-label="ยกเลิก">'+ICON.no+'</button></div>';
+  let h='<div class="qc">'+warn;
+  if(done&&tot>0)h+='<span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span>';
+  else if(base>0)h+='<span class="okb" title="สั่งไปแล้ว '+fmt(base)+' · ที่กรอกคือจำนวนที่เพิ่ม รอสั่ง">สั่ง '+fmt(base)+' +</span>';
+  h+='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+(lock||done?' disabled':'')+'>';
+  if(!lock&&done)h+='<button type="button" class="ib" data-act="add" title="เพิ่ม Plan (สั่งเพิ่มจากที่สั่งไปแล้ว)" aria-label="เพิ่ม Plan '+esc(code)+'">'+ICON.pen+'</button>';
+  else if(!lock&&base>0)h+='<button type="button" class="ib" data-act="undoadd" title="ยกเลิกการเพิ่ม" aria-label="ยกเลิกการเพิ่ม '+esc(code)+'">'+ICON.undo+'</button>';
+  else h+='<span class="ib-sp"></span>';
+  return h+'</div>';}
 function updateProg(){
   const n=S.rows.length,f=S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&p.qty!=null}).length,d=S.rows.filter(i=>isDoneC(i.code)).length;
   $('prog').style.width=(f?d/f*100:0)+'%';
@@ -1117,12 +1149,12 @@ $('q3').addEventListener('input',renderS3);
 (()=>{
   const T3=document.querySelector('table.t3'),TH=[...T3.querySelectorAll('thead th')];
   const names=TH.map(th=>th.textContent.trim().replace(/\s+/g,' '));
-  const CW0=[300,90,100,90,90,150,80,80,80,110,130,150,220,90,220,200,200,110,110,110,120,170,130,130];
-  const MAIN=new Set([0,3,4,5,6,9,10,11,12,13,14,23]);
+  const CW0=[200,280,80,90,80,80,170,70,60,60,90,100,190,170,80,170,170,170,80,80,60,90,150,100,200];
+  const MAIN=new Set([0,1,4,5,6,7,10,11,12,13,14,15,24]);
   let CW=CW0.slice(),CH=new Set();
-  try{const v=JSON.parse(localStorage.getItem('bo.cols.v1')||'null');
+  try{const v=JSON.parse(localStorage.getItem('bo.cols.v2')||'null');
     if(v&&Array.isArray(v.w)&&v.w.length===CW.length){CW=v.w.map((x,i)=>Math.max(50,+x||CW0[i]));CH=new Set((v.h||[]).filter(i=>i>0&&i<CW.length))}}catch(e){}
-  const save=()=>{try{localStorage.setItem('bo.cols.v1',JSON.stringify({w:CW,h:[...CH]}))}catch(e){}};
+  const save=()=>{try{localStorage.setItem('bo.cols.v2',JSON.stringify({w:CW,h:[...CH]}))}catch(e){}};
   T3.insertAdjacentHTML('afterbegin','<colgroup>'+CW.map(()=>'<col>').join('')+'</colgroup>');
   const COLS=[...T3.querySelectorAll('colgroup col')];
   TH.forEach((th,i)=>{const h=document.createElement('span');h.className='rz';h.dataset.i=i;h.title='ลากเพื่อปรับความกว้าง · ดับเบิลคลิกเพื่อรีเซ็ต';th.appendChild(h)});
@@ -1185,7 +1217,7 @@ async function selectRun(id){
   if(!S.run){renderS3();return}
   const mk=arr=>{const r=arr.map(rowObj);if(S.run&&S.run.first)r.forEach(o=>{o.cat='';o.delta=0});return r};
   if(S.run.rows)S.rows=mk(S.run.rows);
-  else if(S.db){$('tb3').innerHTML='<tr><td colspan="24" class="empty">กำลังโหลดรายการ…</td></tr>';
+  else if(S.db){$('tb3').innerHTML='<tr><td colspan="25" class="empty">กำลังโหลดรายการ…</td></tr>';
     try{const snap=await S.db.collection('runs/'+id+'/chunks').get();if(S.runId!==id)return;
       S.rows=mk([...snap.docs].sort((x,y)=>x.id<y.id?-1:1).flatMap(d=>decRows(d.data().rows)))}
     catch(e){$('s3msg').textContent='โหลดรายการของรอบนี้ไม่ได้'}}
@@ -1346,7 +1378,7 @@ S.sort={};
 [['tb2',()=>renderS2()],['tb3',()=>renderS3()],['tb4',()=>renderHistTable()]].forEach(([id,render])=>{
   const tb=$(id);if(!tb)return;const head=tb.closest('table').tHead;if(!head)return;
   [...head.rows[0].cells].forEach((c,i)=>{
-    if(id==='tb3'&&i===23)return;
+    if(id==='tb3'&&i===24)return;
     c.classList.add('sortable');c.title='กดเพื่อเรียง';c.tabIndex=0;
     const a=document.createElement('span');a.className='sa';a.setAttribute('aria-hidden','true');a.textContent='⇅';
     const rz=c.querySelector('.rz');if(rz)c.insertBefore(a,rz);else c.appendChild(a);
