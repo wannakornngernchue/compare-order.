@@ -358,6 +358,16 @@ td[data-qc]{white-space:normal!important;overflow:visible!important}td[data-qc] 
 th.sortable{cursor:pointer;user-select:none}th.sortable:hover{background:color-mix(in srgb,var(--c1s) 100%,var(--surface))}
 th .sa{margin-left:6px;font-size:11px;color:var(--muted);opacity:.55}th.sorted .sa{color:var(--c1);opacity:1}
 th.sorted{color:var(--c1)}
+.hbtn{appearance:none;font:inherit;font-size:11.5px;font-weight:600;margin-left:6px;padding:1px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c1) 35%,var(--line));background:var(--surface);color:var(--c1);cursor:pointer;white-space:nowrap;vertical-align:1px}
+.hbtn:hover{background:var(--c1s)}
+.hpop{position:fixed;z-index:70;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px 12px;max-width:min(560px,calc(100vw - 24px))}
+.hpop .hph{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.hpop table{min-width:0;width:auto;border-collapse:collapse;font-size:13px}
+.hpop th,.hpop td{padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left;position:static;background:transparent}
+.hpop th{font-size:12px;color:var(--muted);font-weight:600}
+.hpop td.n,.hpop th.n{text-align:right;font-variant-numeric:tabular-nums}
+.hpop tr.hcur td{background:var(--c1s);font-weight:600}
+.okt{color:var(--ok);font-weight:600}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -439,7 +449,7 @@ th.sorted{color:var(--c1)}
       <div class="chips" id="chips2"></div>
       <input type="search" class="grow" id="q2" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
     </div>
-    <div class="tw"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Pack key</th><th class="n">Stock Forecast รอบแรก</th><th class="n">Stock Forecast รอบใหม่</th><th>เปลี่ยนแปลง</th><th class="n">สั่งแล้ว (ในไฟล์)</th><th class="n">ประวัติ BO ทุกรอบ</th></tr></thead><tbody id="tb2"></tbody></table></div>
+    <div class="tw"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Pack key</th><th class="n">Stock Forecast รอบแรก</th><th class="n">Stock Forecast รอบใหม่</th><th>เปลี่ยนแปลง</th><th class="n">สั่งแล้ว (ในไฟล์)</th><th class="n">ประวัติทุกรอบ</th></tr></thead><tbody id="tb2"></tbody></table></div>
     <div class="bar">
       <input type="text" id="runLabel" aria-label="ชื่อรอบ" placeholder="ชื่อรอบ เช่น BO 21.10">
       <button class="btn primary" id="saveRun">บันทึกรอบนี้ให้หน้าร้านกรอก Plan order</button>
@@ -526,6 +536,7 @@ th.sorted{color:var(--c1)}
     <p class="hint">ปิดใช้งานแล้ว คนนั้นจะเข้าแอปไม่ได้ทันที แต่ชื่อยังแสดงในช่อง "บันทึกโดย" ของรอบเก่า ถ้าพนักงานลืมรหัสผ่าน ดูวิธีตั้งใหม่ในคู่มือหัวข้อการใช้งานประจำ</p>
   </section>
 </div>
+<div id="histPop" class="hpop" role="dialog" aria-label="ประวัติ Stock Forecast" hidden></div>
 
 <script>
 /*CORE*/
@@ -1010,10 +1021,31 @@ const isSkipP=(p,o)=>oMatch(p,o)&&!o.done&&!!o.note;
 const orderedTotal=(p,o)=>pBase(p)+(isDoneP(p,o)&&p&&typeof p.qty==='number'?p.qty:0);
 const planTotal=p=>p&&typeof p.qty==='number'?pBase(p)+p.qty:null;
 const isDoneC=c=>isDoneP(S.plans.get(c),S.orders.get(c));
-const histHtml=(i,labels)=>{if(!i.hist)return'';
-  const t=i.hist.map(v=>v?'−'+fmt(v):'0').join(' → ');
-  const pl=(i.hplan||[]).some(v=>v!=null)?'<div class="nm">สั่ง: '+i.hplan.map(v=>v==null?'–':fmt(v)).join(' → ')+'</div>':'';
-  return '<div class="hist" title="'+esc((labels||[]).join(' → '))+'">'+t+'</div>'+pl};
+/* history of several rounds: a small button in the row; the details open in a little table (round · Stock Forecast · change · ordered) */
+const histHtml=(i,labels)=>{if(!i.hist||i.hist.length<2)return'';
+  const d=JSON.stringify({c:i.code,h:i.hist,p:i.hplan||[],l:labels||[]});
+  return '<button type="button" class="hbtn" data-hist="'+esc(d)+'" title="ดูประวัติ Stock Forecast ทุกรอบ">'+i.hist.length+' รอบ ▾</button>'};
+function openHistPop(btn){
+  let d;try{d=JSON.parse(btn.getAttribute('data-hist'))}catch(e){return}
+  const pop=$('histPop'),n=d.h.length,neg=v=>v?'<span class="bo">−'+fmt(v)+'</span>':'<span class="hint">0</span>';
+  const rows=d.h.map((v,k)=>{const prev=k?d.h[k-1]:null,ch=prev==null?null:(v||0)-(prev||0),last=k===n-1;
+    const chTxt=ch==null?'<span class="hint">–</span>':ch>0?'<span class="bo">BO +'+fmt(ch)+'</span>':ch<0?'<span class="okt">ลด '+fmt(-ch)+'</span>':'<span class="hint">เท่าเดิม</span>';
+    const p=d.p[k];
+    return '<tr'+(last?' class="hcur"':'')+'><td>'+esc(d.l[k]||('รอบ '+(k+1)))+(last?' <b>(ล่าสุด)</b>':'')+'</td><td class="n">'+neg(v)+'</td><td>'+chTxt+'</td><td class="n">'+(p==null?'<span class="hint">–</span>':fmt(p))+'</td></tr>'}).join('');
+  pop.innerHTML='<div class="hph"><b class="code">'+esc(d.c)+'</b><button type="button" class="ib" data-hclose aria-label="ปิด">✕</button></div>'+
+    '<table><thead><tr><th>รอบ</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th><th class="n">สั่ง / Plan</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  pop.hidden=false;
+  const r=btn.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;
+  let x=Math.min(r.left,window.innerWidth-w-12),y=r.bottom+6;if(y+h>window.innerHeight-12)y=Math.max(12,r.top-h-6);
+  pop.style.left=Math.max(12,x)+'px';pop.style.top=y+'px';S.histBtn=btn;}
+function closeHistPop(){const p=$('histPop');if(p&&!p.hidden){p.hidden=true;S.histBtn=null}}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('.hbtn');
+  if(b){e.stopPropagation();if(S.histBtn===b)closeHistPop();else openHistPop(b);return}
+  if(e.target.closest&&e.target.closest('[data-hclose]')){closeHistPop();return}
+  if(!(e.target.closest&&e.target.closest('#histPop')))closeHistPop()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHistPop()});
+window.addEventListener('scroll',closeHistPop,true);window.addEventListener('resize',closeHistPop);
 const cell=(v,cls)=>'<td'+(cls?' class="'+cls+'"':'')+'>'+(v==null||v===''?'':esc(v))+'</td>';
 function m3(i,f,q){
   const p=S.plans.get(i.code),o=S.orders.get(i.code),done=isDoneP(p,o),has=!!(p&&p.qty!=null);
