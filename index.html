@@ -373,7 +373,7 @@ th.sorted{color:var(--c1)}
       <button class="step" data-step="5" hidden><b>5</b>จัดการผู้ใช้</button>
     </div>
   </div>
-  <div class="ubar" id="ubar" hidden><span id="uName"></span><span class="pill p-ord" id="uRole"></span><button type="button" class="btn sm" id="chgPw">เปลี่ยนรหัสผ่าน</button><button type="button" class="btn sm" id="signOut">ออกจากระบบ</button></div>
+  <div class="ubar" id="ubar" hidden><span class="pill p-up" id="netSt" hidden></span><span id="uName"></span><span class="pill p-ord" id="uRole"></span><button type="button" class="btn sm" id="chgPw">เปลี่ยนรหัสผ่าน</button><button type="button" class="btn sm" id="signOut">ออกจากระบบ</button></div>
   <div class="ov" id="loginOv" hidden><div class="ovb login">
     <form id="loginForm" class="lform">
       <h2>เข้าสู่ระบบ</h2>
@@ -439,7 +439,7 @@ th.sorted{color:var(--c1)}
       <div class="chips" id="chips2"></div>
       <input type="search" class="grow" id="q2" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
     </div>
-    <div class="tw"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Pack key</th><th class="n">BO รอบแรก</th><th class="n">BO รอบใหม่</th><th>เปลี่ยนแปลง</th><th class="n">สั่งแล้ว (ในไฟล์)</th><th class="n">ประวัติ BO ทุกรอบ</th></tr></thead><tbody id="tb2"></tbody></table></div>
+    <div class="tw"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Pack key</th><th class="n">Stock Forecast รอบแรก</th><th class="n">Stock Forecast รอบใหม่</th><th>เปลี่ยนแปลง</th><th class="n">สั่งแล้ว (ในไฟล์)</th><th class="n">ประวัติ BO ทุกรอบ</th></tr></thead><tbody id="tb2"></tbody></table></div>
     <div class="bar">
       <input type="text" id="runLabel" aria-label="ชื่อรอบ" placeholder="ชื่อรอบ เช่น BO 21.10">
       <button class="btn primary" id="saveRun">บันทึกรอบนี้ให้หน้าร้านกรอก Plan order</button>
@@ -470,7 +470,7 @@ th.sorted{color:var(--c1)}
       <span><i style="background:color-mix(in srgb,var(--bo) 9%,var(--surface))"></i>BO ยังไม่มี Plan</span>
     </div>
     <div class="tw wide"><table class="t3"><thead><tr>
-      <th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n">On hand</th><th class="n">BO ตอนนี้</th><th>เทียบรอบก่อน</th>
+      <th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n">On hand</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th>
       <th class="n">Pack key</th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n">สั่งแล้ว (ในไฟล์)</th>
       <th class="n eh">Plan order (หน้าร้าน)</th><th class="eh">หมายเหตุหน้าร้าน (ไม่บังคับ)</th><th class="eh ck">สั่งแล้ว (ระบบ)</th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
       <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
@@ -505,7 +505,7 @@ th.sorted{color:var(--c1)}
       <div class="bar"><button type="button" class="btn sm" id="hBack">← กลับรายการ</button><h2 id="hTitle"></h2><span class="hint" id="hMeta"></span></div>
       <div class="bar"><span class="hint" id="hLock"></span><button type="button" class="btn sm" id="hOpen" hidden>เปิดในหน้ากรอก Plan order</button></div>
       <div class="bar"><div class="chips" id="chips4"></div><input type="search" class="grow" id="q4" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา"><button type="button" class="btn sm" id="hDl">ดาวน์โหลด (.xlsx)</button></div>
-      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">BO</th><th>เทียบรอบก่อน</th><th class="n">Plan order</th><th>หมายเหตุหน้าร้าน</th><th>สถานะการสั่ง</th><th>หมายเหตุระบบ</th><th>บันทึกโดย</th></tr></thead><tbody id="tb4"></tbody></table></div>
+      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th><th class="n">Plan order</th><th>หมายเหตุหน้าร้าน</th><th>สถานะการสั่ง</th><th>หมายเหตุระบบ</th><th>บันทึกโดย</th></tr></thead><tbody id="tb4"></tbody></table></div>
     </div>
   </section>
 
@@ -531,22 +531,35 @@ th.sorted{color:var(--c1)}
 /*CORE*/
 const num=v=>typeof v==='number'&&isFinite(v)?v:null;
 const txt=v=>{const t=v==null?'':String(v).trim();return t==='-'?'':t};
-function findHeader(rows){let h=-1;for(let i=0;i<Math.min(rows.length,8);i++){const r=rows[i];if(r&&String(r[6]==null?'':r[6]).trim()==='Product name')h=i}return h}
+/* Excel import: columns are found by their header names (the same names the paste path knows), not by fixed positions.
+   A blank header cell between two known ones takes the field that fits between them. Missing key columns stop the import with a message. */
+const xNum=v=>typeof v==='number'&&isFinite(v)?v:(v==null||v===''?null:numOf(v));
+function findHeader(rows){let h=-1;
+  for(let i=0;i<Math.min(rows.length,15);i++){const r=rows[i]||[];const f=r.map(c=>typeof c==='string'?headerField(c):null);
+    if(f.includes('name')&&f.filter(Boolean).length>=3)h=i}
+  return h}
 function parseRows(rows){
   const h=findHeader(rows);if(h<0)return null;
-  const H={};(rows[h]||[]).forEach((v,i)=>{if(typeof v==='string'&&!(v.trim() in H))H[v.trim()]=i});
-  const ix=(n,d)=>H[n]!=null?H[n]:d;
-  const c={owner:ix('Owner',3),safety:ix('Safety stock cover day',5),onhand:ix('On hand',7),pack:ix('Packkey',9),rop:ix('ROP',10),order:ix('Order',11),plan:ix('Plan order',13),
-    reason:ix('Reason/Comments',14),desc:ix('Description',15),vol:ix('Sales volume class',16),freq:ix('Frequency class',17),cv:ix('CV class',18),
-    stock:ix('Stock \u0e04\u0e25\u0e31\u0e07\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07',19),wh:ix('\u0e04\u0e25\u0e31\u0e07\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07',20),quota:ix('Remaining quota (Case)',21)};
+  const hdr=(rows[h]||[]).map(c=>c==null?'':String(c));
+  const cm=fillHeaderGaps(hdr.map(c=>{const f=headerField(c);return f?GK.indexOf(f):-1}));
+  const col={};cm.forEach((g,i)=>{if(g>=0){const f=GK[g];if(!(f in col))col[f]=i}});
   const out=new Map();
-  for(let i=h+1;i<rows.length;i++){const r=rows[i];if(!r)continue;
-    const code=r[2],bo=r[8];
-    if(typeof code!=='string'||!code.trim()||typeof bo!=='number')continue;
-    const k=code.trim(),nm=String(r[6]==null?'':r[6]);
-    out.set(k,{code:k,name:nm.startsWith(k+'-')?nm.slice(k.length+1):nm,pack:num(r[c.pack]),bo:bo,plan:num(r[c.plan]),
-      owner:txt(r[c.owner]),safety:num(r[c.safety]),onhand:num(r[c.onhand]),rop:num(r[c.rop]),order:txt(r[c.order]),need:num(r[12]),
-      reason:txt(r[c.reason]),desc:txt(r[c.desc]),vol:txt(r[c.vol]),freq:txt(r[c.freq]),cv:txt(r[c.cv]),stock:num(r[c.stock]),wh:txt(r[c.wh]),quota:num(r[c.quota])});}
+  const miss=['code','name','bo'].filter(f=>!(f in col));
+  if(miss.length){out.error='ไม่พบคอลัมน์ '+miss.map(f=>({code:'Brand code',name:'Product name',bo:'Stock forecast'}[f])).join(', ')+' ในไฟล์ ตรวจหัวตารางแล้วลองใหม่';return out}
+  const at=(r,f)=>f in col?r[col[f]]:null;
+  let skipped=0;
+  for(let i=h+1;i<rows.length;i++){const r=rows[i];if(!r||!r.some(v=>v!=null&&String(v).trim()!==''))continue;
+    const code=at(r,'code'),bo=xNum(at(r,'bo'));
+    if(code==null||!String(code).trim()){skipped++;continue}
+    if(bo==null){skipped++;continue}
+    const k=String(code).trim(),nm=String(at(r,'name')==null?'':at(r,'name'));
+    out.set(k,{code:k,name:nm.startsWith(k+'-')?nm.slice(k.length+1):nm,pack:xNum(at(r,'pack')),bo,plan:xNum(at(r,'plan')),
+      owner:txt(at(r,'owner')),safety:xNum(at(r,'safety')),onhand:xNum(at(r,'onhand')),rop:xNum(at(r,'rop')),order:txt(at(r,'order')),need:xNum(at(r,'need')),
+      reason:txt(at(r,'reason')),desc:txt(at(r,'desc')),vol:txt(at(r,'vol')),freq:txt(at(r,'freq')),cv:txt(at(r,'cv')),stock:xNum(at(r,'stock')),wh:txt(at(r,'wh')),quota:xNum(at(r,'quota'))});}
+  const opt=['onhand','pack','rop','order','need','plan','reason','vol','freq','cv','stock','wh','quota','owner','safety'].filter(f=>!(f in col));
+  const w=[];if(skipped)w.push('ข้าม '+skipped+' แถวที่ไม่มีรหัสหรือ Stock forecast');
+  if(opt.length)w.push('ไม่พบคอลัมน์ '+opt.map(f=>GN[GK.indexOf(f)]).join(', ')+' (เว้นว่างไว้)');
+  out.warn=w.join(' · ');
   return out;}
 /* ---- paste from the source app: tab-separated text copied from its table, header row included ---- */
 function parseTSV(t,d){d=d||'\t';
@@ -833,12 +846,17 @@ async function loadFile(file){
   const st=$('stat');st.className='stat';st.textContent='กำลังอ่านไฟล์…';S.book=null;
   try{
     const wb=await readBook(file);const ok=sheetsWithHeader(wb);
-    if(!ok.length){st.className='stat err';st.textContent='ไม่พบชีทที่มีคอลัมน์ Product name';return}
+    if(!ok.length){st.className='stat err';st.textContent='ไม่พบหัวตารางในไฟล์ (ต้องมีคอลัมน์ Product name, Brand code และ Stock forecast)';return}
     S.book={wb,name:file.name,sheets:ok};
-    const mk=n=>({name:n,rows:mapToRows(parseRows(sheetRows(wb.Sheets[n]))||new Map()),info:'นำเข้าจาก '+file.name+' ['+n+']'});
-    if(ok.length===1){const o=mk(ok[0]);SH[SHI]=o;shLoad();st.className='stat ok';st.textContent=file.name+' · นำเข้าลงชีทนี้แล้ว';return}
-    const use=ok.slice(-MAXSH);SH.length=0;use.forEach(n=>SH.push(mk(n)));SHI=SH.length-1;shLoad();
-    st.className='stat ok';st.textContent=file.name+' · นำเข้า '+use.length+' ชีทเป็นแท็บ'+(ok.length>use.length?' (เอา '+use.length+' ชีทล่าสุด)':'')+' แทนข้อมูลเดิม';
+    const parsed={};ok.forEach(n=>parsed[n]=parseRows(sheetRows(wb.Sheets[n]))||new Map());
+    const bad=ok.filter(n=>parsed[n].error);
+    if(bad.length===ok.length){st.className='stat err';st.textContent=(ok.length>1?'ชีท '+bad[0]+': ':'')+parsed[bad[0]].error;return}
+    const good=ok.filter(n=>!parsed[n].error),warns=good.map(n=>parsed[n].warn?(good.length>1?n+': ':'')+parsed[n].warn:'').filter(Boolean);
+    const mk=n=>({name:n,rows:mapToRows(parsed[n]),info:'นำเข้าจาก '+file.name+' ['+n+'] · '+fmt(parsed[n].size)+' รายการ'});
+    const tail=(bad.length?' · ข้ามชีท '+bad.join(', ')+' ('+parsed[bad[0]].error+')':'')+(warns.length?' · '+warns.join(' · '):'');
+    if(good.length===1){const o=mk(good[0]);SH[SHI]=o;shLoad();st.className=tail?'stat':'stat ok';st.textContent=file.name+' · นำเข้า '+fmt(parsed[good[0]].size)+' รายการลงชีทนี้แล้ว'+tail;return}
+    const use=good.slice(-MAXSH);SH.length=0;use.forEach(n=>SH.push(mk(n)));SHI=SH.length-1;shLoad();
+    st.className=tail?'stat':'stat ok';st.textContent=file.name+' · นำเข้า '+use.length+' ชีทเป็นแท็บ'+(good.length>use.length?' (เอา '+use.length+' ชีทล่าสุด)':'')+' แทนข้อมูลเดิม'+tail;
   }catch(e){st.className='stat err';st.textContent='อ่านไฟล์ไม่ได้ ลองบันทึกเป็น .xlsx แล้วเลือกใหม่'}}
 $('file').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f);e.target.value=''});
 (()=>{const d=$('blkPA');
@@ -1095,6 +1113,7 @@ $('tb3').addEventListener('change',async e=>{
   const g=k=>tr.querySelector('[data-f="'+k+'"]');
   const paint=()=>{const it=S.rows.find(i=>i.code===code);if(it)applyState(tr,it);updateProg()};
   let undo=()=>{};
+  if(!navigator.onLine){msg.textContent='ออฟไลน์ · บันทึกไว้ในเครื่องแล้ว จะส่งเองเมื่อเน็ตกลับมา'}
   try{
     if(f==='qty'||f==='fnote'){
       const v=g('qty').value.trim(),note=g('fnote').value.trim();
@@ -1121,6 +1140,7 @@ $('tb3').addEventListener('change',async e=>{
 function blurQc(){const a=document.activeElement;if(a&&a.closest&&a.closest('[data-qc]'))a.blur()}
 async function writePlan(code,rec,okText){
   const msg=$('s3msg'),prev=S.plans.get(code);S.plans.set(code,rec);S.addCode=null;blurQc();syncCells();
+  if(!navigator.onLine)msg.textContent='ออฟไลน์ · บันทึกไว้ในเครื่องแล้ว จะส่งเองเมื่อเน็ตกลับมา';
   try{if(S.db)await S.db.doc('plans/'+S.runId+'__'+safeId(code)).set(rec);msg.textContent=okText+' ✓ '+code}
   catch(e){if(prev)S.plans.set(code,prev);else S.plans.delete(code);msg.textContent='บันทึกไม่ได้ ลองใหม่อีกครั้ง';syncCells()}}
 function addOk(tr){
@@ -1238,11 +1258,11 @@ async function saveXlsx(filename,rows,widths,sheet){
   catch(e){msg.textContent=e&&e.code==='declined'?'':'ดาวน์โหลดไม่สำเร็จ'}}
 $('dlCompare').addEventListener('click',()=>{
   if(!S.cmp)return;
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','BO รอบแรก','BO รอบใหม่','ส่วนต่าง (+ = BO เพิ่ม)','การเปลี่ยนแปลง','สั่งแล้ว (ในไฟล์)']]
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','Stock Forecast รอบแรก','Stock Forecast รอบใหม่','ส่วนต่าง (+ = BO เพิ่ม)','การเปลี่ยนแปลง','สั่งแล้ว (ในไฟล์)']]
     .concat(S.cmp.items.map(i=>[i.code,i.name,i.pack,-i.aBO,-i.bBO,i.delta,(S.first?'รอบแรก':CAT[i.cat][0]),i.ordered==null?'':i.ordered]));
   saveXlsx('เทียบ BO.xlsx',rows,[18,50,9,12,12,16,14,16],'เทียบ BO');});
 $('dlPlan').addEventListener('click',()=>{
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','BO ตอนนี้','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะ (ระบบ)','สั่งแล้วสะสม (ระบบ)','หมายเหตุระบบ','สั่งแล้ว (ในไฟล์)']];
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะ (ระบบ)','สั่งแล้วสะสม (ระบบ)','หมายเหตุระบบ','สั่งแล้ว (ในไฟล์)']];
   S.rows.forEach(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code),dn=isDoneP(p,o),sk=isSkipP(p,o),tot=orderedTotal(p,o);
     if(p&&(p.qty>0||p.note||pBase(p))||o)rows.push([i.code,i.name,i.pack,i.bo<0?i.bo:'',p&&p.qty!=null?p.qty:'',p?p.note:'',dn?'สั่งแล้ว':sk?'ไม่สั่ง':(p&&p.qty>0?'รอสั่ง':''),tot||'',sk&&o?o.note:(dn&&o?o.note||'':''),i.ordered==null?'':i.ordered])});
   if(rows.length===1){$('s3msg').textContent='ยังไม่มีรายการที่กรอก Plan order';return}
@@ -1342,7 +1362,7 @@ function renderHistTable(){
     :'<tr><td colspan="8" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb4');}
 $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','BO','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ']];
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ']];
   H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
     rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',oMatch(p,o)&&o?o.note||'':''])});
   saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,14,28,14,14,28],'ประวัติ');});
@@ -1401,6 +1421,12 @@ function go(n){
   if(n===3){renderRunSel();selectRun(S.runId||(S.runs[0]&&S.runs[0].id)||null)}}
 $('rail').addEventListener('click',e=>{const b=e.target.closest('.step');if(b&&!b.disabled)go(+b.dataset.step)});
 
+/* ---------- online / offline indicator ---------- */
+function paintNet(){const n=$('netSt');if(!n)return;
+  if(!navigator.onLine){n.hidden=false;n.textContent=S.persist===false?'ออฟไลน์ · อย่าปิดหน้านี้จนกว่าเน็ตจะกลับมา':'ออฟไลน์ · ที่กรอกเก็บไว้ในเครื่อง จะส่งเองเมื่อเน็ตกลับมา'}
+  else n.hidden=true}
+window.addEventListener('offline',paintNet);
+window.addEventListener('online',()=>{paintNet();if(fdb&&fdb.waitForPendingWrites)fdb.waitForPendingWrites().then(()=>{const m=$('s3msg');if(m){m.textContent='ส่งข้อมูลที่ค้างครบแล้ว ✓';setTimeout(()=>{if(m.textContent.startsWith('ส่งข้อมูลที่ค้าง'))m.textContent=''},3000)}}).catch(()=>{})});
 /* ---------- start: Firebase (username + password, data in Firestore) ---------- */
 /* ↓↓↓ วาง firebaseConfig จาก Firebase console (ขั้นที่ 4 ในคู่มือ) แทนค่านี้ ↓↓↓ */
 const FIREBASE_CONFIG = {
@@ -1494,11 +1520,14 @@ $('pwForm').addEventListener('submit',async e=>{e.preventDefault();const m=$('pw
   try{const u=fauth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,$('pwCur').value));await u.updatePassword(n);
     m.textContent='เปลี่ยนรหัสผ่านแล้ว';setTimeout(()=>{$('pwOv').hidden=true},900)}
   catch(er){m.textContent=er&&(er.code==='auth/invalid-credential'||er.code==='auth/wrong-password')?'รหัสผ่านปัจจุบันไม่ถูกต้อง':errTh(er)}});
+paintNet();
 (function init(){
   if(!window.firebase||!FIREBASE_CONFIG.apiKey){
     showNote('ยังไม่ได้ใส่ firebaseConfig ในไฟล์นี้ (ขั้นที่ 7 ในคู่มือ) ตอนนี้ใช้งานได้แบบชั่วคราว ข้อมูลไม่ถูกบันทึก');return}
   firebase.initializeApp(FIREBASE_CONFIG);
   fauth=firebase.auth();fdb=firebase.firestore();
+  /* unsent edits are kept in this browser (IndexedDB) and sent when the app is open and online again */
+  S.persist=true;fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{S.persist=false;paintNet()});
   $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('loginMsg'),user=normUser($('lgUser').value);
     if(!okUser(user)){msg.textContent='ชื่อผู้ใช้ไม่ถูกต้อง';return}
     msg.textContent='กำลังเข้าสู่ระบบ…';$('signIn').disabled=true;
