@@ -448,6 +448,10 @@ body.compact .top h1{white-space:nowrap}
 @media (max-width:1500px){body:not(.compact) .pgl{display:none}body:not(.compact) .pgs{display:inline}body:not(.compact) #s3 .bar .prog{flex-basis:90px}}
 .tzv{font-size:12px;color:var(--muted);min-width:38px;text-align:center;font-variant-numeric:tabular-nums}
 body.compact .tzv{display:none}
+.mapb{max-width:640px}.mapl{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+.mapr{display:flex;flex-direction:column;gap:3px;font-size:13px}.mapr select{width:100%}.mapr.req span{font-weight:700}.mapr b{color:var(--bo)}
+#mapBtn.on{border-color:var(--c1);color:var(--c1)}
+@media (max-width:600px){.mapl{grid-template-columns:1fr}}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -502,7 +506,7 @@ body.compact .tzv{display:none}
     <p class="hint">วางข้อมูลจากแอปต้นทางหรือนำเข้าไฟล์ Excel ลงตาราง 1 ชีทต่อ 1 รอบ กด "+ เพิ่มชีท" เมื่อมีรอบใหม่ แอปจะเทียบชีทล่าสุดกับชีทก่อนหน้าให้อัตโนมัติ (เพิ่มได้สูงสุด 4 ชีท)</p>
     <div class="shtabs" id="shTabs" role="tablist" aria-label="ชีทข้อมูลแต่ละรอบ"></div>
     <div class="bar">
-      <label class="btn sm" for="file" style="cursor:pointer">นำเข้าไฟล์ Excel</label><input type="file" id="file" accept=".xlsx,.xls" hidden aria-label="ไฟล์ Excel">
+      <label class="btn sm" for="file" style="cursor:pointer">นำเข้าไฟล์ Excel</label><button type="button" class="btn sm" id="mapBtn" disabled title="นำเข้าไฟล์หรือวางข้อมูลก่อน แล้วกดเพื่อจับคู่คอลัมน์">⚙ จับคู่คอลัมน์</button><input type="file" id="file" accept=".xlsx,.xls" hidden aria-label="ไฟล์ Excel">
       <span class="stat" id="stat"></span>
     </div>
     <div class="vsl" id="blkPA">
@@ -624,6 +628,7 @@ body.compact .tzv{display:none}
   </section>
 </div>
 <div id="histPop" class="hpop" role="dialog" aria-label="ประวัติ Stock Forecast" hidden></div>
+<div class="ov" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="จับคู่คอลัมน์"><div class="ovb mapb" id="mapBody"></div></div>
 
 <script>
 /*CORE*/
@@ -633,13 +638,14 @@ const txt=v=>{const t=v==null?'':String(v).trim();return t==='-'?'':t};
    A blank header cell between two known ones takes the field that fits between them. Missing key columns stop the import with a message. */
 const xNum=v=>typeof v==='number'&&isFinite(v)?v:(v==null||v===''?null:numOf(v));
 function findHeader(rows){let h=-1;
-  for(let i=0;i<Math.min(rows.length,15);i++){const r=rows[i]||[];const f=r.map(c=>typeof c==='string'?headerField(c):null);
+  for(let i=0;i<Math.min(rows.length,15);i++){const r=rows[i]||[];const f=r.map(c=>typeof c==='string'?fieldOf(c):null);
     if(f.includes('name')&&f.filter(Boolean).length>=3)h=i}
   return h}
 function parseRows(rows){
   const h=findHeader(rows);if(h<0)return null;
   const hdr=(rows[h]||[]).map(c=>c==null?'':String(c));
-  const cm=fillHeaderGaps(hdr.map(hdrIdx));
+  const auto=fillHeaderGaps(hdr.map(hdrIdx)),cm=applyUM(hdr,auto);
+  S.lastHdr=hdr;S.lastAuto=auto;S.lastCM=cm;
   const col={};cm.forEach((g,i)=>{if(g>=0){const f=GK[g];if(!(f in col))col[f]=i}});
   const tot=hdr.findIndex(c=>NORM(c)==='สั่งแล้วสะสม'),stc=hdr.findIndex(c=>NORM(c)==='สถานะการสั่ง');
   const out=new Map();
@@ -694,6 +700,53 @@ function parsePageText(text){
 const GK=['no','code','owner','e','safety','name','onhand','bo','pack','rop','order','need','plan','reason','desc','vol','freq','cv','stock','wh','quota'];
 const GN=['#','Brand code','Owner','Safety stock','Safety stock cover day','Product name','On hand','Stock forecast (BO)','Packkey','ROP','Order','Suggested order (case)','Plan order (case)','Reason/Comments','Description','Sales volume class','Frequency class','CV class','Stock คลังต้นทาง','คลังต้นทาง','Remaining quota (Case)'];
 const nz=x=>String(x==null?'':x).trim();
+/* Whole-page copy where each user may have hidden or added columns: read the column header list printed on the page
+   (the lines after "#"), then place each product's cells by those headers plus a few fixed landmarks:
+   the row id, the code, the name (starts with the code), Order (Yes/No), the A-E/A-E/X-Z class triple and the warehouse line (คลัง...).
+   Some columns have no header text on the page (Brand code, Stock forecast, Safety stock, Suggested order, the Plan input cell);
+   they sit at fixed places next to those landmarks. Returns null when the page is not in this layout. */
+function pageRecordsByHeader(text){
+  const raw=text.replace(/\r\n?/g,'\n').split('\n').map(x=>x.trim());
+  const h0=raw.indexOf('#');if(h0<0)return null;
+  const isId=(A,i)=>/^\d{6,8}$/.test(A[i]||'')&&A[i+1]&&!/\s/.test(A[i+1])&&[2,3,4].some(k=>(A[i+k]||'').startsWith(A[i+1]+'-'));
+  let a0=-1;for(let i=h0+1;i<raw.length;i++){if(isId(raw,i)){a0=i;break}}if(a0<0)return null;
+  /* header names: W1-W4 date lines and the two-line "Stock / คลังต้นทาง" are folded into one name */
+  const H=[];const hl=raw.slice(h0+1,a0).filter(Boolean);
+  for(let j=0;j<hl.length;j++){const x=hl[j];
+    if(/^\d{1,2} [A-Za-z]{3,9} \d{4}( -)?$/.test(x))continue;
+    if(x==='Stock'&&hl[j+1]==='คลังต้นทาง'){H.push('stock คลังต้นทาง');j++;continue}
+    H.push(x.toLowerCase())}
+  const has=n=>H.includes(n);
+  if(!has('order')||!has('product name'))return null;
+  const ids=[];for(let i=a0;i<raw.length;i++)if(isId(raw,i))ids.push(i);
+  const whIdx=H.lastIndexOf('คลังต้นทาง'),tailH=whIdx>=0?H.slice(whIdx+1):[];
+  const dash=v=>v==null||v==='-'?'':v;
+  const out=[];
+  ids.forEach((st,n)=>{
+    const end=n+1<ids.length?ids[n+1]:raw.length;
+    let c=[];raw.slice(st,end).forEach(x=>{if(x.includes('\t'))c.push(...x.split('\t').map(y=>y.trim()));else c.push(x)});
+    while(c.length&&c[c.length-1]==='')c.pop();
+    const code=c[1];const ni=[2,3,4].find(k=>(c[k]||'').startsWith(code+'-'));if(ni==null)return;
+    const owner=ni>=3&&has('owner')?c[2]:'';
+    let o=-1;for(let j=ni+1;j<c.length;j++){if(c[j]==='Yes'||c[j]==='No'){o=j;break}}if(o<0)return;
+    /* before Order, from the right: ROP, Stock forecast (no header), Safety stock cover day, Safety stock (no header) */
+    let p=o-1;const take=()=>p>ni?c[p--]:'';
+    const rop=has('rop')?take():'',bo=take(),cover=has('safety stock cover day')?take():'',ss=has('safety stock cover day')?take():'';
+    /* after Order: Suggested order (no header), the Plan input cell (blank, then the number when filled) */
+    let q=o+1;const need=c[q++]||'';let plan='';
+    if(c[q]==='')q++;
+    if(c[q]!=null&&numOf(c[q])!=null&&c[q]!=='-')plan=c[q++];
+    let t=-1;for(let j=q;j+2<c.length;j++){if(/^[A-E]$/.test(c[j])&&/^[A-E]$/.test(c[j+1])&&/^[X-Z]$/.test(c[j+2])){t=j;break}}
+    const midEnd=t>=0?t:c.length,mid=c.slice(q,midEnd);
+    const reason=has('reason/comments')?(mid[0]||''):'',desc=has('description')?(mid[has('reason/comments')?1:0]||''):'';
+    let w=-1;for(let j=(t>=0?t+3:q);j<c.length;j++){if(/^คลัง/.test(c[j])){w=j;break}}
+    const stock=w>0&&has('stock คลังต้นทาง')&&(t<0||w-1>=t+3)?c[w-1]:'';
+    const tail=w>=0?c.slice(w+1):[];const at=nm=>{const k=tailH.indexOf(nm);return k>=0?tail[k]:undefined};
+    const pc=at('plan order (case)');if(pc!=null&&numOf(pc)!=null)plan=pc;
+    const onhand=at('on hand'),pack=at('packkey'),quota=at('remaining quota (case)');
+    out.push([c[0],code,owner,dash(ss),dash(cover),c[ni],dash(onhand),bo,dash(pack),dash(rop),c[o],dash(need),dash(plan),dash(reason),dash(desc),
+      t>=0?c[t]:'',t>=0?c[t+1]:'',t>=0?c[t+2]:'',dash(stock),w>=0?c[w]:'',dash(quota)])});
+  return out.length?out:null;}
 function pageRecords(text){
   /* Whole-page copy: one cell per line. A product starts at its 6-8 digit row id; the first 12 cells are fixed
      (# .. Suggested order) then one always-blank cell, then an OPTIONAL Plan order line (an empty plan cell gives no line at all),
@@ -723,6 +776,19 @@ function mergeRows(rows,add){
 let LASTINFO='';
 function lastInfo(){return LASTINFO}
 const NORM=x=>nz(x).toLowerCase().replace(/\s+/g,' ');
+/* the signed-in user's own column names (set in "จับคู่คอลัมน์"): field -> header text, '' = do not use that field */
+const umField=c=>{const k=NORM(c);if(!k||!S.UM)return null;for(const f in S.UM){if(S.UM[f]&&S.UM[f]===k)return f}return null};
+function fieldOf(c){return umField(c)||headerField(c)}
+/* apply the user's choices on top of the automatic match: idx[i] = GK index or negative */
+function applyUM(hdr,idx){
+  const out=idx.slice();
+  /* only when this file has the user's column (or the user said "do not use"); otherwise the automatic match stays */
+  for(const f in (S.UM||{})){const g=GK.indexOf(f);if(g<0)continue;
+    const i=S.UM[f]?hdr.findIndex(c=>NORM(c)===S.UM[f]):-1;
+    if(S.UM[f]&&i<0)continue;
+    for(let j=0;j<out.length;j++)if(out[j]===g)out[j]=-2;
+    if(i>=0)out[i]=g}
+  return out}
 function headerField(c){const k=NORM(c);if(!k)return null;
   for(const f in ALIAS)if(ALIAS[f].includes(k))return f;
   let best=null,bl=0;for(const f in ALIAS)for(const a of ALIAS[f])if(a.length>=6&&a.length>bl&&k.includes(a)){best=f;bl=a.length}
@@ -762,7 +828,7 @@ function inferStart(cols,c0){
     if(t>bs+1e-9||(Math.abs(t-bs)<1e-9&&o===c0)){bs=t;best=o}}
   return best<0?0:best;}
 /* source apps often leave some header cells blank (Brand code, BO, Suggested/Plan order...): a blank column between two known ones takes the field that fits between them */
-const hdrIdx=c=>{if(String(c==null?'':c).trim()==='')return -1;const f=headerField(c);return f?GK.indexOf(f):-2};
+const hdrIdx=c=>{if(String(c==null?'':c).trim()==='')return -1;const f=fieldOf(c);return f?GK.indexOf(f):-2};
 function fillHeaderGaps(m){
   const out=m.slice(),used=new Set(m.filter(x=>x>=0));
   for(let i=0;i<m.length;i++){if(m[i]!==-1)continue;
@@ -774,13 +840,14 @@ function fillHeaderGaps(m){
   return out;}
 function gridFromText(text,rows,r0,c0){
   LASTINFO='';
+  const byH=pageRecordsByHeader(text);if(byH){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่านตามหัวคอลัมน์ในหน้า · '+byH.length+' รายการ';return mergeRows(rows,byH)}
   const recs=pageRecords(text);if(recs.length){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่าน '+recs.length+' รายการ';return mergeRows(rows,recs)}
   const t=tableOf(text).map(r=>r.map(nz)).filter(r=>r.some(x=>x!==''));if(!t.length)return rows;
-  const isH=r=>r.filter(c=>headerField(c)).length>=2;let hdr=null;const body=[];
+  const isH=r=>r.filter(c=>fieldOf(c)).length>=2;let hdr=null;const body=[];
   t.forEach(r=>{if(isH(r)){if(!hdr)hdr=r}else body.push(r)});
   if(!body.length)return rows;
   let colMap,how;
-  if(hdr){colMap=fillHeaderGaps(hdr.map(hdrIdx));how='จากหัวตาราง'}
+  if(hdr){const auto=fillHeaderGaps(hdr.map(hdrIdx));colMap=applyUM(hdr,auto);S.lastHdr=hdr;S.lastAuto=auto;S.lastCM=colMap;S.lastImport={kind:'paste'};refreshMapBtn();how=Object.keys(S.UM).length?'จากหัวตาราง (ใช้การจับคู่คอลัมน์ของคุณ)':'จากหัวตาราง'}
   else{const w=Math.max(...body.map(r=>r.length));
     const cols=Array.from({length:w},(_,i)=>body.map(r=>r[i]).filter(x=>x!=null&&x!==''));
     const o=inferStart(cols,c0);colMap=cols.map((_,i)=>o+i<GK.length?o+i:-1);how='AI ตรวจจากเนื้อหาข้อมูล'}
@@ -866,7 +933,7 @@ const fmt=n=>n==null?'':Number(n).toLocaleString('th-TH');
 const bo=n=>n?'<span class="bo">−'+fmt(n)+'</span>':'<span class="hint">–</span>';
 const CSHORT={new:'ใหม่',same:'=',gone:'หาย',up:'',down:''};
 const CAT={new:['BO ใหม่','p-new'],up:['เพิ่มขึ้น','p-up'],same:['เท่าเดิม','p-same'],down:['ลดลง','p-down'],gone:['หายไป','p-gone']};
-const S={src:'file',pp:{A:null,B:null},cur:null,mode:'sheets',first:false,baseMap:null,step:1,book:null,parsed:{A:null,B:null},cmp:null,db:null,user:null,dl:null,uid:null,canEdit:true,
+const S={UM:{},src:'file',pp:{A:null,B:null},cur:null,mode:'sheets',first:false,baseMap:null,step:1,book:null,parsed:{A:null,B:null},cmp:null,db:null,user:null,dl:null,uid:null,canEdit:true,
   runs:[],runId:null,run:null,plans:new Map(),unsubPlans:null,f2:'all',f3:'all',names:{}};
 
 /* ---------- file import ---------- */
@@ -946,11 +1013,13 @@ $('shTabs').addEventListener('click',e=>{
   if(e.target.closest('#shAdd')){shSave();SH.push({name:'',rows:null,info:'',stamp:''});SHI=SH.length-1;shLoad();return}
   const t=e.target.closest('.shtab[data-i]');if(t&&+t.dataset.i!==SHI)shSelect(+t.dataset.i)});
 S.book=null;
+function guessHdr(wb){for(const n of wb.SheetNames){const rows=sheetRows(wb.Sheets[n]);for(let i=0;i<Math.min(rows.length,15);i++){const r=(rows[i]||[]).map(c=>c==null?'':String(c));if(r.filter(x=>x.trim()&&isNaN(Number(x))).length>=3){S.lastHdr=r;S.lastAuto=fillHeaderGaps(r.map(hdrIdx));S.lastCM=applyUM(r,S.lastAuto);return}}}}
 async function loadFile(file){
+  S.lastImport={kind:'file',file};
   const st=$('stat');st.className='stat';st.textContent='กำลังอ่านไฟล์…';S.book=null;
   try{
     const wb=await readBook(file);const ok=sheetsWithHeader(wb);
-    if(!ok.length){st.className='stat err';st.textContent='ไม่พบหัวตารางในไฟล์ (ต้องมีคอลัมน์ Product name, Brand code, Stock forecast และ Plan order)';return}
+    if(!ok.length){guessHdr(wb);refreshMapBtn();st.className='stat err';st.textContent='ไม่พบหัวตารางในไฟล์ (ต้องมีคอลัมน์ Product name, Brand code, Stock forecast และ Plan order) · ถ้าไฟล์ใช้ชื่อคอลัมน์อื่น กด ⚙ จับคู่คอลัมน์';return}
     S.book={wb,name:file.name,sheets:ok};
     const parsed={};ok.forEach(n=>parsed[n]=parseRows(sheetRows(wb.Sheets[n]))||new Map());
     const bad=ok.filter(n=>parsed[n].error);
@@ -958,6 +1027,7 @@ async function loadFile(file){
     const good=ok.filter(n=>!parsed[n].error),warns=good.map(n=>parsed[n].warn?(good.length>1?n+': ':'')+parsed[n].warn:'').filter(Boolean);
     const mk=n=>({name:n,rows:mapToRows(parsed[n]),info:'นำเข้าจาก '+file.name+' ['+n+'] · '+fmt(parsed[n].size)+' รายการ'});
     const tail=(bad.length?' · ข้ามชีท '+bad.join(', ')+' ('+parsed[bad[0]].error+')':'')+(warns.length?' · '+warns.join(' · '):'');
+    refreshMapBtn();if(Object.keys(S.UM).length)warns.unshift('ใช้การจับคู่คอลัมน์ของคุณ');
     if(good.length===1){const o=mk(good[0]);SH[SHI]=o;shLoad();st.className=tail?'stat':'stat ok';st.textContent=file.name+' · นำเข้า '+fmt(parsed[good[0]].size)+' รายการลงชีทนี้แล้ว'+tail;return}
     const use=good.slice(-MAXSH);SH.length=0;use.forEach(n=>SH.push(mk(n)));SHI=SH.length-1;shLoad();
     st.className=tail?'stat':'stat ok';st.textContent=file.name+' · นำเข้า '+use.length+' ชีทเป็นแท็บ'+(good.length>use.length?' (เอา '+use.length+' ชีทล่าสุด)':'')+' แทนข้อมูลเดิม'+tail;
@@ -1361,8 +1431,11 @@ function fitTables(){
   const vh=Math.round((window.visualViewport&&window.visualViewport.height)||window.innerHeight);
   const tw=S.step===3?document.querySelector('#s3 .tw.wide'):S.step===2?document.querySelector('#s2 .tw'):S.step===4&&S.hid?document.querySelector('#histDetail .tw'):null;
   if(!tw||!tw.offsetParent)return;
-  const cur=tw.getBoundingClientRect().height,over=document.documentElement.scrollHeight-vh;
-  const h=Math.max(240,Math.round(cur-over));
+  /* space the page needs below the table (rest of the panel + page padding), measured from the document's real content height */
+  const r=tw.getBoundingClientRect(),cur=r.height,docH=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);
+  const content=document.querySelector('.wrap'),endY=content?content.getBoundingClientRect().bottom+window.scrollY+parseFloat(getComputedStyle(document.body).paddingBottom||0):docH;
+  const below=Math.max(0,endY-(r.bottom+window.scrollY));
+  const h=Math.max(240,Math.floor(vh-(r.top+window.scrollY)-below-2));
   if(Math.abs(h-cur)>1){tw.style.height=h+'px';tw.style.maxHeight='none'}}
 S.fitT=null;const fitSoon=()=>{clearTimeout(S.fitT);S.fitT=setTimeout(fitTables,30)};
 window.addEventListener('resize',fitSoon);if(window.visualViewport)window.visualViewport.addEventListener('resize',fitSoon);
@@ -1606,6 +1679,46 @@ function go(n){
   fitSoon();}
 $('rail').addEventListener('click',e=>{const b=e.target.closest('.step');if(b&&!b.disabled)go(+b.dataset.step)});
 
+/* ---------- per-user column matching ---------- */
+const MAPREQ=['code','name','bo','plan'],MAPF=MAPREQ.concat(GK.filter(f=>f!=='no'&&!MAPREQ.includes(f)));
+function refreshMapBtn(){const b=$('mapBtn');if(b){b.disabled=!(S.lastHdr&&S.lastHdr.length);b.classList.toggle('on',Object.keys(S.UM).length>0)}}
+function umLoadLocal(){try{const v=JSON.parse(localStorage.getItem('bo.colmap.'+(S.uid||'local'))||'null');S.UM=v&&typeof v==='object'?v:{}}catch(e){S.UM={}}}
+async function umLoad(){umLoadLocal();
+  if(S.db&&S.uid){try{const d=await S.db.doc('prefs/'+S.uid).get();if(d.exists&&d.data().colmap){S.UM=d.data().colmap;try{localStorage.setItem('bo.colmap.'+S.uid,JSON.stringify(S.UM))}catch(e){}}}catch(e){}}
+  refreshMapBtn()}
+async function umSave(m){S.UM=m;try{localStorage.setItem('bo.colmap.'+(S.uid||'local'),JSON.stringify(m))}catch(e){}
+  if(S.db&&S.uid){try{await S.db.doc('prefs/'+S.uid).set({colmap:m,at:Date.now()});return true}catch(e){return false}}return true}
+function openMap(){
+  const hdr=S.lastHdr||[],cm=S.lastCM||[],seen=new Set(),opts=[];
+  hdr.forEach((c,i)=>{const k=NORM(c);if(k&&!seen.has(k)){seen.add(k);opts.push([k,String(c).trim(),i])}});
+  const cur=f=>{const g=GK.indexOf(f),i=cm.indexOf(g);return i>=0?NORM(hdr[i]):''};
+  $('mapBody').innerHTML='<h2>จับคู่คอลัมน์</h2><p class="hint">เลือกว่าคอลัมน์ไหนในไฟล์ของคุณ ตรงกับข้อมูลไหนในแอป การตั้งค่านี้จำไว้กับบัญชีของคุณ ใช้ทุกครั้งที่นำเข้าไฟล์หรือวางข้อมูลที่มีหัวตาราง</p>'+
+    '<div class="mapl">'+MAPF.map(f=>{const c=cur(f),req=MAPREQ.includes(f);
+      return '<label class="mapr'+(req?' req':'')+'"><span>'+esc(GN[GK.indexOf(f)])+(req?' <b>*</b>':'')+'</span><select data-mf="'+f+'"><option value="">— ไม่ใช้ —</option>'+
+        opts.map(([k,t])=>'<option value="'+esc(k)+'"'+(k===c?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select></label>'}).join('')+'</div>'+
+    '<p class="hint" id="mapMsg">* ต้องเลือก · เลือกคอลัมน์เดียวกันซ้ำได้เพียงข้อมูลเดียว</p>'+
+    '<div class="bar"><button type="button" class="btn primary" id="mapOk">บันทึกและนำเข้าใหม่</button><button type="button" class="btn" id="mapReset">ใช้แบบอัตโนมัติ</button><button type="button" class="btn" id="mapNo">ยกเลิก</button></div>';
+  $('mapPanel').hidden=false;}
+$('mapBtn').addEventListener('click',openMap);
+umLoadLocal();refreshMapBtn();
+$('mapBody').addEventListener('change',e=>{const sel=e.target.closest('select[data-mf]');if(!sel||!sel.value)return;
+  $('mapBody').querySelectorAll('select[data-mf]').forEach(o=>{if(o!==sel&&o.value===sel.value)o.value=''})});
+async function mapApply(m){
+  const ok=await umSave(m);$('mapPanel').hidden=true;refreshMapBtn();const st=$('stat');
+  if(S.lastImport&&S.lastImport.kind==='file')await loadFile(S.lastImport.file);
+  else{st.className='stat';st.textContent='บันทึกการจับคู่คอลัมน์แล้ว · วางข้อมูลอีกครั้งเพื่อใช้การจับคู่ใหม่'}
+  if(!ok)st.textContent+=' · (บันทึกไว้เฉพาะเครื่องนี้ ยังไม่ได้เพิ่มกฎ prefs ใน Firebase)'}
+$('mapBody').addEventListener('click',e=>{
+  if(e.target.id==='mapNo'){$('mapPanel').hidden=true;return}
+  if(e.target.id==='mapReset'){mapApply({});return}
+  if(e.target.id!=='mapOk')return;
+  const pick={};$('mapBody').querySelectorAll('select[data-mf]').forEach(o=>pick[o.dataset.mf]=o.value);
+  const miss=MAPREQ.filter(f=>!pick[f]);if(miss.length){$('mapMsg').textContent='ยังไม่ได้เลือก: '+miss.map(f=>GN[GK.indexOf(f)]).join(', ');return}
+  /* keep only what differs from the automatic match, so a file with the standard names keeps working */
+  const hdr=S.lastHdr||[],auto=S.lastAuto||[],m={};
+  MAPF.forEach(f=>{const g=GK.indexOf(f),ai=auto.indexOf(g),a=ai>=0?NORM(hdr[ai]):'';if(pick[f]!==a)m[f]=pick[f]});
+  mapApply(m)});
+
 /* ---------- online / offline indicator ---------- */
 function paintNet(){const n=$('netSt');if(!n)return;
   if(!navigator.onLine){n.hidden=false;n.textContent=S.persist===false?'ออฟไลน์ · อย่าปิดหน้านี้จนกว่าเน็ตจะกลับมา':'ออฟไลน์ · ที่กรอกเก็บไว้ในเครื่อง จะส่งเองเมื่อเน็ตกลับมา'}
@@ -1667,7 +1780,7 @@ async function onUser(u){
     profiles:async ids=>{const o={};await Promise.all(ids.map(async id=>{const hit=S.members.find(x=>x.id===id);if(hit){o[id]={name:hit.name||hit.username};return}
       try{const d=await fdb.doc('members/'+id).get();o[id]={name:d.exists?(d.data().name||d.data().username||''):''}}catch(e){o[id]={name:''}}}));return o}};
   memUnsub=fdb.collection('members').onSnapshot(sn=>{S.members=sn.docs.map(d=>({id:d.id,...d.data()}));if(S.step===5)renderUsers()},()=>{});
-  startRuns();
+  startRuns();umLoad();
   if(!S.canEdit)go(3);else go(S.step===2&&!S.cmp?1:S.step);}
 /* ---- user management (admins) ---- */
 function renderUsers(){

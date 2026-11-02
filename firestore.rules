@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ผู้ใช้แต่ละคนมีเอกสาร members/{uid}: role = "admin" (ฝ่ายระบบ) หรือ "store" (หน้าร้าน), active = true/false
+    function signedIn() { return request.auth != null; }
+    function meDoc() { return /databases/$(database)/documents/members/$(request.auth.uid); }
+    function isMember() { return signedIn() && exists(meDoc()) && get(meDoc()).data.active == true; }
+    function isAdmin() { return isMember() && get(meDoc()).data.role == 'admin'; }
+    function setupDoc() { return /databases/$(database)/documents/config/setup; }
+
+    // ตั้งค่าแอดมินคนแรก: สร้างได้ครั้งเดียว ตอนที่ยังไม่มี config/setup
+    match /config/setup {
+      allow get: if true;
+      allow create: if signedIn()
+        && request.resource.data.owner == request.auth.uid
+        && getAfter(/databases/$(database)/documents/members/$(request.auth.uid)).data.role == 'admin';
+      allow update, delete: if false;
+    }
+
+    match /members/{uid} {
+      allow get: if isMember() || (signedIn() && request.auth.uid == uid);
+      allow list: if isMember();
+      allow create: if (isAdmin()
+          && request.resource.data.role in ['admin', 'store']
+          && request.resource.data.active == true)
+        || (signedIn() && request.auth.uid == uid
+          && !exists(setupDoc())
+          && getAfter(setupDoc()).data.owner == uid
+          && request.resource.data.role == 'admin'
+          && request.resource.data.active == true);
+      // แอดมินแก้สิทธิ์/สถานะคนอื่นได้ แต่แก้ของตัวเองไม่ได้ (กันแอดมินคนสุดท้ายปิดตัวเอง)
+      allow update: if isAdmin() && uid != request.auth.uid
+        && request.resource.data.role in ['admin', 'store']
+        && request.resource.data.username == resource.data.username;
+      allow delete: if false;
+    }
+
+    match /runs/{runId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+      match /chunks/{chunkId} {
+        allow read: if isMember();
+        allow write: if isAdmin();
+      }
+    }
+    // การตั้งค่าส่วนตัวของแต่ละคน (เช่น จับคู่คอลัมน์) อ่าน/เขียนได้เฉพาะเจ้าของ
+    match /prefs/{uid} { allow read, write: if isMember() && request.auth.uid == uid; }
+    match /plans/{id} { allow read, write: if isMember(); }
+    match /orders/{id} { allow read: if isMember(); allow write: if isAdmin(); }
+  }
+}
