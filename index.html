@@ -381,19 +381,49 @@ body.compact #f3sel{display:block}
 body.compact #s3 .bar{gap:8px}
 body.compact #q3{flex:1 1 140px;min-width:120px}
 body.compact #roleHint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 10px;font-size:12.5px}
-body.compact #s3{padding:10px;gap:8px}
+body.compact #s3{padding:8px 6px;gap:8px}
+body.compact.full{padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
 body.compact .tw.wide{height:calc(100vh - 250px)!important;min-height:300px}
-body.compact .t3 td,body.compact .t3 th{padding-left:6px!important;padding-right:6px!important}
+body.compact .t3 td,body.compact .t3 th{padding-left:4px!important;padding-right:4px!important}
+body.compact .t3 td{font-size:12.5px!important}
+body.compact .t3 th{white-space:normal!important;line-height:1.2!important;font-size:11px!important}
+body.compact .qc{grid-template-columns:12px minmax(0,1fr) auto;column-gap:2px}
+body.compact .qc .qa{min-width:22px}body.compact .ib{width:22px;height:22px}
+body.compact .t3 .pill{padding:0 5px!important;font-size:11px!important}
 body.compact .t3 td:first-child{position:sticky;left:0;z-index:2}
-body.compact .t3 .st{font-size:0;width:9px;height:9px;padding:0;margin-left:5px;border-radius:50%;vertical-align:1px}
 body.compact .t3 .st.s-bo{background:var(--bo)}
-body.compact .qc{gap:2px;flex-wrap:wrap;row-gap:2px}body.compact .qc .qty{width:52px!important;padding-left:5px;padding-right:5px}body.compact .qc .okb{flex-basis:100%;text-align:right;background:none;padding:0}
 body.compact .t3 td:first-child .code{font-size:12px;letter-spacing:-.1px}
 body.compact #roleHint:not(.notice){display:none}
 body.compact .t3 th{font-size:11.5px!important}
 body.compact .okb{padding:0 5px;font-size:10.5px}
 body.compact .t3 .note{min-width:0}
 .brand{display:flex;align-items:center;gap:12px}.brand img{flex:none;border-radius:10px}body.full .brand img{width:32px;height:32px}.lgl{border-radius:14px;align-self:flex-start}
+.t3 .ls{display:none}
+.cmpc{display:flex;align-items:center;gap:4px;white-space:nowrap}.cmpc .hbtn{margin-left:0}
+.cc{display:flex;align-items:center;gap:6px;min-width:0}.cc .code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.qc{display:grid!important;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;column-gap:4px;row-gap:2px;justify-items:end}
+.qc .okb{grid-column:1/-1}
+.qc .qty{width:100%!important;max-width:84px;justify-self:end}
+.qc .qa{display:flex;gap:2px;min-width:24px;justify-content:flex-start}
+.qv{font-weight:700;font-variant-numeric:tabular-nums;padding-right:2px}
+.fw{width:14px;text-align:center}
+.nv{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.tick{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1.5px solid color-mix(in srgb,var(--muted) 55%,var(--line));border-radius:6px;background:var(--surface);cursor:pointer;display:inline-grid;place-items:center;vertical-align:middle}
+.tick:checked{background:var(--ok) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--ok)}
+.tick:disabled{cursor:default;opacity:1}.tick:disabled:not(:checked){background:transparent;border-style:dashed}
+.tick:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+body.compact .t3 .lf{display:none}body.compact .t3 .ls{display:inline}
+body.compact .t3 .pill{padding:0 6px}body.compact .hbtn{padding:0 5px;font-size:10.5px}
+body.compact .t3 th{vertical-align:middle;padding-top:8px!important;padding-bottom:8px!important}
+body.compact .t3 th .sa{display:none}body.compact .t3 th.sorted .sa{display:inline;margin-left:3px}
+body.compact .cc{gap:5px}body.compact .cc .st{order:-1;flex:none;font-size:0;width:8px;height:8px;padding:0;margin:0;border-radius:50%}
+body.compact .cc .st:empty{display:inline-block;background:transparent}
+body.compact .t3 td{padding-top:5px!important;padding-bottom:5px!important}
+body.compact .t3 .qty,body.compact .t3 .note{min-width:0!important;padding-left:3px!important;padding-right:3px!important;height:26px}
+body.compact .t3 .qty{text-align:right;-moz-appearance:textfield}body.compact .t3 .qty::-webkit-inner-spin-button,body.compact .t3 .qty::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+body.compact .qc .qty{max-width:none}
+body.compact .qc .okb{font-size:10.5px;background:none;padding:0;line-height:14px}
+body.compact .note::placeholder{color:transparent}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -508,9 +538,9 @@ body.compact .t3 .note{min-width:0}
       <span><i style="background:color-mix(in srgb,var(--bo) 9%,var(--surface))"></i>BO ยังไม่มี Plan</span>
     </div>
     <div class="tw wide"><table class="t3"><thead><tr>
-      <th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n">On hand</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th>
-      <th class="n">Pack key</th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n">สั่งแล้ว (ในไฟล์)</th>
-      <th class="n eh">Plan order (หน้าร้าน)</th><th class="eh">หมายเหตุหน้าร้าน (ไม่บังคับ)</th><th class="eh ck">สั่งแล้ว (ระบบ)</th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
+      <th><span class="lf">รหัสสินค้า</span><span class="ls">รหัส</span></th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n"><span class="lf">On hand</span><span class="ls">On hand</span></th><th class="n"><span class="lf">Stock Forecast</span><span class="ls">Stock FC</span></th><th><span class="lf">เทียบรอบก่อน</span><span class="ls">เทียบ</span></th>
+      <th class="n"><span class="lf">Pack key</span><span class="ls">Pack</span></th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n" title="สั่งแล้ว (ในไฟล์)"><span class="lf">สั่งแล้ว (ในไฟล์)</span><span class="ls">ไฟล์</span></th>
+      <th class="n eh"><span class="lf">Plan order (หน้าร้าน)</span><span class="ls">Plan</span></th><th class="eh"><span class="lf">หมายเหตุหน้าร้าน (ไม่บังคับ)</span><span class="ls">โน้ต</span></th><th class="eh ck"><span class="lf">สั่งแล้ว (ระบบ)</span><span class="ls">สั่ง</span></th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
       <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
     </tr></thead><tbody id="tb3"></tbody></table></div>
     <div class="bar"><button class="btn" id="dlPlan">ดาวน์โหลด Plan order (.xlsx)</button><span class="hint" id="s3msg"></span></div>
@@ -800,6 +830,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>n==null?'':Number(n).toLocaleString('th-TH');
 const bo=n=>n?'<span class="bo">−'+fmt(n)+'</span>':'<span class="hint">–</span>';
+const CSHORT={new:'ใหม่',same:'=',gone:'หาย',up:'',down:''};
 const CAT={new:['BO ใหม่','p-new'],up:['เพิ่มขึ้น','p-up'],same:['เท่าเดิม','p-same'],down:['ลดลง','p-down'],gone:['หายไป','p-gone']};
 const S={src:'file',pp:{A:null,B:null},cur:null,mode:'sheets',first:false,baseMap:null,step:1,book:null,parsed:{A:null,B:null},cmp:null,db:null,user:null,dl:null,uid:null,canEdit:true,
   runs:[],runId:null,run:null,plans:new Map(),unsubPlans:null,f2:'all',f3:'all',names:{}};
@@ -1052,7 +1083,7 @@ const isDoneC=c=>isDoneP(S.plans.get(c),S.orders.get(c));
 /* history of several rounds: a small button in the row; the details open in a little table (round · Stock Forecast · change · ordered) */
 const histHtml=(i,labels)=>{if(!i.hist||i.hist.length<2)return'';
   const d=JSON.stringify({c:i.code,h:i.hist,p:i.hplan||[],l:labels||[]});
-  return '<button type="button" class="hbtn" data-hist="'+esc(d)+'" title="ดูประวัติ Stock Forecast ทุกรอบ">'+i.hist.length+' รอบ ▾</button>'};
+  return '<button type="button" class="hbtn" data-hist="'+esc(d)+'" title="ดูประวัติ Stock Forecast ทุกรอบ ('+i.hist.length+' รอบ)"><span class="lf">'+i.hist.length+' รอบ </span>▾</button>'};
 function openHistPop(btn){
   let d;try{d=JSON.parse(btn.getAttribute('data-hist'))}catch(e){return}
   const pop=$('histPop'),n=d.h.length,neg=v=>v?'<span class="bo">−'+fmt(v)+'</span>':'<span class="hint">0</span>';
@@ -1115,13 +1146,13 @@ function renderS3(){
   if(lock)$('roleHint').textContent='🔒 รอบนี้บันทึกเมื่อ '+when(S.run.createdAt)+' และผ่านเที่ยงคืนแล้ว จึงดูได้อย่างเดียว แก้ไขไม่ได้ · ข้อมูลยังใช้เทียบกับรอบถัดไปได้ตามปกติ';
   $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
     return '<tr data-code="'+esc(i.code)+'">'+
-    '<td title="'+esc(i.code+' · '+i.name)+'"><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span></td><td class="pn" title="'+esc(i.name)+'">'+esc(i.name)+'</td>'+
+    '<td title="'+esc(i.code+' · '+i.name)+'"><div class="cc"><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span></div></td><td class="pn" title="'+esc(i.name)+'">'+esc(i.name)+'</td>'+
     cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n" data-s="'+(i.bBO?-i.bBO:(i.bo||0))+'">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
-    '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
+    '<td data-s="'+(c?(i.delta||0):'')+'"><div class="cmpc">'+(c?'<span class="pill '+c[1]+'">'+(i.cat==='up'||i.cat==='down'?'<span class="lf">'+c[0]+' </span>'+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'<span class="lf">'+c[0]+'</span><span class="ls">'+CSHORT[i.cat]+'</span>')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</div></td>'+
     cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
-    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
+    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord"><span class="lf">สั่งแล้ว </span>'+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
     '<td class="n ec" data-qc>'+qtyCell(i)+'</td>'+
-    '<td class="ec"><input type="text" class="note" data-f="fnote" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุหน้าร้าน '+esc(i.code)+'" value="'+esc(p.note||'')+'" placeholder="ไม่บังคับ"'+lk+'></td>'+
+    '<td class="ec">'+(lock?'<span class="nv" title="'+esc(p.note||'')+'">'+esc(p.note||'')+'</span>':'<input type="text" class="note" data-f="fnote" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุหน้าร้าน '+esc(i.code)+'" value="'+esc(p.note||'')+'" placeholder="ไม่บังคับ">')+'</td>'+
     '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(isDoneP(S.plans.get(i.code),S.orders.get(i.code))?' checked':'')+dis+'></td>'+
     '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(oMatch(p,o)?o.note||'':'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
     cell(i.reason)+cell(i.desc)+cell(i.vol)+cell(i.freq)+cell(i.cv)+cell(fmt(i.stock),'n')+cell(i.wh)+cell(fmt(i.quota),'n')+'<td class="who" data-who></td></tr>'}).join('')
@@ -1136,18 +1167,20 @@ const ICON={
   undo:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.5L2 6.5l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 6.5H10a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'};
 function qtyCell(i){
   const code=i.code,p=S.plans.get(code)||{},o=S.orders.get(code),lock=isLocked(S.run),done=isDoneP(p,o),base=pBase(p),tot=orderedTotal(p,o);
-  const warn=i.ordered!=null?'<span class="fw" title="สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ">⚠</span>':'';
+  const warn='<span class="fw"'+(i.ordered!=null?' title="สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ">⚠':'>')+'</span>';
   if(S.addCode===code&&done&&!lock)
-    return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+ เพิ่ม">'+
-      '<button type="button" class="ib ok" data-act="addok" title="บันทึกจำนวนที่เพิ่ม" aria-label="บันทึกจำนวนที่เพิ่ม">'+ICON.ok+'</button><button type="button" class="ib" data-act="addno" title="ยกเลิก" aria-label="ยกเลิก">'+ICON.no+'</button></div>';
-  let h='<div class="qc">'+warn;
+    return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><span class="fw"></span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+">'+
+      '<span class="qa"><button type="button" class="ib ok" data-act="addok" title="บันทึกจำนวนที่เพิ่ม" aria-label="บันทึกจำนวนที่เพิ่ม">'+ICON.ok+'</button><button type="button" class="ib" data-act="addno" title="ยกเลิก" aria-label="ยกเลิก">'+ICON.no+'</button></span></div>';
+  let h='<div class="qc">';
   if(done&&base>0)h+='<span class="okb" title="สั่งแล้วทั้งหมด (รวมที่เพิ่ม Plan)">สั่ง '+fmt(tot)+'</span>';
   else if(base>0)h+='<span class="okb" title="สั่งไปแล้ว '+fmt(base)+' · ที่กรอกคือจำนวนที่เพิ่ม รอสั่ง">สั่ง '+fmt(base)+' +</span>';
-  h+='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'"'+(lock||done?' disabled':'')+'>';
+  h+=warn;
+  if(lock||done)h+='<span class="qv">'+(p.qty!=null?fmt(p.qty):'<span class="hint">–</span>')+'</span>';
+  else h+='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'">';
+  h+='<span class="qa">';
   if(!lock&&done)h+='<button type="button" class="ib" data-act="add" title="เพิ่ม Plan (สั่งเพิ่มจากที่สั่งไปแล้ว)" aria-label="เพิ่ม Plan '+esc(code)+'">'+ICON.pen+'</button>';
   else if(!lock&&base>0)h+='<button type="button" class="ib" data-act="undoadd" title="ยกเลิกการเพิ่ม" aria-label="ยกเลิกการเพิ่ม '+esc(code)+'">'+ICON.undo+'</button>';
-  else h+='<span class="ib-sp"></span>';
-  return h+'</div>';}
+  return h+'</span></div>';}
 function updateProg(){
   const n=S.rows.length,f=S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&p.qty!=null}).length,d=S.rows.filter(i=>isDoneC(i.code)).length;
   $('prog').style.width=(f?d/f*100:0)+'%';
@@ -1231,7 +1264,7 @@ $('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
 /* ---- resizable / hideable columns of the plan-order table (kept per viewer in the browser) ---- */
 (()=>{
   const T3=document.querySelector('table.t3'),TH=[...T3.querySelectorAll('thead th')];
-  const names=TH.map(th=>th.textContent.trim().replace(/\s+/g,' '));
+  const names=TH.map(th=>(th.querySelector('.lf')||th).textContent.trim().replace(/\s+/g,' '));
   const CW0=[200,280,80,90,80,80,170,70,60,60,90,100,190,170,80,170,170,170,80,80,60,90,150,100,200];
   const MAIN=new Set([0,1,4,5,6,7,10,11,12,13,14,15,24]);
   let CW=CW0.slice(),CH=new Set();
@@ -1245,10 +1278,10 @@ $('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
   pop.innerHTML='<div class="bar"><button type="button" class="btn sm" data-p="all">แสดงทั้งหมด</button><button type="button" class="btn sm" data-p="main">เฉพาะคอลัมน์หลัก</button><button type="button" class="btn sm" data-p="w">รีเซ็ตความกว้าง</button></div>'+
     names.map((n,i)=>'<label class="xo2"><input type="checkbox" data-c="'+i+'"'+(i===0?' disabled':'')+'> '+esc(n)+'</label>').join('');
   /* compact view for a narrow window: code, Stock Forecast, Pack key, Plan order, store note, ordered tick. Its own widths, kept apart from the full view's. */
-  const CSHOW=[0,4,5,7,12,13,14],NOTE=13,CWC0={0:120,4:52,5:62,7:46,12:94,13:60,14:36};
+  const CSHOW=[0,4,5,6,7,11,12,13,14],NOTE=13,CWC0={0:104,4:38,5:50,6:54,7:34,11:34,12:80,13:40,14:30};
   let CWC=Object.assign({},CWC0);
-  try{const v=JSON.parse(localStorage.getItem('bo.cols.c2')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
-  const saveC=()=>{try{localStorage.setItem('bo.cols.c2',JSON.stringify(CWC))}catch(e){}};
+  try{const v=JSON.parse(localStorage.getItem('bo.cols.c5')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
+  const saveC=()=>{try{localStorage.setItem('bo.cols.c5',JSON.stringify(CWC))}catch(e){}};
   const isC=()=>document.body.classList.contains('compact');
   function apply(){
     if(isC()){
