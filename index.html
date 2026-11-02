@@ -1265,7 +1265,7 @@ $('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
 (()=>{
   const T3=document.querySelector('table.t3'),TH=[...T3.querySelectorAll('thead th')];
   const names=TH.map(th=>(th.querySelector('.lf')||th).textContent.trim().replace(/\s+/g,' '));
-  const CW0=[200,280,80,90,80,80,170,70,60,60,90,100,190,170,80,170,170,170,80,80,60,90,150,100,200];
+  const CW0=[230,280,80,90,80,80,170,70,60,60,90,100,190,170,80,170,170,170,80,80,60,90,150,100,200];
   const MAIN=new Set([0,1,4,5,6,7,10,11,12,13,14,15,24]);
   let CW=CW0.slice(),CH=new Set();
   try{const v=JSON.parse(localStorage.getItem('bo.cols.v2')||'null');
@@ -1278,6 +1278,7 @@ $('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
   pop.innerHTML='<div class="bar"><button type="button" class="btn sm" data-p="all">แสดงทั้งหมด</button><button type="button" class="btn sm" data-p="main">เฉพาะคอลัมน์หลัก</button><button type="button" class="btn sm" data-p="w">รีเซ็ตความกว้าง</button></div>'+
     names.map((n,i)=>'<label class="xo2"><input type="checkbox" data-c="'+i+'"'+(i===0?' disabled':'')+'> '+esc(n)+'</label>').join('');
   /* compact view for a narrow window: code, Stock Forecast, Pack key, Plan order, store note, ordered tick. Its own widths, kept apart from the full view's. */
+  const FLEX=[1,13,15,16,17,24];
   const CSHOW=[0,4,5,6,7,11,12,13,14],NOTE=13,CWC0={0:104,4:38,5:50,6:54,7:34,11:34,12:80,13:40,14:30};
   let CWC=Object.assign({},CWC0);
   try{const v=JSON.parse(localStorage.getItem('bo.cols.c5')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
@@ -1290,8 +1291,13 @@ $('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
       COLS.forEach((c,i)=>{const on=CSHOW.includes(i);c.style.width=(on?(i===NOTE?note:CWC[i]):0)+'px';c.style.visibility=on?'':'collapse'});
       T3.style.width=(fixed+note)+'px';
     }else{
-      COLS.forEach((c,i)=>{c.style.width=CW[i]+'px';c.style.visibility=CH.has(i)?'collapse':''});
-      T3.style.width=CW.reduce((s,w,i)=>CH.has(i)?s:s+w,0)+'px';}
+      /* a wide screen: spread the spare width over the text columns that are shown (name, notes, comments), so the table fills the window */
+      const vis=CW.map((_,i)=>i).filter(i=>!CH.has(i)),sum=vis.reduce((a,i)=>a+CW[i],0),avail=Math.max(0,(T3.parentNode.clientWidth||0)-2);
+      const W=CW.slice();
+      if(avail>sum){const flex=vis.filter(i=>FLEX.includes(i)),pool=flex.length?flex:vis,ps=pool.reduce((a,i)=>a+CW[i],0),extra=avail-sum;
+        let given=0;pool.forEach((i,k)=>{const add=k===pool.length-1?extra-given:Math.floor(extra*CW[i]/ps);W[i]=CW[i]+add;given+=add})}
+      COLS.forEach((c,i)=>{c.style.width=W[i]+'px';c.style.visibility=CH.has(i)?'collapse':''});
+      T3.style.width=Math.max(sum,avail>sum?avail:sum)+'px';}
     pop.querySelectorAll('input[data-c]').forEach(x=>x.checked=!CH.has(+x.dataset.c));}
   S.applyCols=apply;
   pop.addEventListener('change',e=>{const x=e.target;if(x.dataset.c==null)return;const i=+x.dataset.c;if(x.checked)CH.delete(i);else CH.add(i);apply();save()});
