@@ -368,6 +368,25 @@ th.sorted{color:var(--c1)}
 .hpop td.n,.hpop th.n{text-align:right;font-variant-numeric:tabular-nums}
 .hpop tr.hcur td{background:var(--c1s);font-weight:600}
 .okt{color:var(--ok);font-weight:600}
+#f3sel{display:none;max-width:200px}
+.vseg{padding:3px}.vseg .segb{padding:5px 12px;font-size:13px}
+body.compact #chips3,body.compact .legend{display:none}
+body.compact #f3sel{display:block}
+body.compact #s3 .bar{gap:8px}
+body.compact #q3{flex:1 1 140px;min-width:120px}
+body.compact #roleHint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 10px;font-size:12.5px}
+body.compact #s3{padding:10px;gap:8px}
+body.compact .tw.wide{height:calc(100vh - 250px)!important;min-height:300px}
+body.compact .t3 td,body.compact .t3 th{padding-left:6px!important;padding-right:6px!important}
+body.compact .t3 td:first-child{position:sticky;left:0;z-index:2}
+body.compact .t3 .st{font-size:0;width:9px;height:9px;padding:0;margin-left:5px;border-radius:50%;vertical-align:1px}
+body.compact .t3 .st.s-bo{background:var(--bo)}
+body.compact .qc{gap:2px;flex-wrap:wrap;row-gap:2px}body.compact .qc .qty{width:52px!important;padding-left:5px;padding-right:5px}body.compact .qc .okb{flex-basis:100%;text-align:right;background:none;padding:0}
+body.compact .t3 td:first-child .code{font-size:12px;letter-spacing:-.1px}
+body.compact #roleHint:not(.notice){display:none}
+body.compact .t3 th{font-size:11.5px!important}
+body.compact .okb{padding:0 5px;font-size:10.5px}
+body.compact .t3 .note{min-width:0}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -468,7 +487,9 @@ th.sorted{color:var(--c1)}
     <div class="bar"><span id="progTxt" class="hint"></span></div>
     <div class="bar">
       <div class="chips" id="chips3"></div>
+      <select id="f3sel" aria-label="ตัวกรอง"></select>
       <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
+      <div class="segs vseg" role="group" aria-label="มุมมองตาราง"><button type="button" class="segb" data-view="full" aria-pressed="true">เต็ม</button><button type="button" class="segb" data-view="compact" aria-pressed="false">ย่อ</button></div>
       <details class="colmenu" id="colMenu"><summary class="btn sm">⚙ คอลัมน์</summary><div class="colpop" id="colPop"></div></details>
     </div>
     <p class="hint" id="roleHint"></p>
@@ -1077,15 +1098,17 @@ function renderS3(){
   $('roleHint').textContent=S.run?('หน้าร้านกรอก Plan order และหมายเหตุ · พนักงานระบบติ๊ก "สั่งแล้ว"'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')+' และใส่หมายเหตุเมื่อไม่สั่งตามแพลน · ช่องหมายเหตุไม่บังคับ'):'';
   const cts={};F3.forEach(([k])=>cts[k]=items.filter(i=>m3(i,k,'')).length);
   chips($('chips3'),F3,S.f3,cts,k=>{S.f3=k;renderS3()});
+  $('f3sel').innerHTML=F3.map(([k,l])=>'<option value="'+k+'"'+(k===S.f3?' selected':'')+'>'+esc(l)+' ('+cts[k]+')</option>').join('');
   if(!S.run)renderOS();
   if(!S.run){$('tb3').innerHTML='<tr><td colspan="25" class="empty">ยังไม่มีรอบที่บันทึก ให้ฝ่ายนำเข้าไฟล์ เทียบ BO และกดบันทึกรอบก่อน</td></tr>';updateProg();return}
   const rows=items.filter(i=>m3(i,S.f3,q));
   const lock=isLocked(S.run),lk=lock?' disabled':'',dis=(S.canEdit&&!lock)?'':' disabled';
   S.lockShown=lock;$('roleHint').classList.toggle('notice',lock);
+  $('roleHint').title=lock?'รอบนี้ล็อกแล้ว ดูได้อย่างเดียว':'';
   if(lock)$('roleHint').textContent='🔒 รอบนี้บันทึกเมื่อ '+when(S.run.createdAt)+' และผ่านเที่ยงคืนแล้ว จึงดูได้อย่างเดียว แก้ไขไม่ได้ · ข้อมูลยังใช้เทียบกับรอบถัดไปได้ตามปกติ';
   $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
     return '<tr data-code="'+esc(i.code)+'">'+
-    '<td><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span></td><td class="pn" title="'+esc(i.name)+'">'+esc(i.name)+'</td>'+
+    '<td title="'+esc(i.code+' · '+i.name)+'"><span class="code">'+esc(i.code)+'</span><span class="st" data-st></span></td><td class="pn" title="'+esc(i.name)+'">'+esc(i.name)+'</td>'+
     cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n" data-s="'+(i.bBO?-i.bBO:(i.bo||0))+'">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
     '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</td>'+
     cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
@@ -1197,6 +1220,7 @@ $('tb3').addEventListener('keydown',e=>{
   e.preventDefault();const tr=el.closest('tr'),f=el.dataset.f;el.blur();
   let n=tr.nextElementSibling;while(n){const nx=n.querySelector('[data-f="'+f+'"]');if(nx&&!nx.disabled){nx.focus();if(nx.select)nx.select();nx.scrollIntoView({block:'nearest'});break}n=n.nextElementSibling}});
 $('q3').addEventListener('input',renderS3);
+$('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
 /* ---- resizable / hideable columns of the plan-order table (kept per viewer in the browser) ---- */
 (()=>{
   const T3=document.querySelector('table.t3'),TH=[...T3.querySelectorAll('thead th')];
@@ -1213,21 +1237,46 @@ $('q3').addEventListener('input',renderS3);
   const pop=$('colPop');
   pop.innerHTML='<div class="bar"><button type="button" class="btn sm" data-p="all">แสดงทั้งหมด</button><button type="button" class="btn sm" data-p="main">เฉพาะคอลัมน์หลัก</button><button type="button" class="btn sm" data-p="w">รีเซ็ตความกว้าง</button></div>'+
     names.map((n,i)=>'<label class="xo2"><input type="checkbox" data-c="'+i+'"'+(i===0?' disabled':'')+'> '+esc(n)+'</label>').join('');
+  /* compact view for a narrow window: code, Stock Forecast, Pack key, Plan order, store note, ordered tick. Its own widths, kept apart from the full view's. */
+  const CSHOW=[0,4,5,7,12,13,14],NOTE=13,CWC0={0:120,4:52,5:62,7:46,12:94,13:60,14:36};
+  let CWC=Object.assign({},CWC0);
+  try{const v=JSON.parse(localStorage.getItem('bo.cols.c2')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
+  const saveC=()=>{try{localStorage.setItem('bo.cols.c2',JSON.stringify(CWC))}catch(e){}};
+  const isC=()=>document.body.classList.contains('compact');
   function apply(){
-    COLS.forEach((c,i)=>{c.style.width=CW[i]+'px';c.style.visibility=CH.has(i)?'collapse':''});
-    T3.style.width=CW.reduce((s,w,i)=>CH.has(i)?s:s+w,0)+'px';
+    if(isC()){
+      const wrap=T3.parentNode,avail=Math.max(0,(wrap.clientWidth||0)-2),fixed=CSHOW.filter(i=>i!==NOTE).reduce((s,i)=>s+CWC[i],0);
+      const note=Math.max(CWC[NOTE],avail-fixed);
+      COLS.forEach((c,i)=>{const on=CSHOW.includes(i);c.style.width=(on?(i===NOTE?note:CWC[i]):0)+'px';c.style.visibility=on?'':'collapse'});
+      T3.style.width=(fixed+note)+'px';
+    }else{
+      COLS.forEach((c,i)=>{c.style.width=CW[i]+'px';c.style.visibility=CH.has(i)?'collapse':''});
+      T3.style.width=CW.reduce((s,w,i)=>CH.has(i)?s:s+w,0)+'px';}
     pop.querySelectorAll('input[data-c]').forEach(x=>x.checked=!CH.has(+x.dataset.c));}
+  S.applyCols=apply;
   pop.addEventListener('change',e=>{const x=e.target;if(x.dataset.c==null)return;const i=+x.dataset.c;if(x.checked)CH.delete(i);else CH.add(i);apply();save()});
   pop.addEventListener('click',e=>{const p=e.target.dataset&&e.target.dataset.p;if(!p)return;
     if(p==='all')CH=new Set();else if(p==='main')CH=new Set(CW.map((_,i)=>i).filter(i=>!MAIN.has(i)));else CW=CW0.slice();
     apply();save()});
   let drag=null;
-  T3.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.rz');if(!h)return;e.preventDefault();const i=+h.dataset.i;drag={i,x:e.clientX,w:CW[i]};h.setPointerCapture(e.pointerId)});
-  T3.addEventListener('pointermove',e=>{if(!drag)return;CW[drag.i]=Math.max(50,Math.round(drag.w+e.clientX-drag.x));apply()});
-  T3.addEventListener('pointerup',()=>{if(drag){drag=null;save()}});
-  T3.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.rz');if(h){CW[+h.dataset.i]=CW0[+h.dataset.i];apply();save()}});
+  T3.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.rz');if(!h)return;e.preventDefault();const i=+h.dataset.i,c=isC();drag={i,c,x:e.clientX,w:c?CWC[i]:CW[i]};h.setPointerCapture(e.pointerId)});
+  T3.addEventListener('pointermove',e=>{if(!drag)return;const w=Math.max(drag.c?40:50,Math.round(drag.w+e.clientX-drag.x));if(drag.c)CWC[drag.i]=w;else CW[drag.i]=w;apply()});
+  T3.addEventListener('pointerup',()=>{if(drag){const c=drag.c;drag=null;if(c)saveC();else save()}});
+  T3.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.rz');if(!h)return;const i=+h.dataset.i;if(isC()){CWC[i]=CWC0[i];saveC()}else{CW[i]=CW0[i];save()}apply()});
   document.addEventListener('click',e=>{const m=$('colMenu');if(m.open&&!m.contains(e.target))m.open=false});
   apply();})();
+/* full / compact view: chosen by the viewer, or automatic by window width (under 800px = compact). Crossing that width again goes back to automatic. */
+(()=>{
+  const AUTO=800,get=()=>{try{return localStorage.getItem('bo.view')}catch(e){return null}},set=v=>{try{v?localStorage.setItem('bo.view',v):localStorage.removeItem('bo.view')}catch(e){}};
+  let narrow=window.innerWidth<AUTO;
+  function paint(){
+    const pref=get(),c=pref?pref==='compact':narrow;
+    document.body.classList.toggle('compact',c);
+    document.querySelectorAll('.vseg .segb').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.view==='compact')===c)));
+    $('colMenu').hidden=c;if(S.applyCols)S.applyCols();}
+  document.querySelector('.vseg').addEventListener('click',e=>{const b=e.target.closest('.segb');if(!b)return;set(b.dataset.view);paint()});
+  let t=null;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>{const n=window.innerWidth<AUTO;if(n!==narrow){narrow=n;set(null)}paint()},120)});
+  paint();})();
 /* system staff press "บันทึกการสั่ง": every item the store planned but that was not ticked as ordered needs a reason (e.g. ตู้เต็ม) */
 const osPlanned=()=>S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&typeof p.qty==='number'&&p.qty>0});
 const osPending=()=>osPlanned().filter(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code);return !isDoneP(p,o)&&!isSkipP(p,o)});
@@ -1450,7 +1499,7 @@ function go(n){
     b.disabled=(k===1&&!S.canEdit)||(k===2&&(!S.canEdit||!S.cmp))||(k===5&&!(S.canEdit&&S.me));if(k===5)b.hidden=!(S.canEdit&&S.me)});
   if(n===1&&S.db)fillBaseRuns();
   if(n===2)renderS2();
-  if(n===3){renderRunSel();selectRun(S.runId||(S.runs[0]&&S.runs[0].id)||null)}}
+  if(n===3){renderRunSel();selectRun(S.runId||(S.runs[0]&&S.runs[0].id)||null);if(S.applyCols)setTimeout(S.applyCols,0)}}
 $('rail').addEventListener('click',e=>{const b=e.target.closest('.step');if(b&&!b.disabled)go(+b.dataset.step)});
 
 /* ---------- online / offline indicator ---------- */
