@@ -639,11 +639,12 @@ function findHeader(rows){let h=-1;
 function parseRows(rows){
   const h=findHeader(rows);if(h<0)return null;
   const hdr=(rows[h]||[]).map(c=>c==null?'':String(c));
-  const cm=fillHeaderGaps(hdr.map(c=>{const f=headerField(c);return f?GK.indexOf(f):-1}));
+  const cm=fillHeaderGaps(hdr.map(hdrIdx));
   const col={};cm.forEach((g,i)=>{if(g>=0){const f=GK[g];if(!(f in col))col[f]=i}});
+  const tot=hdr.findIndex(c=>NORM(c)==='สั่งแล้วสะสม'),stc=hdr.findIndex(c=>NORM(c)==='สถานะการสั่ง');
   const out=new Map();
-  const miss=['code','name','bo'].filter(f=>!(f in col));
-  if(miss.length){out.error='ไม่พบคอลัมน์ '+miss.map(f=>({code:'Brand code',name:'Product name',bo:'Stock forecast'}[f])).join(', ')+' ในไฟล์ ตรวจหัวตารางแล้วลองใหม่';return out}
+  const miss=['code','name','bo','plan'].filter(f=>!(f in col)&&!(f==='plan'&&tot>=0));
+  if(miss.length){out.error='ไม่พบคอลัมน์ '+miss.map(f=>({code:'Brand code',name:'Product name',bo:'Stock forecast',plan:'Plan order'}[f])).join(', ')+' ในไฟล์ ตรวจหัวตารางแล้วลองใหม่';return out}
   const at=(r,f)=>f in col?r[col[f]]:null;
   let skipped=0;
   for(let i=h+1;i<rows.length;i++){const r=rows[i];if(!r||!r.some(v=>v!=null&&String(v).trim()!==''))continue;
@@ -651,12 +652,15 @@ function parseRows(rows){
     if(code==null||!String(code).trim()){skipped++;continue}
     if(bo==null){skipped++;continue}
     const k=String(code).trim(),nm=String(at(r,'name')==null?'':at(r,'name'));
-    out.set(k,{code:k,name:nm.startsWith(k+'-')?nm.slice(k.length+1):nm,pack:xNum(at(r,'pack')),bo,plan:xNum(at(r,'plan')),
+    let plan=xNum(at(r,'plan'));
+    if(tot>=0){const t=xNum(r[tot]),done=stc>=0&&String(r[stc]==null?'':r[stc]).trim()==='สั่งแล้ว';plan=done?(t!=null?t:plan):((t||0)+(plan||0)||(t!=null||plan!=null?0:null))}
+    out.set(k,{code:k,name:nm.startsWith(k+'-')?nm.slice(k.length+1):nm,pack:xNum(at(r,'pack')),bo,plan,
       owner:txt(at(r,'owner')),safety:xNum(at(r,'safety')),onhand:xNum(at(r,'onhand')),rop:xNum(at(r,'rop')),order:txt(at(r,'order')),need:xNum(at(r,'need')),
       reason:txt(at(r,'reason')),desc:txt(at(r,'desc')),vol:txt(at(r,'vol')),freq:txt(at(r,'freq')),cv:txt(at(r,'cv')),stock:xNum(at(r,'stock')),wh:txt(at(r,'wh')),quota:xNum(at(r,'quota'))});}
   const opt=['onhand','pack','rop','order','need','plan','reason','vol','freq','cv','stock','wh','quota','owner','safety'].filter(f=>!(f in col));
   const w=[];if(skipped)w.push('ข้าม '+skipped+' แถวที่ไม่มีรหัสหรือ Stock forecast');
-  if(opt.length)w.push('ไม่พบคอลัมน์ '+opt.map(f=>GN[GK.indexOf(f)]).join(', ')+' (เว้นว่างไว้)');
+  if(tot>=0)w.unshift('ไฟล์ประวัติจากแอปนี้ · Plan order = สั่งแล้วสะสม + ส่วนที่ยังรอสั่ง');
+  else if(opt.length)w.push(opt.length>4?'ไม่มีคอลัมน์รอง '+opt.length+' คอลัมน์ (เว้นว่างไว้)':'ไม่พบคอลัมน์ '+opt.map(f=>GN[GK.indexOf(f)]).join(', ')+' (เว้นว่างไว้)');
   out.warn=w.join(' · ');
   return out;}
 /* ---- paste from the source app: tab-separated text copied from its table, header row included ---- */
@@ -671,7 +675,7 @@ function parseTSV(t,d){d=d||'\t';
   if(cur!==''||row.length){row.push(cur);rows.push(row)}
   return rows;}
 const ALIAS={code:['brand code','brandcode','รหัสสินค้า','sku','code'],name:['product name','ชื่อสินค้า','product'],bo:['stock forecast','stock forecast (bo)','back order','bo'],onhand:['on hand'],pack:['packkey','pack key'],rop:['rop'],order:['order'],
-  need:['suggested order (case)','suggested order'],plan:['plan order (case)','plan order','plan'],reason:['reason/comments'],desc:['description'],vol:['sales volume class'],freq:['frequency class'],cv:['cv class'],
+  need:['suggested order (case)','suggested order'],plan:['plan order (case)','plan order','plan'],reason:['reason/comments','หมายเหตุหน้าร้าน'],desc:['description'],vol:['sales volume class'],freq:['frequency class'],cv:['cv class'],
   stock:['stock คลังต้นทาง'],wh:['คลังต้นทาง'],quota:['remaining quota (case)'],e:['safety stock'],safety:['safety stock cover day'],owner:['owner'],no:['#']};
 function numOf(v){if(v==null)return null;let t=String(v).replace(/[,\s\u00a0]/g,'').replace(/[\u2212\u2013]/g,'-');if(t===''||t==='-')return null;const n=Number(t);return isFinite(n)?n:null}
 /* whole-page copy (Ctrl+A) from the source app: every cell on its own line, 21 lines per product starting at the 6-8 digit row id */
@@ -758,9 +762,10 @@ function inferStart(cols,c0){
     if(t>bs+1e-9||(Math.abs(t-bs)<1e-9&&o===c0)){bs=t;best=o}}
   return best<0?0:best;}
 /* source apps often leave some header cells blank (Brand code, BO, Suggested/Plan order...): a blank column between two known ones takes the field that fits between them */
+const hdrIdx=c=>{if(String(c==null?'':c).trim()==='')return -1;const f=headerField(c);return f?GK.indexOf(f):-2};
 function fillHeaderGaps(m){
   const out=m.slice(),used=new Set(m.filter(x=>x>=0));
-  for(let i=0;i<m.length;i++){if(m[i]>=0)continue;
+  for(let i=0;i<m.length;i++){if(m[i]!==-1)continue;
     let l=i-1;while(l>=0&&m[l]<0)l--;let r=i+1;while(r<m.length&&m[r]<0)r++;
     const cl=l>=0?m[l]+(i-l):-1,cr=r<m.length?m[r]-(r-i):-1;
     const ok=v=>v>=0&&v<GK.length&&!used.has(v);
@@ -775,7 +780,7 @@ function gridFromText(text,rows,r0,c0){
   t.forEach(r=>{if(isH(r)){if(!hdr)hdr=r}else body.push(r)});
   if(!body.length)return rows;
   let colMap,how;
-  if(hdr){colMap=fillHeaderGaps(hdr.map(c=>{const f=headerField(c);return f?GK.indexOf(f):-1}));how='จากหัวตาราง'}
+  if(hdr){colMap=fillHeaderGaps(hdr.map(hdrIdx));how='จากหัวตาราง'}
   else{const w=Math.max(...body.map(r=>r.length));
     const cols=Array.from({length:w},(_,i)=>body.map(r=>r[i]).filter(x=>x!=null&&x!==''));
     const o=inferStart(cols,c0);colMap=cols.map((_,i)=>o+i<GK.length?o+i:-1);how='AI ตรวจจากเนื้อหาข้อมูล'}
@@ -945,7 +950,7 @@ async function loadFile(file){
   const st=$('stat');st.className='stat';st.textContent='กำลังอ่านไฟล์…';S.book=null;
   try{
     const wb=await readBook(file);const ok=sheetsWithHeader(wb);
-    if(!ok.length){st.className='stat err';st.textContent='ไม่พบหัวตารางในไฟล์ (ต้องมีคอลัมน์ Product name, Brand code และ Stock forecast)';return}
+    if(!ok.length){st.className='stat err';st.textContent='ไม่พบหัวตารางในไฟล์ (ต้องมีคอลัมน์ Product name, Brand code, Stock forecast และ Plan order)';return}
     S.book={wb,name:file.name,sheets:ok};
     const parsed={};ok.forEach(n=>parsed[n]=parseRows(sheetRows(wb.Sheets[n]))||new Map());
     const bad=ok.filter(n=>parsed[n].error);
