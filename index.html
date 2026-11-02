@@ -376,14 +376,13 @@ th.sorted{color:var(--c1)}
 .okt{color:var(--ok);font-weight:600}
 #f3sel{display:none;max-width:200px}
 .vseg{padding:3px}.vseg .segb{padding:5px 12px;font-size:13px}
-body.compact #chips3,body.compact .legend{display:none}
+body.compact #chips3{display:none}
 body.compact #f3sel{display:block}
 body.compact #s3 .bar{gap:8px}
 body.compact #q3{flex:1 1 140px;min-width:120px}
 body.compact #roleHint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 10px;font-size:12.5px}
 body.compact #s3{padding:8px 6px;gap:8px}
 body.compact.full{padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
-body.compact .tw.wide{height:calc(100vh - 250px)!important;min-height:300px}
 body.compact .t3 td,body.compact .t3 th{padding-left:4px!important;padding-right:4px!important}
 body.compact .t3 td{font-size:12.5px!important}
 body.compact .t3 th{white-space:normal!important;line-height:1.2!important;font-size:11px!important}
@@ -424,6 +423,27 @@ body.compact .t3 .qty{text-align:right;-moz-appearance:textfield}body.compact .t
 body.compact .qc .qty{max-width:none}
 body.compact .qc .okb{font-size:10.5px;background:none;padding:0;line-height:14px}
 body.compact .note::placeholder{color:transparent}
+body.full .tw.wide{height:auto;min-height:240px}
+#s3 .bar .sp{flex:1 1 0}
+#s3 .bar .prog{flex:0 0 140px;height:8px}
+#s3 #progTxt{white-space:nowrap;font-size:12.5px}
+.legpop{width:300px}.legpop .legend{flex-direction:column;align-items:flex-start;padding:4px 0;background:none}
+#legMenu summary{white-space:nowrap}
+body.full .t3 td{padding-top:3px!important;padding-bottom:3px!important}
+body.full .t3 .qty,body.full .t3 .note{height:26px;padding-top:2px;padding-bottom:2px}
+body.full .t3 .tick{width:18px;height:18px}
+body.compact #s3 .bar .prog{flex-basis:70px}body.compact #progTxt{font-size:11.5px}
+.pgs{display:none}body.compact .pgl{display:none}body.compact .pgs{display:inline}
+#s3>.bar:first-child{row-gap:8px}
+body.full .top{flex-wrap:nowrap}
+body.compact .top{gap:8px}body.compact .top h1{font-size:18px}body.compact .brand img{width:26px;height:26px}
+body.compact .step:not([aria-current="true"]){font-size:0;gap:0;padding:5px 7px}body.compact .step:not([aria-current="true"]) b{font-size:11px}
+body.compact .rail{padding:3px}body.compact .step{padding:5px 9px;font-size:12.5px}body.compact .step b{width:18px;height:18px;font-size:11px}
+body.compact #runMeta,body.compact #osInfo{display:none}
+body.compact #saveOrder{padding:6px 12px;font-size:13px}
+body.compact #runSel{max-width:170px}
+#osInfo{white-space:nowrap;font-size:12px}
+body.compact .top h1{white-space:nowrap}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -432,10 +452,10 @@ body.compact .note::placeholder{color:transparent}
   <div class="top">
     <div><div class="brand"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IlBsYW4gb3JkZXIgbG9nbyI+CjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzRGNDZFNSIvPjxzdG9wIG9mZnNldD0iLjU1IiBzdG9wLWNvbG9yPSIjN0MzQUVEIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjREIyNzc3Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2cpIi8+CjxwYXRoIGQ9Ik0xNjQgNDEyVjExMmgxMTJhOTYgOTYgMCAwIDEgMCAxOTJoLTExMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjU2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPHBhdGggZD0iTTI2MiAzNzJsMzggMzYgODAtODQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIzNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPg==" alt="" width="40" height="40"><h1>Plan order</h1></div><p>อัปโหลดข้อมูลแต่ละรอบ ดูว่า BO เพิ่มเท่าไหร่ สั่งไปแล้วหรือยัง แล้วให้หน้าร้านกรอก Plan order</p></div>
     <div class="rail" id="rail">
-      <button class="step" data-step="1"><b>1</b>อัปโหลดข้อมูล</button>
-      <button class="step" data-step="2"><b>2</b>เทียบ BO</button>
-      <button class="step" data-step="3"><b>3</b>กรอก Plan order</button>
-      <button class="step" data-step="4"><b>4</b>ประวัติ</button>
+      <button class="step" data-step="1" title="อัปโหลดข้อมูล"><b>1</b>อัปโหลดข้อมูล</button>
+      <button class="step" data-step="2" title="เทียบ BO"><b>2</b>เทียบ BO</button>
+      <button class="step" data-step="3" title="กรอก Plan order"><b>3</b>กรอก Plan order</button>
+      <button class="step" data-step="4" title="ประวัติ"><b>4</b>ประวัติ</button>
       <button class="step" data-step="5" hidden><b>5</b>จัดการผู้ใช้</button>
     </div>
   </div>
@@ -518,32 +538,36 @@ body.compact .note::placeholder{color:transparent}
     <div class="bar">
       <label for="runSel" class="hint">รอบ</label><select id="runSel"></select>
       <span class="hint" id="runMeta"></span>
-      <button class="btn primary" id="saveOrder" type="button">บันทึกการสั่ง</button><span class="hint" id="osInfo"></span>
-    </div>
-    <div class="prog"><i id="prog"></i></div>
-    <div class="bar"><span id="progTxt" class="hint"></span></div>
-    <div class="bar">
-      <div class="chips" id="chips3"></div>
-      <select id="f3sel" aria-label="ตัวกรอง"></select>
-      <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
+      <div class="prog" title="ความคืบหน้า: สั่งแล้ว / กรอก Plan แล้ว"><i id="prog"></i></div><span id="progTxt" class="hint"></span>
+      <span class="sp"></span>
       <div class="segs vseg" role="group" aria-label="มุมมองตาราง"><button type="button" class="segb" data-view="full" aria-pressed="true">เต็ม</button><button type="button" class="segb" data-view="compact" aria-pressed="false">ย่อ</button></div>
-      <details class="colmenu" id="colMenu"><summary class="btn sm">⚙ คอลัมน์</summary><div class="colpop" id="colPop"></div></details>
-    </div>
-    <p class="hint" id="roleHint"></p>
-    <div class="legend" aria-label="คำอธิบายสี">
+      <details class="colmenu" id="legMenu"><summary class="btn sm" title="ความหมายของสีแถว">? สี</summary><div class="colpop legpop"><p class="hint" id="roleTip"></p><div class="legend" aria-label="คำอธิบายสี">
       <span><i style="background:color-mix(in srgb,var(--ok) 26%,var(--surface))"></i>สั่งแล้ว (ติ๊กแล้ว)</span>
       <span><i style="background:color-mix(in srgb,var(--ok) 11%,var(--surface))"></i>สั่งแล้ว (จากไฟล์)</span>
       <span><i style="background:color-mix(in srgb,var(--warn) 26%,var(--surface))"></i>ไม่สั่งตามแพลน (มีหมายเหตุ)</span>
       <span><i style="background:color-mix(in srgb,var(--accent) 13%,var(--surface))"></i>มี Plan รอสั่ง</span>
       <span><i style="background:color-mix(in srgb,var(--bo) 9%,var(--surface))"></i>BO ยังไม่มี Plan</span>
+    </div></div></details>
+      <details class="colmenu" id="colMenu"><summary class="btn sm">⚙ คอลัมน์</summary><div class="colpop" id="colPop"></div></details>
+      <button class="btn sm" id="dlPlan" type="button" title="ดาวน์โหลด Plan order (.xlsx)">⬇ Excel</button>
+      <button class="btn primary" id="saveOrder" type="button">บันทึกการสั่ง</button><span class="hint" id="osInfo"></span>
     </div>
+    <div class="bar">
+      <div class="chips" id="chips3"></div>
+      <select id="f3sel" aria-label="ตัวกรอง"></select>
+      <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
+
+
+
+    </div>
+    <p class="hint" id="roleHint"></p>
     <div class="tw wide"><table class="t3"><thead><tr>
       <th><span class="lf">รหัสสินค้า</span><span class="ls">รหัส</span></th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n"><span class="lf">On hand</span><span class="ls">On hand</span></th><th class="n"><span class="lf">Stock Forecast</span><span class="ls">Stock FC</span></th><th><span class="lf">เทียบรอบก่อน</span><span class="ls">เทียบ</span></th>
       <th class="n"><span class="lf">Pack key</span><span class="ls">Pack</span></th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n" title="สั่งแล้ว (ในไฟล์)"><span class="lf">สั่งแล้ว (ในไฟล์)</span><span class="ls">ไฟล์</span></th>
       <th class="n eh"><span class="lf">Plan order (หน้าร้าน)</span><span class="ls">Plan</span></th><th class="eh"><span class="lf">หมายเหตุหน้าร้าน (ไม่บังคับ)</span><span class="ls">โน้ต</span></th><th class="eh ck"><span class="lf">สั่งแล้ว (ระบบ)</span><span class="ls">สั่ง</span></th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
       <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
     </tr></thead><tbody id="tb3"></tbody></table></div>
-    <div class="bar"><button class="btn" id="dlPlan">ดาวน์โหลด Plan order (.xlsx)</button><span class="hint" id="s3msg"></span></div>
+    <span class="hint" id="s3msg"></span>
     <datalist id="osReasons"><option value="ตู้เต็ม"></option></datalist>
     <div class="ov" id="osPanel" hidden role="dialog" aria-modal="true" aria-label="บันทึกการสั่ง"><div class="ovb" id="osBody"></div></div>
   </section>
@@ -840,7 +864,7 @@ function readBook(file){return new Promise((res,rej)=>{const fr=new FileReader()
 /* always read from column A / row 1, even when the sheet's used range starts later (empty column A) */
 function sheetRows(ws){const rg=XLSX.utils.decode_range(ws['!ref']||'A1');rg.s.c=0;rg.s.r=0;return XLSX.utils.sheet_to_json(ws,{header:1,defval:null,range:rg})}
 function sheetsWithHeader(wb){return wb.SheetNames.filter(n=>findHeader(sheetRows(wb.Sheets[n]))>=0)}
-const PI={A:'',B:''};const G={A:[],B:[]},GS={A:{r:0,c:0},B:{r:0,c:0}},GROWS=15;
+const PI={A:'',B:''};const G={A:[],B:[]},GS={A:{r:0,c:0},B:{r:0,c:0}},GROWS=40;
 const emptyRows=n=>Array.from({length:n},()=>GK.map(()=>''));
 let gBad={A:new Set(),B:new Set()};
 function gridRender(sd){
@@ -1053,7 +1077,7 @@ function renderS2(){
     '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':(i.bBO?'<span class="hint">ยังไม่ได้สั่ง</span>':''))+'</td>'+
     '<td class="n" data-s="'+(i.bBO||0)+'">'+histHtml(i,S.cmp.rounds)+'</td></tr>'}).join('')
     :'<tr><td colspan="7" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
-  sortBody('tb2');}
+  sortBody('tb2');fitSoon();}
 $('q2').addEventListener('input',renderS2);
 $('saveRun').addEventListener('click',async()=>{
   const msg=$('s2msg');if(!S.cmp)return;
@@ -1143,6 +1167,8 @@ function renderS3(){
   const lock=isLocked(S.run),lk=lock?' disabled':'',dis=(S.canEdit&&!lock)?'':' disabled';
   S.lockShown=lock;$('roleHint').classList.toggle('notice',lock);
   $('roleHint').title=lock?'รอบนี้ล็อกแล้ว ดูได้อย่างเดียว':'';
+  $('roleTip').textContent=S.run?('หน้าร้านกรอก Plan order และหมายเหตุ · ฝ่ายระบบติ๊ก "สั่งแล้ว" และใส่หมายเหตุเมื่อไม่สั่งตามแพลน'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')):'';
+  $('roleHint').hidden=!lock;
   if(lock)$('roleHint').textContent='🔒 รอบนี้บันทึกเมื่อ '+when(S.run.createdAt)+' และผ่านเที่ยงคืนแล้ว จึงดูได้อย่างเดียว แก้ไขไม่ได้ · ข้อมูลยังใช้เทียบกับรอบถัดไปได้ตามปกติ';
   $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
     return '<tr data-code="'+esc(i.code)+'">'+
@@ -1159,7 +1185,7 @@ function renderS3(){
     :'<tr><td colspan="25" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb3');
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
-  fillWho();updateProg();renderOS();}
+  fillWho();updateProg();renderOS();fitSoon();}
 const ICON={
   pen:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M11.3 1.7a1.5 1.5 0 0 1 2.1 0l.9.9a1.5 1.5 0 0 1 0 2.1L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 3l3 3" stroke="currentColor" stroke-width="1.5"/></svg>',
   ok:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -1184,7 +1210,7 @@ function qtyCell(i){
 function updateProg(){
   const n=S.rows.length,f=S.rows.filter(i=>{const p=S.plans.get(i.code);return p&&p.qty!=null}).length,d=S.rows.filter(i=>isDoneC(i.code)).length;
   $('prog').style.width=(f?d/f*100:0)+'%';
-  $('progTxt').textContent=n?('กรอก Plan แล้ว '+f+' จาก '+n+' รายการ · สั่งแล้ว '+d+' จาก '+f+' ที่กรอก'):'';}
+  $('progTxt').innerHTML=n?('<span class="pgl">กรอก Plan แล้ว '+f+' จาก '+n+' รายการ · สั่งแล้ว '+d+' จาก '+f+' ที่กรอก</span><span class="pgs">Plan '+f+'/'+n+' · สั่ง '+d+'/'+f+'</span>'):'';}
 async function fillWho(){
   const ids=[...new Set([...S.plans.values(),...S.orders.values()].map(p=>p.by).filter(Boolean))].filter(id=>!(id in S.names));
   if(ids.length&&S.user&&S.user.profiles){try{const ps=await S.user.profiles(ids);ids.forEach(id=>S.names[id]=(ps[id]&&ps[id].name)||'ผู้ใช้')}catch(e){ids.forEach(id=>S.names[id]='ผู้ใช้')}}
@@ -1309,8 +1335,19 @@ $('f3sel').addEventListener('change',()=>{S.f3=$('f3sel').value;renderS3()});
   T3.addEventListener('pointermove',e=>{if(!drag)return;const w=Math.max(drag.c?40:50,Math.round(drag.w+e.clientX-drag.x));if(drag.c)CWC[drag.i]=w;else CW[drag.i]=w;apply()});
   T3.addEventListener('pointerup',()=>{if(drag){const c=drag.c;drag=null;if(c)saveC();else save()}});
   T3.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.rz');if(!h)return;const i=+h.dataset.i;if(isC()){CWC[i]=CWC0[i];saveC()}else{CW[i]=CW0[i];save()}apply()});
-  document.addEventListener('click',e=>{const m=$('colMenu');if(m.open&&!m.contains(e.target))m.open=false});
+  document.addEventListener('click',e=>{['colMenu','legMenu'].forEach(id=>{const m=$(id);if(m&&m.open&&!m.contains(e.target))m.open=false})});
   apply();})();
+/* one scroll area: the table on the plan, compare and history pages grows or shrinks so the whole page fits the window; only the table scrolls */
+function fitTables(){
+  const vh=Math.round((window.visualViewport&&window.visualViewport.height)||window.innerHeight);
+  const tw=S.step===3?document.querySelector('#s3 .tw.wide'):S.step===2?document.querySelector('#s2 .tw'):S.step===4&&S.hid?document.querySelector('#histDetail .tw'):null;
+  if(!tw||!tw.offsetParent)return;
+  const cur=tw.getBoundingClientRect().height,over=document.documentElement.scrollHeight-vh;
+  const h=Math.max(240,Math.round(cur-over));
+  if(Math.abs(h-cur)>1){tw.style.height=h+'px';tw.style.maxHeight='none'}}
+S.fitT=null;const fitSoon=()=>{clearTimeout(S.fitT);S.fitT=setTimeout(fitTables,30)};
+window.addEventListener('resize',fitSoon);if(window.visualViewport)window.visualViewport.addEventListener('resize',fitSoon);
+if(window.ResizeObserver){const ro=new ResizeObserver(fitSoon);['s2','s3','s4'].forEach(id=>{const el=$(id);if(el)[...el.children].forEach(c=>{if(!c.classList.contains('tw'))ro.observe(c)})});}
 /* full / compact view: chosen by the viewer, or automatic by window width (under 800px = compact). Crossing that width again goes back to automatic. */
 (()=>{
   const AUTO=800,get=()=>{try{return localStorage.getItem('bo.view')}catch(e){return null}},set=v=>{try{v?localStorage.setItem('bo.view',v):localStorage.removeItem('bo.view')}catch(e){}};
@@ -1329,7 +1366,8 @@ const osPending=()=>osPlanned().filter(i=>{const p=S.plans.get(i.code),o=S.order
 function renderOS(){
   const b=$('saveOrder'),r=S.run;b.hidden=!S.canEdit;b.disabled=!r||isLocked(r);
   const o=r&&r.orderSaved;
-  $('osInfo').textContent=o?('บันทึกการสั่งแล้ว '+when(o.at)+' · สั่ง '+o.done+' จาก '+o.planned+' รายการ'+(o.skipped?' · ไม่สั่ง '+o.skipped+' (มีเหตุผล)':'')):(r?'ยังไม่ได้บันทึกการสั่ง':'');}
+  const ost=o?('บันทึกการสั่งแล้ว '+when(o.at)+' · สั่ง '+o.done+' จาก '+o.planned+' รายการ'+(o.skipped?' · ไม่สั่ง '+o.skipped+' (มีเหตุผล)':'')):(r?'ยังไม่ได้บันทึกการสั่ง':'');
+  $('osInfo').textContent=o?('บันทึกแล้ว '+when(o.at)):'';$('osInfo').title=ost;b.title=ost;}
 function closeOS(){$('osPanel').hidden=true}
 function openOS(){
   if(!S.run||!S.canEdit||isLocked(S.run))return;
@@ -1487,7 +1525,7 @@ function renderHistTable(){
       '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
       '<td class="n" data-s="'+(p.qty!=null?p.qty:'')+'">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
     :'<tr><td colspan="8" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
-  sortBody('tb4');}
+  sortBody('tb4');fitSoon();}
 $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
   const rows=[['รหัสสินค้า','ชื่อสินค้า','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ']];
   H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
@@ -1545,7 +1583,8 @@ function go(n){
     b.disabled=(k===1&&!S.canEdit)||(k===2&&(!S.canEdit||!S.cmp))||(k===5&&!(S.canEdit&&S.me));if(k===5)b.hidden=!(S.canEdit&&S.me)});
   if(n===1&&S.db)fillBaseRuns();
   if(n===2)renderS2();
-  if(n===3){renderRunSel();selectRun(S.runId||(S.runs[0]&&S.runs[0].id)||null);if(S.applyCols)setTimeout(S.applyCols,0)}}
+  if(n===3){renderRunSel();selectRun(S.runId||(S.runs[0]&&S.runs[0].id)||null);if(S.applyCols)setTimeout(S.applyCols,0)}
+  fitSoon();}
 $('rail').addEventListener('click',e=>{const b=e.target.closest('.step');if(b&&!b.disabled)go(+b.dataset.step)});
 
 /* ---------- online / offline indicator ---------- */
