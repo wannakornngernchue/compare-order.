@@ -452,6 +452,14 @@ body.compact .tzv{display:none}
 .mapr{display:flex;flex-direction:column;gap:3px;font-size:13px}.mapr select{width:100%}.mapr.req span{font-weight:700}.mapr b{color:var(--bo)}
 #mapBtn.on{border-color:var(--c1);color:var(--c1)}
 @media (max-width:600px){.mapl{grid-template-columns:1fr}}
+.qin{display:inline-flex;align-items:stretch;justify-self:end;width:100%;max-width:96px;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.qin:focus-within{border-color:var(--c1);box-shadow:0 0 0 3px var(--c1s)}
+.qin .qty{border:0!important;box-shadow:none!important;border-radius:0;background:transparent;min-width:0!important;flex:1 1 auto;width:100%!important;max-width:none!important;text-align:right;padding-right:4px!important}
+.spn{display:flex;flex-direction:column;flex:none;width:16px;border-left:1px solid var(--line)}
+.spb{appearance:none;flex:1;border:0;padding:0;margin:0;background:var(--surface2);color:var(--c1);font-size:8px;line-height:1;cursor:pointer}
+.spb+.spb{border-top:1px solid var(--line)}.spb:hover{background:var(--c1s)}.spb:active{background:var(--c1);color:#fff}
+.qc .qin{grid-column:2}
+body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .qa{min-width:18px}body.compact .ib{width:18px;height:20px}body.compact .qin .qty{padding-left:2px!important;padding-right:2px!important}
 .ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;font-size:13px;color:var(--muted)}.ubar[hidden]{display:none!important}.login{max-width:440px;border-top-color:var(--c1)}
 #localNote{display:flex;flex-direction:column;gap:8px}#localNote[hidden]{display:none!important}.why{font-weight:400;line-height:1.6}.why ol{margin:4px 0 0;padding-left:20px}
 </style>
@@ -1275,14 +1283,14 @@ function qtyCell(i){
   const code=i.code,p=S.plans.get(code)||{},o=S.orders.get(code),lock=isLocked(S.run),done=isDoneP(p,o),base=pBase(p),tot=orderedTotal(p,o);
   const warn='<span class="fw"'+(i.ordered!=null?' title="สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ">⚠':'>')+'</span>';
   if(S.addCode===code&&done&&!lock)
-    return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><span class="fw"></span><input type="number" class="qty" min="1" step="1" inputmode="numeric" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+">'+
+    return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><span class="fw"></span><span class="qin"><input type="text" class="qty" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-pk="'+(num(i.pack)||1)+'" data-min="1" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+"><span class="spn"><button type="button" class="spb" data-spin="1" tabindex="-1" title="เพิ่ม 1 Pack key" aria-label="เพิ่ม 1 Pack key">▲</button><button type="button" class="spb" data-spin="-1" tabindex="-1" title="ลด 1 Pack key" aria-label="ลด 1 Pack key">▼</button></span></span>'+
       '<span class="qa"><button type="button" class="ib ok" data-act="addok" title="บันทึกจำนวนที่เพิ่ม" aria-label="บันทึกจำนวนที่เพิ่ม">'+ICON.ok+'</button><button type="button" class="ib" data-act="addno" title="ยกเลิก" aria-label="ยกเลิก">'+ICON.no+'</button></span></div>';
   let h='<div class="qc">';
   if(done&&base>0)h+='<span class="okb" title="สั่งแล้วทั้งหมด (รวมที่เพิ่ม Plan)">สั่ง '+fmt(tot)+'</span>';
   else if(base>0)h+='<span class="okb" title="สั่งไปแล้ว '+fmt(base)+' · ที่กรอกคือจำนวนที่เพิ่ม รอสั่ง">สั่ง '+fmt(base)+' +</span>';
   h+=warn;
   if(lock||done)h+='<span class="qv">'+(p.qty!=null?fmt(p.qty):'<span class="hint">–</span>')+'</span>';
-  else h+='<input type="number" class="qty" min="'+(base?1:0)+'" step="1" inputmode="numeric" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+'" value="'+(p.qty!=null?p.qty:'')+'">';
+  else h+='<span class="qin"><input type="text" class="qty" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-pk="'+(num(i.pack)||1)+'" data-min="'+(base?1:0)+'" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+' (▲▼ ทีละ Pack key '+(num(i.pack)||1)+')" value="'+(p.qty!=null?p.qty:'')+'"><span class="spn"><button type="button" class="spb" data-spin="1" tabindex="-1" title="เพิ่ม 1 Pack key" aria-label="เพิ่ม 1 Pack key">▲</button><button type="button" class="spb" data-spin="-1" tabindex="-1" title="ลด 1 Pack key" aria-label="ลด 1 Pack key">▼</button></span></span>';
   h+='<span class="qa">';
   if(!lock&&done)h+='<button type="button" class="ib" data-act="add" title="เพิ่ม Plan (สั่งเพิ่มจากที่สั่งไปแล้ว)" aria-label="เพิ่ม Plan '+esc(code)+'">'+ICON.pen+'</button>';
   else if(!lock&&base>0)h+='<button type="button" class="ib" data-act="undoadd" title="ยกเลิกการเพิ่ม" aria-label="ยกเลิกการเพิ่ม '+esc(code)+'">'+ICON.undo+'</button>';
@@ -1358,6 +1366,20 @@ $('tb3').addEventListener('click',e=>{
   else if(act==='undoadd'){const p=S.plans.get(code);if(!p||!p.rev)return;const steps=(p.steps||[]).slice(),last=steps.length?steps.pop():0;
     const rec={runId:S.runId,code,qty:last,note:p.note||'',by:S.uid,at:Date.now()};if(p.rev>1){rec.base=pBase(p)-last;rec.rev=p.rev-1;rec.steps=steps}
     writePlan(code,rec,'ยกเลิกการเพิ่มแล้ว')}});
+/* Plan order box: whole numbers only. ▲ / ▼ (or the arrow keys) move to the next multiple of the item's Pack key; typing any number is still allowed. */
+$('tb3').addEventListener('input',e=>{const x=e.target;if(!x.classList||!x.classList.contains('qty'))return;const v=x.value.replace(/,/g,'').split('.')[0].replace(/\D+/g,'').replace(/^0+(?=\d)/,'');if(v!==x.value)x.value=v});
+function spinQty(x,dir){
+  const pk=Math.max(1,parseInt(x.dataset.pk,10)||1),mn=parseInt(x.dataset.min,10)||0,cur=x.value===''?0:parseInt(x.value,10)||0;
+  let v=dir>0?(Math.floor(cur/pk)+1)*pk:(Math.ceil(cur/pk)-1)*pk;
+  if(v<mn)v=dir>0?Math.max(mn,pk):(x.dataset.add!=null||mn>0?mn:0);
+  if(dir<0&&v<=0&&mn===0){x.value=x.value===''?'':'0'}else x.value=String(v);
+  if(x.dataset.add!=null)return;
+  clearTimeout(x._spinT);x._spinT=setTimeout(()=>x.dispatchEvent(new Event('change',{bubbles:true})),600)}
+$('tb3').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-spin]');if(!b)return;e.preventDefault();e.stopPropagation();
+  const x=b.closest('.qin').querySelector('input.qty');if(!x||x.disabled)return;spinQty(x,+b.dataset.spin)},true);
+$('tb3').addEventListener('keydown',e=>{const x=e.target;if(!x.classList||!x.classList.contains('qty'))return;
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();spinQty(x,e.key==='ArrowUp'?1:-1);return}
+  if(e.key.length===1&&!/\d/.test(e.key)&&!e.ctrlKey&&!e.metaKey)e.preventDefault()});
 $('tb3').addEventListener('keydown',e=>{const x=e.target.closest&&e.target.closest('[data-add]');if(!x)return;
   if(e.key==='Enter'){e.preventDefault();addOk(x.closest('tr'))}else if(e.key==='Escape'){S.addCode=null;blurQc();syncCells()}});
 /* Enter saves the cell and drops to the same field on the next row, like a spreadsheet */
@@ -1394,10 +1416,10 @@ document.querySelector('.tzseg').addEventListener('click',e=>{const b=e.target.c
     names.map((n,i)=>'<label class="xo2"><input type="checkbox" data-c="'+i+'"'+(i===0?' disabled':'')+'> '+esc(n)+'</label>').join('');
   /* compact view for a narrow window: code, Stock Forecast, Pack key, Plan order, store note, ordered tick. Its own widths, kept apart from the full view's. */
   const FLEX=[1,13,15,16,17,24];
-  const CSHOW=[0,4,5,6,7,11,12,13,14],NOTE=13,CWC0={0:104,4:38,5:50,6:54,7:34,11:34,12:80,13:40,14:30};
+  const CSHOW=[0,4,5,6,7,11,12,13,14],NOTE=13,CWC0={0:98,4:38,5:50,6:54,7:34,11:34,12:96,13:36,14:28};
   let CWC=Object.assign({},CWC0);
-  try{const v=JSON.parse(localStorage.getItem('bo.cols.c5')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
-  const saveC=()=>{try{localStorage.setItem('bo.cols.c5',JSON.stringify(CWC))}catch(e){}};
+  try{const v=JSON.parse(localStorage.getItem('bo.cols.c6')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
+  const saveC=()=>{try{localStorage.setItem('bo.cols.c6',JSON.stringify(CWC))}catch(e){}};
   const isC=()=>document.body.classList.contains('compact');
   function apply(){
     if(isC()){
@@ -1628,7 +1650,7 @@ $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
 function sortVal(td){
   if(!td)return null;
   if(td.hasAttribute('data-s')){const v=td.getAttribute('data-s');return v===''?null:Number(v)}
-  const n=td.querySelector('input[type=number]');if(n)return n.value===''?null:Number(n.value);
+  const n=td.querySelector('input.qty,input[type=number]');if(n)return n.value===''?null:Number(n.value);
   const c=td.querySelector('input[type=checkbox]');if(c)return c.checked?1:0;
   const t=td.querySelector('input[type=text]');let x=(t?t.value:td.textContent).trim();
   if(!x||x==='–'||x==='-')return null;
