@@ -715,6 +715,19 @@ const nz=x=>String(x==null?'':x).trim();
    they sit at fixed places next to those landmarks. Returns null when the page is not in this layout. */
 const PAGEH=new Set(['brand code','product name','safety stock','safety stock cover day','stock forecast','stock forecast (bo)','suggested order','suggested order (case)','plan order','plan order (case)','plan order (pallet)',
   'reason/comments','sales volume class','frequency class','cv class','remaining quota (case)','incoming stock','wma per week','service level (%)','allocate qty','future order','stock available','promotion type','promotion name','promotion effect %','original sku']);
+/* safety net for whole-page copies: only Stock forecast can be negative (On hand, Packkey, ROP, Suggested order never are).
+   If the values read as Stock forecast are never negative but another number column is, those two columns were swapped: swap them back. */
+function fixNegCols(rows){
+  if(!rows||!rows.length)return rows;
+  const F=['onhand','pack','rop','need','e','safety','stock','quota'],bi=GK.indexOf('bo');
+  const neg=i=>rows.filter(r=>{const v=numOf(r[i]);return v!=null&&v<0}).length;
+  const nb=neg(bi);if(nb>0)return rows;
+  let best=-1,bn=0;F.forEach(f=>{const i=GK.indexOf(f),n=neg(i);if(n>bn){bn=n;best=i}});
+  if(best<0)return rows;
+  rows.forEach(r=>{const t=r[bi];r[bi]=r[best];r[best]=t});
+  LASTFIX='สลับคอลัมน์ '+GN[best]+' กับ Stock forecast ให้แล้ว (ค่าติดลบต้องอยู่ที่ Stock forecast)';
+  return rows}
+let LASTFIX='';
 function pageRecordsByHeader(text){
   /* Whole-page copy where each user orders, hides or adds columns. The page prints the header names once (after "#"),
      then every product as one cell per line. Five columns print no header (Brand code, Safety stock, Stock forecast,
@@ -903,8 +916,9 @@ function fillHeaderGaps(m){
   return out;}
 function gridFromText(text,rows,r0,c0){
   LASTINFO='';
-  const byH=pageRecordsByHeader(text);if(byH){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่านตามหัวคอลัมน์ในหน้า · '+byH.length+' รายการ';return mergeRows(rows,byH)}
-  const recs=pageRecords(text);if(recs.length){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่าน '+recs.length+' รายการ';return mergeRows(rows,recs)}
+  LASTFIX='';
+  const byH=fixNegCols(pageRecordsByHeader(text));if(byH){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่านตามหัวคอลัมน์ในหน้า · '+byH.length+' รายการ'+(LASTFIX?' · '+LASTFIX:'');return mergeRows(rows,byH)}
+  const recs=fixNegCols(pageRecords(text));if(recs.length){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่าน '+recs.length+' รายการ'+(LASTFIX?' · '+LASTFIX:'');return mergeRows(rows,recs)}
   const t=tableOf(text).map(r=>r.map(nz)).filter(r=>r.some(x=>x!==''));if(!t.length)return rows;
   const isH=r=>r.filter(c=>fieldOf(c)).length>=2;let hdr=null;const body=[];
   t.forEach(r=>{if(isH(r)){if(!hdr)hdr=r}else body.push(r)});
