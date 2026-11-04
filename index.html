@@ -713,12 +713,16 @@ const nz=x=>String(x==null?'':x).trim();
    the row id, the code, the name (starts with the code), Order (Yes/No), the A-E/A-E/X-Z class triple and the warehouse line (คลัง...).
    Some columns have no header text on the page (Brand code, Stock forecast, Safety stock, Suggested order, the Plan input cell);
    they sit at fixed places next to those landmarks. Returns null when the page is not in this layout. */
+const PAGEH=new Set(['brand code','product name','safety stock','safety stock cover day','stock forecast','stock forecast (bo)','suggested order','suggested order (case)','plan order','plan order (case)','plan order (pallet)',
+  'reason/comments','sales volume class','frequency class','cv class','remaining quota (case)','incoming stock','wma per week','service level (%)','allocate qty','future order','stock available','promotion type','promotion name','promotion effect %','original sku']);
 function pageRecordsByHeader(text){
   /* Whole-page copy where each user orders, hides or adds columns. The page prints the header names once (after "#"),
      then every product as one cell per line. Five columns print no header (Brand code, Safety stock, Stock forecast,
      Suggested order, the Plan input), so the cells are lined up with the names by what each column holds, over all products. */
   const raw=text.replace(/\r\n?/g,'\n').split('\n').map(x=>x.replace(/\s+$/,'').replace(/^\s+/,''));
-  const isId=(A,i)=>/^\d{6,8}$/.test(A[i]||'')&&A[i+1]&&!/\s/.test(A[i+1])&&[2,3,4,5].some(k=>(A[i+k]||'').startsWith(A[i+1]+'-'));
+  /* a product starts at its row id: a 6-8 digit line followed (within a few lines) by a code and a name that starts with that code */
+  const isId=(A,i)=>{if(!/^\d{6,8}$/.test(A[i]||''))return false;
+    for(let k=1;k<=6;k++){const x=A[i+k];if(!x||/\s/.test(x)||/^\d{6,8}$/.test(x))continue;for(let m=1;m<=6;m++)if(m!==k&&(A[i+m]||'').startsWith(x+'-'))return true}return false};
   let a0=-1;for(let i=0;i<raw.length;i++){if(isId(raw,i)){a0=i;break}}if(a0<0)return null;
   let h0=-1;for(let i=a0-1;i>=0;i--){if(raw[i]==='#'){h0=i;break}}if(h0<0)return null;
   /* the header list may be printed twice (sticky header): keep the last copy */
@@ -727,7 +731,9 @@ function pageRecordsByHeader(text){
   for(let j=0;j<hl.length;j++){const x=hl[j];
     if(/^\d{1,2} [A-Za-z]{3,9} \d{4}( -)?$/.test(x))continue;
     if(x==='Stock'&&hl[j+1]==='คลังต้นทาง'){H.push('stock คลังต้นทาง');j++;continue}
-    H.push(x.toLowerCase())}
+    /* a header the page wrapped onto 2-3 lines ("Suggested order" / "(case)") is joined back when the joined name is a known one */
+    let hit=false;for(const n of [3,2]){if(j+n>hl.length)continue;const jn=hl.slice(j,j+n).join(' ').toLowerCase().replace(/\s+/g,' ');if(PAGEH.has(jn)){H.push(jn);j+=n-1;hit=true;break}}
+    if(!hit)H.push(x.toLowerCase())}
   if(!H.includes('product name'))return null;
   /* products: from one row id to the next */
   const ids=[];for(let i=a0;i<raw.length;i++)if(isId(raw,i))ids.push(i);
@@ -737,25 +743,31 @@ function pageRecordsByHeader(text){
   /* the last product runs into the page footer: cut it to the common length */
   const cnt={};recs.forEach(c=>cnt[c.length]=(cnt[c.length]||0)+1);
   const N=+Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x]||x-y)[0];
-  const U=N-1-H.length;if(U<1||U>8)return null;
+  /* the source app may print a header for every column (newer versions) or leave five unnamed */
+  const hasCode=H.includes('brand code');
+  const U=N-1-H.length;if(U<(hasCode?0:1)||U>8)return null;
   /* what each column holds, over all products of the common length */
   const full=recs.filter(c=>c.length===N);
   const num=x=>x!==''&&x!=='-'&&numOf(x)!=null;
   const prof=Array.from({length:N},(_,j)=>{const v=full.map(c=>c[j]),n=v.length||1,f=p=>v.filter(p).length/n;
     return{code:j===1?1:0,name:f((x,k)=>x.startsWith(full[k][1]+'-')),yn:f(x=>x==='Yes'||x==='No'),ae:f(x=>/^[A-E]$/.test(x)),xz:f(x=>/^[X-Z]$/.test(x)),
       wh:f(x=>/^คลัง/.test(x)),empty:f(x=>x===''),dash:f(x=>x==='-'),num:f(num),neg:f(x=>num(x)&&numOf(x)<0),dec:f(x=>num(x)&&/\./.test(x)),
-      txt:f(x=>x!==''&&x!=='-'&&!num(x)),alpha:f(x=>/^[A-Za-z]{2,12}$/.test(x))}});
-  const want=h=>({'#':'id','owner':'alpha','product name':'name','order':'yn','sales volume class':'ae','frequency class':'ae','cv class':'xz','คลังต้นทาง':'wh',
+      txt:f(x=>x!==''&&x!=='-'&&!num(x)),alpha:f(x=>/^[A-Za-z]{2,12}$/.test(x)),
+      code:f((x,k)=>!!x&&!/\s/.test(x)&&full[k].some((y,m)=>m!==j&&y.startsWith(x+'-')))}});
+  const want=h=>({'#':'id','brand code':'code','owner':'alpha','product name':'name','plan order (case)':'plan','plan order':'plan','order':'yn','sales volume class':'ae','frequency class':'ae','cv class':'xz','คลังต้นทาง':'wh',
     'reason/comments':'text','description':'text','promotion type':'text','promotion name':'text','original sku':'text'}[h]||'num');
   const fit=(h,p)=>{const w=want(h);
     if(w==='id')return 0;
     if(w==='text')return 2*(p.txt+p.dash+p.empty)-3*(p.yn+p.ae+p.xz+p.name)-1.5*p.num;
-    if(w==='num')return 2*(p.num+p.dash+p.empty*0.5)-3*(p.txt-p.dash>0?p.txt:0)-2*p.neg+(h==='safety stock cover day'?p.dec:0);
+    if(w==='plan')return 2*(p.num+p.empty+p.dash)-3*(p.txt-p.dash>0?p.txt:0)-p.neg;
+    if(w==='code')return 4*p.code-2;
+    if(w==='num'){const bo=/^stock forecast/.test(h);return 2*(p.num+p.dash+p.empty*0.5)-3*(p.txt-p.dash>0?p.txt:0)+(bo?3:-2)*p.neg+(h==='safety stock cover day'?p.dec:0)}
     return 3*p[w]-1};
   /* an unheaded column: Brand code, or a number (Safety stock / Stock forecast / Suggested order) or the Plan input (often empty) */
   const unh=p=>2*(p.num+p.empty+p.dash*0.5)+2*p.neg-3*(p.yn+p.ae+p.xz+p.name+p.wh+(p.txt-p.dash>0?p.txt:0));
   /* align: column 0 = "#", column 1 = Brand code; the rest is the header list with U-1 unheaded columns in between */
-  const K=H.length,M=N-2,Hs=H,P=prof.slice(2),need=U-1;
+  /* without a Brand code header, column 1 is the code; otherwise every column after "#" is lined up */
+  const st0=hasCode?1:2,K=H.length,M=N-st0,Hs=H,P=prof.slice(st0),need=hasCode?U:U-1;
   const NEG=-1e9,dp=Array.from({length:M+1},()=>Array(K+1).fill(NEG)),bk=Array.from({length:M+1},()=>Array(K+1).fill(0));dp[0][0]=0;
   for(let j=0;j<M;j++)for(let h=0;h<=K;h++){if(dp[j][h]===NEG)continue;
     if(h<K){const v=dp[j][h]+fit(Hs[h],P[j]);if(v>dp[j+1][h+1]){dp[j+1][h+1]=v;bk[j+1][h+1]=1}}
@@ -765,8 +777,8 @@ function pageRecordsByHeader(text){
       const bonus=(nx==='safety stock cover day'?3:0)+(pv==='safety stock cover day'?2.5:0)+(nx==='reason/comments'?3:0)+(pv==='on hand'?0.5:0);
       const v=dp[j][h]+unh(P[j])+bonus;if(v>dp[j+1][h]){dp[j+1][h]=v;bk[j+1][h]=2}}}
   if(dp[M][K]===NEG)return null;
-  const lab=Array(N).fill(null);lab[0]='#';lab[1]='@code';
-  for(let j=M,h=K;j>0;j--){if(bk[j][h]===1){lab[j+1]=Hs[h-1];h--}else lab[j+1]='@?'}
+  const lab=Array(N).fill(null);lab[0]='#';if(!hasCode)lab[1]='@code';
+  for(let j=M,h=K;j>0;j--){if(bk[j][h]===1){lab[j+st0-1]=Hs[h-1];h--}else lab[j+st0-1]='@?'}
   /* name the unheaded numeric columns: Plan = the mostly-empty one (the input box); Suggested = the one just before it;
      Safety stock = the one just before "Safety stock cover day"; Stock forecast = the one with negative values (else the first left) */
   const un=lab.map((l,j)=>l==='@?'?j:-1).filter(j=>j>=0);
@@ -778,8 +790,9 @@ function pageRecordsByHeader(text){
   else if(un.length){const bj=un.slice().sort((x,y)=>prof[y].neg-prof[x].neg||x-y)[0];lab[take(bj)]='@bo'}
   if(un.length&&!lab.includes('@need'))lab[take(un[un.length-1])]='@need';
   if(un.length&&!lab.includes('@ss')&&cv<0)lab[take(un[0])]='@ss';
-  if(!lab.includes('@bo'))return null;
-  const F={'#':'no','@code':'code','owner':'owner','@ss':'e','safety stock cover day':'safety','product name':'name','on hand':'onhand','@bo':'bo','packkey':'pack',
+  if(!lab.includes('@bo')&&!lab.some(l=>/^stock forecast/.test(l||'')))return null;
+  const F={'brand code':'code','safety stock':'e','stock forecast':'bo','stock forecast (bo)':'bo','suggested order (case)':'need','suggested order':'need','plan order':'plan',
+    '#':'no','@code':'code','owner':'owner','@ss':'e','safety stock cover day':'safety','product name':'name','on hand':'onhand','@bo':'bo','packkey':'pack',
     'rop':'rop','order':'order','@need':'need','@plan':'plan','plan order (case)':'plan','reason/comments':'reason','description':'desc','sales volume class':'vol',
     'frequency class':'freq','cv class':'cv','stock คลังต้นทาง':'stock','คลังต้นทาง':'wh','remaining quota (case)':'quota'};
   const colOf={};lab.forEach((l,j)=>{const f=F[l];if(f&&!(f in colOf))colOf[f]=j});
@@ -793,7 +806,7 @@ function pageRecordsByHeader(text){
     if(c.length===N+1&&pjc!=null&&c[pjc]===''&&num(c[pjc+1]))c.splice(pjc,1);
     if(c.length>N)c=c.slice(0,N);
     if(c.length<N-1)return;
-    const code=c[1],ni=colOf.name;if(!(c[ni]||'').startsWith(code+'-'))return;
+    const code=c[colOf.code!=null?colOf.code:1],ni=colOf.name;if(!code||!(c[ni]||'').startsWith(code+'-'))return;
     const g=f=>f in colOf?dash(c[colOf[f]]):'';
     out.push(GK.map(f=>f==='code'?code:f==='name'?c[ni]:g(f)))});
   return out.length?out:null;}
