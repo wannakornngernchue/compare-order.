@@ -296,7 +296,8 @@ table.gt{font-size:14px}
 .pgb table{width:100%;border-collapse:collapse}.pgb td,.pgb th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}.pgb td.n{text-align:right;font-weight:700;font-size:16px}.pgb select{width:100%;max-width:340px}.pgb .smp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pgb .bo{color:var(--bo)}
 .ovb{background:var(--surface);border-radius:20px;border-top:4px solid var(--c3);box-shadow:var(--shadow);padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .osl{display:flex;flex-direction:column;gap:8px}
-.osr{display:grid;grid-template-columns:1fr auto minmax(180px,220px);gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.osin{display:flex;flex-direction:column;gap:6px}.osin select,.osin input{width:100%}.osm .osmb{display:flex;flex-direction:column;gap:10px;margin-top:10px}.osls{display:flex;flex-wrap:wrap;gap:6px}.rsn{display:inline-flex;align-items:center;gap:4px}.rx{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:inherit;padding:0 2px}#osNew{flex:1;min-width:180px}
+.osr{display:grid;grid-template-columns:1fr auto minmax(200px,240px);gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
 .osr .note{width:100%}
 .t3{min-width:0!important;table-layout:fixed}
 .t3 th,.t3 td{min-width:0!important}
@@ -589,7 +590,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
       <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
     </tr></thead><tbody id="tb3"></tbody></table></div>
     <span class="hint" id="s3msg"></span>
-    <datalist id="osReasons"><option value="ตู้เต็ม"></option></datalist>
+    <datalist id="osReasons"></datalist>
     <div class="ov" id="osPanel" hidden role="dialog" aria-modal="true" aria-label="บันทึกการสั่ง"><div class="ovb" id="osBody"></div></div>
   </section>
 
@@ -1594,20 +1595,56 @@ function renderOS(){
   const ost=o?('บันทึกการสั่งแล้ว '+when(o.at)+' · สั่ง '+o.done+' จาก '+o.planned+' รายการ'+(o.skipped?' · ไม่สั่ง '+o.skipped+' (มีเหตุผล)':'')):(r?'ยังไม่ได้บันทึกการสั่ง':'');
   $('osInfo').textContent=o?('บันทึกแล้ว '+when(o.at)):'';$('osInfo').title=ost;b.title=ost;}
 function closeOS(){$('osPanel').hidden=true}
+/* reasons for "ไม่สั่งตามแพลน": one list shared by everyone (config/reasons), system staff can add or remove items */
+const REASONS0=['ตู้เต็ม','ไม่มีสต็อคคลัง 5','เบิกแล้วไม่ได้'];
+S.reasons=REASONS0.slice();
+function paintReasons(){$('osReasons').innerHTML=S.reasons.map(r=>'<option value="'+esc(r)+'"></option>').join('')}
+paintReasons();
+let reasonsUnsub=null;
+function watchReasons(){if(reasonsUnsub||!S.db)return;
+  reasonsUnsub=S.db.doc('config/reasons').onSnapshot(d=>{const l=d.exists&&Array.isArray(d.data().list)?d.data().list.filter(x=>typeof x==='string'&&x.trim()):null;
+    S.reasons=l&&l.length?l:REASONS0.slice();paintReasons();if(!$('osPanel').hidden)osPaintList()},()=>{})}
+async function saveReasons(list){S.reasons=list;paintReasons();osPaintList();osRefreshSelects();
+  if(S.db){try{await S.db.doc('config/reasons').set({list,at:Date.now(),by:S.uid||null})}catch(e){$('osMsg').textContent='บันทึกรายการเหตุผลไม่ได้ (ตรวจกฎความปลอดภัยใน Firebase)'}}}
+const OTHER='__other';
+function osSelHtml(v){const inList=S.reasons.includes(v);
+  return '<option value=""'+(v?'':' selected')+'>— เลือกเหตุผล —</option>'+S.reasons.map(r=>'<option value="'+esc(r)+'"'+(r===v?' selected':'')+'>'+esc(r)+'</option>').join('')+
+    '<option value="'+OTHER+'"'+(v&&!inList?' selected':'')+'>พิมพ์เอง…</option>'}
+function osPaintList(){const el=$('osList');if(!el)return;
+  el.innerHTML=S.reasons.map((r,k)=>'<span class="pill p-same rsn">'+esc(r)+' <button type="button" class="rx" data-rdel="'+k+'" title="เอาออกจากรายการ" aria-label="เอา '+esc(r)+' ออก">×</button></span>').join('')}
+function osRefreshSelects(){$('osBody').querySelectorAll('select[data-osr]').forEach(sel=>{const row=sel.closest('.osr'),inp=row.querySelector('input[data-os]'),v=sel.value===OTHER?inp.value.trim():sel.value;
+  sel.innerHTML=osSelHtml(v);if(sel.value!==OTHER)inp.value=sel.value});
+  const all=$('osAllSel');if(all)all.innerHTML=S.reasons.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('')}
 function openOS(){
   if(!S.run||!S.canEdit||isLocked(S.run))return;
   const pend=osPending();if(!pend.length){commitOS({});return}
-  $('osBody').innerHTML='<h2>ยังสั่งไม่ครบตามที่หน้าร้านกรอก</h2><p class="hint">มี '+pend.length+' รายการที่มี Plan order แต่ยังไม่ได้ติ๊กสั่งแล้ว กรุณาใส่เหตุผลทุกรายการก่อนบันทึก</p>'+
-    '<div class="bar"><button type="button" class="btn sm" id="osAll">ใส่ "ตู้เต็ม" ทุกรายการ</button></div>'+
-    '<div class="osl">'+pend.map(i=>{const p=S.plans.get(i.code);return '<div class="osr"><div><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></div><div class="n">Plan '+fmt(p.qty)+'</div><input type="text" class="note" list="osReasons" data-os="'+esc(i.code)+'" value="'+esc(noteOf(p,S.orders.get(i.code)))+'" placeholder="เหตุผล (บังคับ)" aria-label="เหตุผล '+esc(i.code)+'"></div>'}).join('')+'</div>'+
+  $('osBody').innerHTML='<h2>ยังสั่งไม่ครบตามที่หน้าร้านกรอก</h2><p class="hint">มี '+pend.length+' รายการที่มี Plan order แต่ยังไม่ได้ติ๊กสั่งแล้ว กรุณาเลือกเหตุผลทุกรายการก่อนบันทึก เหตุผลจะถูกบันทึกในช่องหมายเหตุของรายการนั้น</p>'+
+    '<div class="bar"><span class="hint">ใส่ทุกรายการที่ยังว่าง:</span><select id="osAllSel" aria-label="เหตุผลสำหรับทุกรายการ">'+S.reasons.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('')+'</select><button type="button" class="btn sm" id="osAll">ใส่</button></div>'+
+    '<div class="osl">'+pend.map(i=>{const p=S.plans.get(i.code),v=noteOf(p,S.orders.get(i.code)),inList=S.reasons.includes(v);
+      return '<div class="osr"><div><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></div><div class="n">Plan '+fmt(p.qty)+'</div>'+
+      '<div class="osin"><select data-osr="'+esc(i.code)+'" aria-label="เหตุผล '+esc(i.code)+'">'+osSelHtml(v)+'</select>'+
+      '<input type="text" class="note" data-os="'+esc(i.code)+'" value="'+esc(v)+'" placeholder="พิมพ์เหตุผล" aria-label="พิมพ์เหตุผลเอง '+esc(i.code)+'"'+(v&&!inList?'':' hidden')+'></div></div>'}).join('')+'</div>'+
+    '<details class="osm"><summary class="btn sm">แก้รายการเหตุผล</summary><div class="osmb"><div class="osls" id="osList"></div>'+
+      '<div class="bar"><input type="text" id="osNew" placeholder="เพิ่มเหตุผลใหม่ เช่น สินค้าหมดอายุ" aria-label="เหตุผลใหม่"><button type="button" class="btn sm" id="osAdd">เพิ่มในรายการ</button></div>'+
+      '<p class="hint">รายการนี้ใช้ร่วมกันทุกคน และขึ้นเป็นตัวเลือกในช่องหมายเหตุของตารางด้วย</p></div></details>'+
+    '<p class="hint" id="osMsg"></p>'+
     '<div class="bar"><button type="button" class="btn primary" id="osOk" disabled>บันทึกการสั่ง</button><button type="button" class="btn" id="osNo">ยกเลิก</button></div>';
-  $('osPanel').hidden=false;osCheck();}
+  osPaintList();$('osPanel').hidden=false;osCheck();}
 function osCheck(){const ins=[...$('osBody').querySelectorAll('input[data-os]')];$('osOk').disabled=!ins.every(x=>x.value.trim())}
 $('saveOrder').addEventListener('click',openOS);
 $('osBody').addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.os!=null)osCheck()});
+$('osBody').addEventListener('change',e=>{const sel=e.target.closest('select[data-osr]');if(!sel)return;const inp=sel.closest('.osr').querySelector('input[data-os]');
+  if(sel.value===OTHER){inp.hidden=false;if(S.reasons.includes(inp.value))inp.value='';inp.focus()}else{inp.hidden=true;inp.value=sel.value}osCheck()});
+$('osBody').addEventListener('keydown',e=>{if(e.target.id==='osNew'&&e.key==='Enter'){e.preventDefault();$('osAdd').click()}});
 $('osBody').addEventListener('click',e=>{
+  const del=e.target.closest('[data-rdel]');
+  if(del){const k=+del.dataset.rdel,l=S.reasons.slice();l.splice(k,1);if(!l.length){$('osMsg').textContent='ต้องมีเหตุผลอย่างน้อย 1 รายการ';return}saveReasons(l);return}
   if(e.target.id==='osNo')closeOS();
-  else if(e.target.id==='osAll'){$('osBody').querySelectorAll('input[data-os]').forEach(x=>{if(!x.value.trim())x.value='ตู้เต็ม'});osCheck()}
+  else if(e.target.id==='osAdd'){const x=$('osNew'),v=x.value.trim().replace(/\s+/g,' ');if(!v)return;
+    if(S.reasons.includes(v)){$('osMsg').textContent='มี "'+v+'" ในรายการแล้ว';return}
+    x.value='';$('osMsg').textContent='เพิ่ม "'+v+'" ในรายการแล้ว';saveReasons([...S.reasons,v])}
+  else if(e.target.id==='osAll'){const v=$('osAllSel').value;$('osBody').querySelectorAll('.osr').forEach(row=>{const inp=row.querySelector('input[data-os]'),sel=row.querySelector('select[data-osr]');
+      if(!inp.value.trim()){inp.value=v;sel.value=v;inp.hidden=true}});osCheck()}
   else if(e.target.id==='osOk'){const r={};$('osBody').querySelectorAll('input[data-os]').forEach(x=>r[x.dataset.os]=x.value.trim());commitOS(r)}});
 async function commitOS(reasons){
   const msg=$('s3msg');closeOS();if(!S.run||isLocked(S.run))return;
@@ -1896,7 +1933,7 @@ function startRuns(){
     S.runs=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.step===1)fillBaseRuns();if(S.step===4&&!S.hid&&!S.hr.list)renderHist();
     if(S.step===3){const keep=S.runs.some(r=>r.id===S.runId)?S.runId:(S.runs[0]&&S.runs[0].id);renderRunSel();if(keep!==S.runId||!S.run)selectRun(keep);else{S.run=S.runs.find(r=>r.id===S.runId);$('runSel').value=S.runId;renderOS()}}
   },e=>{showNote('อ่านข้อมูลไม่ได้ ('+esc(e&&e.code||'error')+') ตรวจว่าวางกฎความปลอดภัยครบ (ขั้นที่ 5) แล้วรีเฟรชหน้า')});}
-function stopAll(){if(runsUnsub){runsUnsub();runsUnsub=null}if(memUnsub){memUnsub();memUnsub=null}}
+function stopAll(){if(reasonsUnsub){reasonsUnsub();reasonsUnsub=null}if(runsUnsub){runsUnsub();runsUnsub=null}if(memUnsub){memUnsub();memUnsub=null}}
 async function showLogin(msg){
   $('loginOv').hidden=false;$('ubar').hidden=true;
   let setup=true;try{setup=(await fdb.doc('config/setup').get()).exists}catch(e){}
@@ -1917,7 +1954,7 @@ async function onUser(u){
     profiles:async ids=>{const o={};await Promise.all(ids.map(async id=>{const hit=S.members.find(x=>x.id===id);if(hit){o[id]={name:hit.name||hit.username};return}
       try{const d=await fdb.doc('members/'+id).get();o[id]={name:d.exists?(d.data().name||d.data().username||''):''}}catch(e){o[id]={name:''}}}));return o}};
   memUnsub=fdb.collection('members').onSnapshot(sn=>{S.members=sn.docs.map(d=>({id:d.id,...d.data()}));if(S.step===5)renderUsers()},()=>{});
-  startRuns();umLoad();
+  startRuns();umLoad();watchReasons();
   if(!S.canEdit)go(3);else go(S.step===2&&!S.cmp?1:S.step);}
 /* ---- user management (admins) ---- */
 function renderUsers(){
