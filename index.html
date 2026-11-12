@@ -170,7 +170,9 @@ body.full .t3 td{padding:6px 10px;font-size:13px}
 .st:empty{display:none}
 .st.s-done{background:var(--ok);color:var(--surface)} .st.s-file{background:var(--ok-soft);color:var(--ok)}
 .st.s-skip{background:var(--warn);color:var(--surface)} .st.s-plan{background:var(--accent);color:var(--accent-ink)}
-.st.s-bo{background:var(--bo-soft);color:var(--bo)}
+.st.s-bo{background:var(--bo-soft);color:var(--bo)} .st.s-nostk{background:var(--line);color:var(--muted)}
+.t3 tr.st-nostk td,.t3 tr.st-nostk td.ec{background:color-mix(in srgb,var(--muted) 10%,var(--surface));color:var(--muted)}
+.pill.p-nostk{background:var(--line);color:var(--muted)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12.5px;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid var(--line)}
 .t3 td.ck,.t3 th.ck{text-align:center}
@@ -291,6 +293,7 @@ table.gt{font-size:14px}
 #shName{min-width:220px}
 #blkPA.over{outline:2px dashed var(--c1)}
 .ov{position:fixed;inset:0;z-index:50;background:rgba(10,12,30,.55);display:grid;place-items:center;padding:16px}
+.pgb table{width:100%;border-collapse:collapse}.pgb td,.pgb th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}.pgb td.n{text-align:right;font-weight:700;font-size:16px}.pgb select{width:100%;max-width:340px}.pgb .smp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pgb .bo{color:var(--bo)}
 .ovb{background:var(--surface);border-radius:20px;border-top:4px solid var(--c3);box-shadow:var(--shadow);padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .osl{display:flex;flex-direction:column;gap:8px}
 .osr{display:grid;grid-template-columns:1fr auto minmax(180px,220px);gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
@@ -562,6 +565,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
       <span><i style="background:color-mix(in srgb,var(--ok) 26%,var(--surface))"></i>สั่งแล้ว (ติ๊กแล้ว)</span>
       <span><i style="background:color-mix(in srgb,var(--ok) 11%,var(--surface))"></i>สั่งแล้ว (จากไฟล์)</span>
       <span><i style="background:color-mix(in srgb,var(--warn) 26%,var(--surface))"></i>ไม่สั่งตามแพลน (มีหมายเหตุ)</span>
+      <span><i style="background:color-mix(in srgb,var(--muted) 10%,var(--surface))"></i>ไม่มีของ คลัง 5 (Plan 0 ในแอปต้นทาง สั่งไม่ได้)</span>
       <span><i style="background:color-mix(in srgb,var(--accent) 13%,var(--surface))"></i>มี Plan รอสั่ง</span>
       <span><i style="background:color-mix(in srgb,var(--bo) 9%,var(--surface))"></i>BO ยังไม่มี Plan</span>
     </div></div></details>
@@ -581,7 +585,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
     <div class="tw wide"><table class="t3"><thead><tr>
       <th><span class="lf">รหัสสินค้า</span><span class="ls">รหัส</span></th><th>ชื่อสินค้า</th><th>Owner</th><th class="n">Safety stock cover day</th><th class="n"><span class="lf">On hand</span><span class="ls">On hand</span></th><th class="n"><span class="lf">Stock Forecast</span><span class="ls">Stock FC</span></th><th><span class="lf">เทียบรอบก่อน</span><span class="ls">เทียบ</span></th>
       <th class="n"><span class="lf">Pack key</span><span class="ls">Pack</span></th><th class="n">ROP</th><th>Order</th><th class="n">จำนวนแนะนำ</th><th class="n" title="สั่งแล้ว (ในไฟล์)"><span class="lf">สั่งแล้ว (ในไฟล์)</span><span class="ls">ไฟล์</span></th>
-      <th class="n eh"><span class="lf">Plan order (หน้าร้าน)</span><span class="ls">Plan</span></th><th class="eh"><span class="lf">หมายเหตุหน้าร้าน (ไม่บังคับ)</span><span class="ls">โน้ต</span></th><th class="eh ck"><span class="lf">สั่งแล้ว (ระบบ)</span><span class="ls">สั่ง</span></th><th class="eh">หมายเหตุระบบ (ไม่บังคับ)</th>
+      <th class="n eh"><span class="lf">Plan order (หน้าร้าน)</span><span class="ls">Plan</span></th><th class="eh"><span class="lf">หมายเหตุ (หน้าร้าน + ระบบ)</span><span class="ls">โน้ต</span></th><th class="eh ck"><span class="lf">สั่งแล้ว (ระบบ)</span><span class="ls">สั่ง</span></th>
       <th>Reason/Comments (ไฟล์)</th><th>Description</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th>คลังต้นทาง</th><th class="n">Remaining quota (Case)</th><th>บันทึกโดย</th>
     </tr></thead><tbody id="tb3"></tbody></table></div>
     <span class="hint" id="s3msg"></span>
@@ -614,7 +618,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
       <div class="bar"><button type="button" class="btn sm" id="hBack">← กลับรายการ</button><h2 id="hTitle"></h2><span class="hint" id="hMeta"></span></div>
       <div class="bar"><span class="hint" id="hLock"></span><button type="button" class="btn sm" id="hOpen" hidden>เปิดในหน้ากรอก Plan order</button></div>
       <div class="bar"><div class="chips" id="chips4"></div><input type="search" class="grow" id="q4" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา"><button type="button" class="btn sm" id="hDl">ดาวน์โหลด (.xlsx)</button></div>
-      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th><th class="n">Plan order</th><th>หมายเหตุหน้าร้าน</th><th>สถานะการสั่ง</th><th>หมายเหตุระบบ</th><th>บันทึกโดย</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th></tr></thead><tbody id="tb4"></tbody></table></div>
+      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th><th class="n">Plan order</th><th>หมายเหตุ</th><th>สถานะการสั่ง</th><th>บันทึกโดย</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th></tr></thead><tbody id="tb4"></tbody></table></div>
     </div>
   </section>
 
@@ -636,6 +640,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
   </section>
 </div>
 <div id="histPop" class="hpop" role="dialog" aria-label="ประวัติ Stock Forecast" hidden></div>
+<div class="ov" id="pgChk" hidden role="dialog" aria-modal="true" aria-label="ตรวจการอ่านคอลัมน์"><div class="ovb pgb" id="pgBody"></div></div>
 <div class="ov" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="จับคู่คอลัมน์"><div class="ovb mapb" id="mapBody"></div></div>
 
 <script>
@@ -665,6 +670,7 @@ function parseRows(rows){
     const code=at(r,'code'),bo=xNum(at(r,'bo'));
     if(code==null||!String(code).trim()){skipped++;continue}
     if(bo==null){skipped++;continue}
+    if(SKIPOWN(at(r,'owner'))){out.whamt=(out.whamt||0)+1;continue}
     const k=String(code).trim(),nm=String(at(r,'name')==null?'':at(r,'name'));
     let plan=xNum(at(r,'plan'));
     if(tot>=0){const t=xNum(r[tot]),done=stc>=0&&String(r[stc]==null?'':r[stc]).trim()==='สั่งแล้ว';plan=done?(t!=null?t:plan):((t||0)+(plan||0)||(t!=null||plan!=null?0:null))}
@@ -672,7 +678,7 @@ function parseRows(rows){
       owner:txt(at(r,'owner')),safety:xNum(at(r,'safety')),onhand:xNum(at(r,'onhand')),rop:xNum(at(r,'rop')),order:txt(at(r,'order')),need:xNum(at(r,'need')),
       reason:txt(at(r,'reason')),desc:txt(at(r,'desc')),vol:txt(at(r,'vol')),freq:txt(at(r,'freq')),cv:txt(at(r,'cv')),stock:xNum(at(r,'stock')),wh:txt(at(r,'wh')),quota:xNum(at(r,'quota'))});}
   const opt=['onhand','pack','rop','order','need','plan','reason','vol','freq','cv','stock','wh','quota','owner','safety'].filter(f=>!(f in col));
-  const w=[];if(skipped)w.push('ข้าม '+skipped+' แถวที่ไม่มีรหัสหรือ Stock forecast');
+  const w=[];if(skipped)w.push('ข้าม '+skipped+' แถวที่ไม่มีรหัสหรือ Stock forecast');if(out.whamt)w.push('ตัด Owner WHAMT '+out.whamt+' แถว');
   if(tot>=0)w.unshift('ไฟล์ประวัติจากแอปนี้ · Plan order = สั่งแล้วสะสม + ส่วนที่ยังรอสั่ง');
   else if(opt.length)w.push(opt.length>4?'ไม่มีคอลัมน์รอง '+opt.length+' คอลัมน์ (เว้นว่างไว้)':'ไม่พบคอลัมน์ '+opt.map(f=>GN[GK.indexOf(f)]).join(', ')+' (เว้นว่างไว้)');
   out.warn=w.join(' · ');
@@ -721,10 +727,12 @@ function fixNegCols(rows){
   if(!rows||!rows.length)return rows;
   const F=['onhand','pack','rop','need','e','safety','stock','quota'],bi=GK.indexOf('bo');
   const neg=i=>rows.filter(r=>{const v=numOf(r[i]);return v!=null&&v<0}).length;
+  if(S.pageCtx&&S.pageCtx.saved)return rows;
   const nb=neg(bi);if(nb>0)return rows;
   let best=-1,bn=0;F.forEach(f=>{const i=GK.indexOf(f),n=neg(i);if(n>bn){bn=n;best=i}});
   if(best<0)return rows;
   rows.forEach(r=>{const t=r[bi];r[bi]=r[best];r[best]=t});
+  if(S.pageCtx){const c=S.pageCtx.colOf,f=GK[best],a=c.bo,b=c[f];if(b==null)delete c.bo;else c.bo=b;if(a==null)delete c[f];else c[f]=a}
   LASTFIX='สลับคอลัมน์ '+GN[best]+' กับ Stock forecast ให้แล้ว (ค่าติดลบต้องอยู่ที่ Stock forecast)';
   return rows}
 let LASTFIX='';
@@ -820,15 +828,27 @@ function pageRecordsByHeader(text){
   if(!('name' in colOf))return null;
   const pjc=colOf.plan;
   S.pageLayout={headers:H,labels:lab};
-  const dash=v=>v==null||v==='-'?'':v;
-  const out=[];
+  /* the same page layout was corrected by this user before: use the columns they picked */
+  const sig=H.join('|'),saved=(S.PM||{})[sig];
+  if(saved)PGF.forEach(([f])=>{if(!(f in saved))return;if(saved[f]==null||saved[f]<0||saved[f]>=N)delete colOf[f];else colOf[f]=saved[f]});
+  const cells=[];
   recs.forEach(c0=>{let c=c0.slice(0);
     /* a filled Plan box prints an empty line and then the number: fold it into one cell */
     if(c.length===N+1&&pjc!=null&&c[pjc]===''&&num(c[pjc+1]))c.splice(pjc,1);
     if(c.length>N)c=c.slice(0,N);
     if(c.length<N-1)return;
+    cells.push(c)});
+  const ctx={sig,H,lab,N,cells,colOf,saved:!!saved};
+  const out=pageBuild(ctx,colOf);
+  if(out)S.pageCtx=ctx;
+  return out;}
+/* the fields the paste check shows (and lets the user re-pick) */
+const PGF=[['onhand','On hand'],['bo','Stock forecast'],['pack','Packkey'],['rop','ROP'],['e','Safety stock'],['need','Suggested order (case)'],['plan','Plan order (case)']];
+function pageBuild(ctx,colOf){
+  const dash=v=>v==null||v==='-'?'':v,out=[];
+  ctx.cells.forEach(c=>{
     const code=c[colOf.code!=null?colOf.code:1],ni=colOf.name;if(!code||!(c[ni]||'').startsWith(code+'-'))return;
-    const g=f=>f in colOf?dash(c[colOf[f]]):'';
+    const g=f=>f in colOf&&colOf[f]>=0?dash(c[colOf[f]]):'';
     out.push(GK.map(f=>f==='code'?code:f==='name'?c[ni]:g(f)))});
   return out.length?out:null;}
 function pageRecords(text){
@@ -847,11 +867,12 @@ function pageRecords(text){
   return out;}
 /* returns the new grid rows (array of 21-string arrays) for pasted text; selection (r0,c0) is used only for a plain block paste */
 /* new product rows go after the last filled row; a code that is already in the grid is overwritten in place, so pasting twice never duplicates */
+let MSKIP=0;
 function mergeRows(rows,add){
   const out=rows.map(r=>r.slice()),blank=r=>!r.some(x=>nz(x)!=='');
   const idx=new Map();out.forEach((r,i)=>{if(nz(r[1]))idx.set(nz(r[1]),i)});
   let last=-1;out.forEach((r,i)=>{if(!blank(r))last=i});
-  add.forEach(r=>{const k=nz(r[1]);
+  add.forEach(r=>{if(SKIPOWN(r[2])){MSKIP++;return}const k=nz(r[1]);
     if(k&&idx.has(k)){out[idx.get(k)]=r;return}
     last++;if(last<out.length)out[last]=r;else out.push(r);
     if(k)idx.set(k,last)});
@@ -923,8 +944,12 @@ function fillHeaderGaps(m){
     if(v>=0){out[i]=v;used.add(v)}}
   return out;}
 function gridFromText(text,rows,r0,c0){
+  MSKIP=0;const out=gridFromText0(text,rows,r0,c0),n=out.filter(r=>SKIPOWN(r[2])).length;
+  if(n+MSKIP)LASTINFO=(LASTINFO?LASTINFO+' · ':'')+'ตัด Owner WHAMT '+(n+MSKIP)+' แถว';
+  return n?out.filter(r=>!SKIPOWN(r[2])):out}
+function gridFromText0(text,rows,r0,c0){
   LASTINFO='';
-  LASTFIX='';
+  LASTFIX='';S.pageCtx=null;
   const byH=fixNegCols(pageRecordsByHeader(text));if(byH){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่านตามหัวคอลัมน์ในหน้า · '+byH.length+' รายการ'+(LASTFIX?' · '+LASTFIX:'');return mergeRows(rows,byH)}
   const recs=fixNegCols(pageRecords(text));if(recs.length){LASTINFO='ตรวจพบการคัดลอกทั้งหน้า · อ่าน '+recs.length+' รายการ'+(LASTFIX?' · '+LASTFIX:'');return mergeRows(rows,recs)}
   const t=tableOf(text).map(r=>r.map(nz)).filter(r=>r.some(x=>x!==''));if(!t.length)return rows;
@@ -961,6 +986,7 @@ function gridToMap(rows){
     if(!r.some(x=>nz(x)!==''))return;
     const code=nz(r[1]),bo=numOf(nz(r[7]));
     if(!code||bo==null){bad.add(i);return}
+    if(SKIPOWN(r[2]))return;
     const nm=nz(r[5]);
     map.set(code,{code,name:nm.startsWith(code+'-')?nm.slice(code.length+1):nm,pack:numOf(r[8]),bo,plan:numOf(r[12]),
       owner:tx(nz(r[2])),safety:numOf(r[4]),onhand:numOf(r[6]),rop:numOf(r[9]),order:tx(nz(r[10])),need:numOf(r[11]),
@@ -978,7 +1004,7 @@ function parsePasted(text){
   const at=(r,f)=>ix[f]>=0&&ix[f]<r.length?String(r[ix[f]]).trim():'';
   const tx=v=>v==='-'?'':v;const map=new Map();
   for(let i=h+1;i<rows.length;i++){const r=rows[i];const code=at(r,'code'),bo=numOf(at(r,'bo'));
-    if(!code||bo==null)continue;
+    if(!code||bo==null||SKIPOWN(at(r,'owner')))continue;
     const nm=at(r,'name');
     map.set(code,{code,name:nm.startsWith(code+'-')?nm.slice(code.length+1):nm,pack:numOf(at(r,'pack')),bo,plan:numOf(at(r,'plan')),
       owner:tx(at(r,'owner')),safety:numOf(at(r,'safety')),onhand:numOf(at(r,'onhand')),rop:numOf(at(r,'rop')),order:tx(at(r,'order')),need:numOf(at(r,'need')),
@@ -1008,6 +1034,9 @@ function compare(A,B,older){
   const w=r=>r[5]<0?r[5]:1e9;
   rows.sort((x,y)=>w(x)-w(y));
   return{items,totals,rows};}
+/* Plan order 0 in the source app = no stock at the source warehouse (คลัง 5): nothing can be ordered, no action needed */
+const SKIPOWN=o=>String(o==null?'':o).trim().toUpperCase()==='WHAMT';
+const NOSTK=i=>i&&i.ordered===0,ORDF=i=>i&&typeof i.ordered==='number'&&i.ordered>0;
 const ROWKEYS=['code','name','owner','safety','onhand','bo','pack','rop','order','need','ordered','reason','desc','vol','freq','cv','stock','wh','quota','aBO','hist','hplan'];
 function rowObj(a){const o={};ROWKEYS.forEach((k,i)=>o[k]=a[i]);o.bBO=o.bo<0?-o.bo:0;o.cat=catOf(o.aBO,o.bBO);o.delta=o.bBO-o.aBO;return o}
 /*ENDCORE*/
@@ -1064,9 +1093,11 @@ function gridEdit(sd,td){
     if(e.target.isContentEditable)return;
     const text=(e.clipboardData&&e.clipboardData.getData('text/plain'))||'';if(!text.trim())return;
     e.preventDefault();
+    const before=G[sd].map(r=>r.slice());
     let rows=gridFromText(text,G[sd],GS[sd].r,GS[sd].c);
     while(rows.length<GROWS)rows.push(GK.map(()=>''));
-    G[sd]=rows;PI[sd]=lastInfo();gridChanged(sd);});
+    G[sd]=rows;PI[sd]=lastInfo();gridChanged(sd);
+    if(S.pageCtx)pgOpen(sd,before,S.pageCtx);});
   el.addEventListener('keydown',e=>{
     if(e.target.isContentEditable)return;const s0=GS[sd];
     const mv={ArrowDown:[1,0],ArrowUp:[-1,0],ArrowLeft:[0,-1],ArrowRight:[0,1],Tab:[0,1]}[e.key];
@@ -1207,7 +1238,7 @@ $('goCompare').addEventListener('click',async()=>{
 const F2=[['all','ทั้งหมด'],['new','BO ใหม่'],['up','เพิ่มขึ้น'],['same','เท่าเดิม'],['down','ลดลง'],['gone','หายไป'],['todo','ยังไม่ได้สั่ง'],['done','สั่งแล้ว']];
 function match(i,f,q){
   if(f==='todo'&&!(i.bBO&&i.ordered==null))return false;
-  if(f==='done'&&i.ordered==null)return false;
+  if(f==='done'&&!ORDF(i))return false;
   if(CAT[f]&&i.cat!==f)return false;
   if(q){q=q.toLowerCase();if(!(i.code.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)))return false}
   return true;}
@@ -1216,7 +1247,7 @@ function chips(el,list,cur,counts,onPick){
   el.onclick=e=>{const b=e.target.closest('.chip');if(b)onPick(b.dataset.k)};}
 function counts(items,list){const c={};list.forEach(([k])=>c[k]=items.filter(i=>match(i,k,'')).length);return c}
 function renderTiles(){
-  if(S.first){const it=S.cmp.items,t=S.cmp.totals,np=it.filter(i=>i.bBO&&i.ordered!=null),nn=it.filter(i=>i.bBO&&i.ordered==null);
+  if(S.first){const it=S.cmp.items,t=S.cmp.totals,np=it.filter(i=>i.bBO&&ORDF(i)),nn=it.filter(i=>i.bBO&&i.ordered==null);
     $('tiles').innerHTML=
      '<div class="tile"><span class="k">BO รอบนี้ (รอบแรก)</span><span class="v">'+fmt(t.bCount)+' รายการ</span><span class="s">รวม −'+fmt(t.bSum)+'</span></div>'+
      '<div class="tile"><span class="k">มี Plan order ในไฟล์แล้ว</span><span class="v">'+fmt(np.length)+' รายการ</span><span class="s">รวม −'+fmt(np.reduce((s,i)=>s+i.bBO,0))+'</span></div>'+
@@ -1239,7 +1270,7 @@ function renderS2(){
   $('tb2').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat];
     return '<tr><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n">'+fmt(i.pack)+'</td><td class="n" data-s="'+(i.aBO||0)+'">'+bo(i.aBO)+'</td><td class="n" data-s="'+(i.bBO||0)+'">'+bo(i.bBO)+'</td>'+
     '<td data-s="'+(S.first?'':(i.delta||0))+'">'+(S.first?'<span class="pill p-same">รอบแรก</span>':'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>')+'</td>'+
-    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':(i.bBO?'<span class="hint">ยังไม่ได้สั่ง</span>':''))+'</td>'+
+    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(NOSTK(i)?'<span class="pill p-nostk" title="Plan order 0 ในแอปต้นทาง = ไม่มีของที่คลัง 5 สั่งไม่ได้">ไม่มีของ คลัง 5</span>':i.ordered!=null?'<span class="pill p-ord">สั่งแล้ว '+fmt(i.ordered)+'</span>':(i.bBO?'<span class="hint">ยังไม่ได้สั่ง</span>':''))+'</td>'+
     '<td class="n" data-s="'+(i.bBO||0)+'">'+histHtml(i,S.cmp.rounds)+'</td></tr>'}).join('')
     :'<tr><td colspan="7" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb2');fitSoon();}
@@ -1265,7 +1296,9 @@ S.rows=[];S.orders=new Map();S.unsubOrders=null;S.addCode=null;
 const pRev=p=>(p&&p.rev)||0, pBase=p=>(p&&p.base)||0;
 const oMatch=(p,o)=>!!o&&((o.rev||0)===pRev(p));
 const isDoneP=(p,o)=>oMatch(p,o)&&!!o.done;
-const isSkipP=(p,o)=>oMatch(p,o)&&!o.done&&!!o.note;
+const isSkipP=(p,o)=>oMatch(p,o)&&!o.done&&(!!o.skip||!!o.note);
+/* one shared note per item (store and system staff write the same field); old rounds may still hold a separate system note */
+const noteOf=(p,o)=>{const a=(p&&p.note)||'',b=oMatch(p,o)&&o.note?o.note:'';return b&&b!==a?(a?a+' · ':'')+b:a};
 const orderedTotal=(p,o)=>pBase(p)+(isDoneP(p,o)&&p&&typeof p.qty==='number'?p.qty:0);
 const planTotal=p=>p&&typeof p.qty==='number'?pBase(p)+p.qty:null;
 const isDoneC=c=>isDoneP(S.plans.get(c),S.orders.get(c));
@@ -1297,17 +1330,18 @@ window.addEventListener('scroll',closeHistPop,true);window.addEventListener('res
 const cell=(v,cls)=>'<td'+(cls?' class="'+cls+'"':'')+'>'+(v==null||v===''?'':esc(v))+'</td>';
 function m3(i,f,q){
   const p=S.plans.get(i.code),o=S.orders.get(i.code),done=isDoneP(p,o),has=!!(p&&p.qty!=null);
-  if(f==='bo'&&!i.bBO)return false;
-  if(f==='empty'&&has)return false;if(f==='filled'&&!has)return false;
-  if(f==='undone'&&!(has&&!done&&i.ordered==null))return false;if(f==='done'&&!(done||i.ordered!=null))return false;
+  if(f==='bo'&&(!i.bBO||NOSTK(i)))return false;
+  if(f==='empty'&&(has||NOSTK(i)))return false;if(f==='filled'&&!has)return false;
+  if(f==='undone'&&!(has&&!done&&i.ordered==null))return false;if(f==='done'&&!(done||ORDF(i)))return false;
   if(f==='skip'&&!isSkipP(p,o))return false;
   if(q){q=q.toLowerCase();if(!(i.code.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)))return false}
   return true;}
-const STL={done:'สั่งแล้ว',file:'สั่งแล้ว (ไฟล์)',skip:'ไม่สั่งตามแพลน',plan:'รอสั่ง',bo:'BO ไม่มี Plan'};
+const STL={nostk:'ไม่มีของ คลัง 5',done:'สั่งแล้ว',file:'สั่งแล้ว (ไฟล์)',skip:'ไม่สั่งตามแพลน',plan:'รอสั่ง',bo:'BO ไม่มี Plan'};
 function stateOf(i){const p=S.plans.get(i.code),o=S.orders.get(i.code),has=!!(p&&p.qty!=null);
   if(isDoneP(p,o))return'done';
   if(isSkipP(p,o))return'skip';
-  if(i.ordered!=null)return'file';
+  if(NOSTK(i)&&!has)return'nostk';
+  if(ORDF(i))return'file';
   if(has)return'plan';
   if(i.bBO)return'bo';
   return'';}
@@ -1322,17 +1356,17 @@ function renderRunSel(){
 function renderS3(){
   const items=S.rows,q=$('q3').value.trim();
   $('runMeta').textContent=S.run?(S.run.first?('รอบแรก · '+S.run.fileB):(S.run.fileA+'  VS  '+S.run.fileB)):'';
-  $('roleHint').textContent=S.run?('หน้าร้านกรอก Plan order และหมายเหตุ · พนักงานระบบติ๊ก "สั่งแล้ว"'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')+' และใส่หมายเหตุเมื่อไม่สั่งตามแพลน · ช่องหมายเหตุไม่บังคับ'):'';
+  $('roleHint').textContent=S.run?('หน้าร้านกรอก Plan order · ฝ่ายระบบติ๊ก "สั่งแล้ว"'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')+' · ช่องหมายเหตุใช้ร่วมกันทั้งหน้าร้านและระบบ (ไม่บังคับ)'):'';
   const cts={};F3.forEach(([k])=>cts[k]=items.filter(i=>m3(i,k,'')).length);
   chips($('chips3'),F3,S.f3,cts,k=>{S.f3=k;renderS3()});
   $('f3sel').innerHTML=F3.map(([k,l])=>'<option value="'+k+'"'+(k===S.f3?' selected':'')+'>'+esc(l)+' ('+cts[k]+')</option>').join('');
   if(!S.run)renderOS();
-  if(!S.run){$('tb3').innerHTML='<tr><td colspan="25" class="empty">ยังไม่มีรอบที่บันทึก ให้ฝ่ายนำเข้าไฟล์ เทียบ BO และกดบันทึกรอบก่อน</td></tr>';updateProg();return}
+  if(!S.run){$('tb3').innerHTML='<tr><td colspan="24" class="empty">ยังไม่มีรอบที่บันทึก ให้ฝ่ายนำเข้าไฟล์ เทียบ BO และกดบันทึกรอบก่อน</td></tr>';updateProg();return}
   const rows=items.filter(i=>m3(i,S.f3,q));
   const lock=isLocked(S.run),lk=lock?' disabled':'',dis=(S.canEdit&&!lock)?'':' disabled';
   S.lockShown=lock;$('roleHint').classList.toggle('notice',lock);
   $('roleHint').title=lock?'รอบนี้ล็อกแล้ว ดูได้อย่างเดียว':'';
-  $('roleTip').textContent=S.run?('หน้าร้านกรอก Plan order และหมายเหตุ · ฝ่ายระบบติ๊ก "สั่งแล้ว" และใส่หมายเหตุเมื่อไม่สั่งตามแพลน'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')):'';
+  $('roleTip').textContent=S.run?('หน้าร้านกรอก Plan order · ฝ่ายระบบติ๊ก "สั่งแล้ว" · ช่องหมายเหตุใช้ร่วมกันทั้งสองฝ่าย'+(S.canEdit?'':' (บัญชีนี้ติ๊กไม่ได้)')):'';
   $('roleHint').hidden=!lock;
   if(lock)$('roleHint').textContent='🔒 รอบนี้บันทึกเมื่อ '+when(S.run.createdAt)+' และผ่านเที่ยงคืนแล้ว จึงดูได้อย่างเดียว แก้ไขไม่ได้ · ข้อมูลยังใช้เทียบกับรอบถัดไปได้ตามปกติ';
   $('tb3').innerHTML=rows.length?rows.map(i=>{const c=CAT[i.cat],p=S.plans.get(i.code)||{},o=S.orders.get(i.code)||{};
@@ -1341,13 +1375,12 @@ function renderS3(){
     cell(i.owner)+cell(i.safety,'n')+cell(fmt(i.onhand),'n')+'<td class="n" data-s="'+(i.bBO?-i.bBO:(i.bo||0))+'">'+(i.bBO?bo(i.bBO):(i.bo>0?'<span class="hint">+'+fmt(i.bo)+'</span>':'<span class="hint">0</span>'))+'</td>'+
     '<td data-s="'+(c?(i.delta||0):'')+'"><div class="cmpc">'+(c?'<span class="pill '+c[1]+'">'+(i.cat==='up'||i.cat==='down'?'<span class="lf">'+c[0]+' </span>'+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'<span class="lf">'+c[0]+'</span><span class="ls">'+CSHORT[i.cat]+'</span>')+'</span>':'')+histHtml(i,S.run&&S.run.rounds)+'</div></td>'+
     cell(fmt(i.pack),'n')+cell(fmt(i.rop),'n')+cell(i.order)+cell(fmt(i.need),'n')+
-    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(i.ordered!=null?'<span class="pill p-ord"><span class="lf">สั่งแล้ว </span>'+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
+    '<td class="n" data-s="'+(i.ordered!=null?i.ordered:'')+'">'+(NOSTK(i)?'<span class="pill p-nostk" title="Plan order 0 ในแอปต้นทาง = ไม่มีของที่คลัง 5"><span class="lf">ไม่มีของ</span><span class="ls">0</span></span>':i.ordered!=null?'<span class="pill p-ord"><span class="lf">สั่งแล้ว </span>'+fmt(i.ordered)+'</span>':'<span class="hint">–</span>')+'</td>'+
     '<td class="n ec" data-qc>'+qtyCell(i)+'</td>'+
-    '<td class="ec">'+(lock?'<span class="nv" title="'+esc(p.note||'')+'">'+esc(p.note||'')+'</span>':'<input type="text" class="note" data-f="fnote" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุหน้าร้าน '+esc(i.code)+'" value="'+esc(p.note||'')+'" placeholder="ไม่บังคับ">')+'</td>'+
+    '<td class="ec">'+(lock?'<span class="nv" title="'+esc(noteOf(p,o))+'">'+esc(noteOf(p,o))+'</span>':'<input type="text" class="note" data-f="fnote" list="osReasons" id="fn_'+esc(i.code)+'" aria-label="หมายเหตุ '+esc(i.code)+'" value="'+esc(noteOf(p,o))+'" placeholder="ไม่บังคับ">')+'</td>'+
     '<td class="ck ec"><input type="checkbox" class="tick" data-f="done" id="d_'+esc(i.code)+'" aria-label="สั่งแล้ว '+esc(i.code)+'"'+(isDoneP(S.plans.get(i.code),S.orders.get(i.code))?' checked':'')+dis+'></td>'+
-    '<td class="ec"><input type="text" class="note" data-f="onote" list="osReasons" id="on_'+esc(i.code)+'" aria-label="หมายเหตุระบบ '+esc(i.code)+'" value="'+esc(oMatch(p,o)?o.note||'':'')+'" placeholder="ไม่บังคับ"'+dis+'></td>'+
     cell(i.reason)+cell(i.desc)+cell(i.vol)+cell(i.freq)+cell(i.cv)+cell(fmt(i.stock),'n')+cell(i.wh)+cell(fmt(i.quota),'n')+'<td class="who" data-who></td></tr>'}).join('')
-    :'<tr><td colspan="25" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+    :'<tr><td colspan="24" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb3');
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
   fillWho();updateProg();renderOS();fitSoon();}
@@ -1358,10 +1391,11 @@ const ICON={
   undo:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.5L2 6.5l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 6.5H10a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'};
 function qtyCell(i){
   const code=i.code,p=S.plans.get(code)||{},o=S.orders.get(code),lock=isLocked(S.run),done=isDoneP(p,o),base=pBase(p),tot=orderedTotal(p,o);
-  const warn='<span class="fw"'+(i.ordered!=null?' title="สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ">⚠':'>')+'</span>';
+  const warn='<span class="fw"'+(ORDF(i)?' title="สั่งไปแล้ว '+fmt(i.ordered)+' (ในไฟล์) ตรวจก่อนกรอกซ้ำ">⚠':'>')+'</span>';
   if(S.addCode===code&&done&&!lock)
     return '<div class="qc"><span class="okb" title="สั่งแล้วทั้งหมด">สั่ง '+fmt(tot)+'</span><span class="fw"></span><span class="qin"><input type="text" class="qty" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-pk="'+(num(i.pack)||1)+'" data-min="1" data-add id="add_'+esc(code)+'" aria-label="จำนวนที่จะเพิ่ม '+esc(code)+'" placeholder="+"><span class="spn"><button type="button" class="spb" data-spin="1" tabindex="-1" title="เพิ่ม 1 Pack key" aria-label="เพิ่ม 1 Pack key">▲</button><button type="button" class="spb" data-spin="-1" tabindex="-1" title="ลด 1 Pack key" aria-label="ลด 1 Pack key">▼</button></span></span>'+
       '<span class="qa"><button type="button" class="ib ok" data-act="addok" title="บันทึกจำนวนที่เพิ่ม" aria-label="บันทึกจำนวนที่เพิ่ม">'+ICON.ok+'</button><button type="button" class="ib" data-act="addno" title="ยกเลิก" aria-label="ยกเลิก">'+ICON.no+'</button></span></div>';
+  if(NOSTK(i)&&!(p.qty!=null)&&!base)return '<div class="qc"><span class="fw"></span><span class="qv hint" title="Plan order 0 ในแอปต้นทาง = ไม่มีของที่คลัง 5 สั่งไม่ได้">สั่งไม่ได้</span><span class="qa"></span></div>';
   let h='<div class="qc">';
   if(done&&base>0)h+='<span class="okb" title="สั่งแล้วทั้งหมด (รวมที่เพิ่ม Plan)">สั่ง '+fmt(tot)+'</span>';
   else if(base>0)h+='<span class="okb" title="สั่งไปแล้ว '+fmt(base)+' · ที่กรอกคือจำนวนที่เพิ่ม รอสั่ง">สั่ง '+fmt(base)+' +</span>';
@@ -1388,7 +1422,7 @@ function syncCells(){
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{
     const code=tr.dataset.code,p=S.plans.get(code)||{},o=S.orders.get(code)||{},it=S.rows.find(i=>i.code===code);
     const set=(f,v)=>{const el=tr.querySelector('[data-f="'+f+'"]');if(el&&document.activeElement!==el){if(el.type==='checkbox')el.checked=!!v;else el.value=v==null?'':v}};
-    set('fnote',p.note);set('done',isDoneP(S.plans.get(code),S.orders.get(code)));set('onote',oMatch(S.plans.get(code),S.orders.get(code))?o.note:'');
+    set('fnote',noteOf(S.plans.get(code),S.orders.get(code)));set('done',isDoneP(S.plans.get(code),S.orders.get(code)));
     const qc=tr.querySelector('[data-qc]');if(qc&&it&&!qc.contains(document.activeElement)){const h=qtyCell(it);if(qc.dataset.h!==h){qc.innerHTML=h;qc.dataset.h=h}}
     if(it)applyState(tr,it);});
   fillWho();updateProg();}
@@ -1402,7 +1436,7 @@ $('tb3').addEventListener('change',async e=>{
   if(!navigator.onLine){msg.textContent='ออฟไลน์ · บันทึกไว้ในเครื่องแล้ว จะส่งเองเมื่อเน็ตกลับมา'}
   try{
     if(f==='qty'||f==='fnote'){
-      const v=g('qty').value.trim(),note=g('fnote').value.trim();
+      const qi=g('qty'),pv=S.plans.get(code),v=qi?qi.value.trim():(pv&&pv.qty!=null?String(pv.qty):''),note=g('fnote').value.trim();
       const qty=v===''?null:Math.max(0,Math.round(Number(v)));
       if(qty!=null&&!isFinite(qty)){g('qty').value='';return}
       const id='plans/'+S.runId+'__'+safeId(code),prev=S.plans.get(code),base=pBase(prev);
@@ -1413,11 +1447,11 @@ $('tb3').addEventListener('change',async e=>{
       else{const rec={runId:S.runId,code,qty,note,by:S.uid,at:Date.now()};if(prev&&prev.rev){rec.base=base;rec.rev=prev.rev;rec.steps=prev.steps||[]}
         S.plans.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
     }else{
-      const done=g('done').checked,note=g('onote').value.trim(),id='orders/'+S.runId+'__'+safeId(code),prev=S.orders.get(code);
+      const done=g('done').checked,note='',id='orders/'+S.runId+'__'+safeId(code),prev=S.orders.get(code);
       undo=()=>{if(prev)S.orders.set(code,prev);else S.orders.delete(code)};
       const pl=S.plans.get(code);
       if(!done&&!note){S.orders.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
-      else{const rec={runId:S.runId,code,done,note,by:S.uid,at:Date.now(),rev:pRev(pl),qty:pl&&typeof pl.qty==='number'?pl.qty:null};S.orders.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
+      else{const rec={runId:S.runId,code,done,skip:false,by:S.uid,at:Date.now(),rev:pRev(pl),qty:pl&&typeof pl.qty==='number'?pl.qty:null};S.orders.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
     }
     msg.textContent='บันทึกแล้ว ✓ '+code;clearTimeout(S.okT);S.okT=setTimeout(()=>{if(msg.textContent.startsWith('บันทึกแล้ว'))msg.textContent=''},2500);
   }catch(err){undo();msg.textContent='บันทึกไม่ได้ บัญชีนี้อาจไม่มีสิทธิ์ในช่องนี้ หรือการเชื่อมต่อมีปัญหา';syncCells();paint()}
@@ -1479,12 +1513,12 @@ document.querySelector('.tzseg').addEventListener('click',e=>{const b=e.target.c
 (()=>{
   const T3=document.querySelector('table.t3'),TH=[...T3.querySelectorAll('thead th')];
   const names=TH.map(th=>(th.querySelector('.lf')||th).textContent.trim().replace(/\s+/g,' '));
-  const CW0=[230,280,80,90,80,80,170,70,60,60,90,100,190,170,80,170,170,170,80,80,60,90,150,100,200];
-  const MAIN=new Set([0,1,4,5,6,7,10,11,12,13,14,15,24]);
+  const CW0=[230,280,80,90,80,80,170,70,60,60,90,100,190,220,80,170,170,80,80,60,90,150,100,200];
+  const MAIN=new Set([0,1,4,5,6,7,10,11,12,13,14,23]);
   let CW=CW0.slice(),CH=new Set();
-  try{const v=JSON.parse(localStorage.getItem('bo.cols.v2')||'null');
+  try{const v=JSON.parse(localStorage.getItem('bo.cols.v3')||'null');
     if(v&&Array.isArray(v.w)&&v.w.length===CW.length){CW=v.w.map((x,i)=>Math.max(50,+x||CW0[i]));CH=new Set((v.h||[]).filter(i=>i>0&&i<CW.length))}}catch(e){}
-  const save=()=>{try{localStorage.setItem('bo.cols.v2',JSON.stringify({w:CW,h:[...CH]}))}catch(e){}};
+  const save=()=>{try{localStorage.setItem('bo.cols.v3',JSON.stringify({w:CW,h:[...CH]}))}catch(e){}};
   T3.insertAdjacentHTML('afterbegin','<colgroup>'+CW.map(()=>'<col>').join('')+'</colgroup>');
   const COLS=[...T3.querySelectorAll('colgroup col')];
   TH.forEach((th,i)=>{const h=document.createElement('span');h.className='rz';h.dataset.i=i;h.title='ลากเพื่อปรับความกว้าง · ดับเบิลคลิกเพื่อรีเซ็ต';th.appendChild(h)});
@@ -1492,7 +1526,7 @@ document.querySelector('.tzseg').addEventListener('click',e=>{const b=e.target.c
   pop.innerHTML='<div class="bar"><button type="button" class="btn sm" data-p="all">แสดงทั้งหมด</button><button type="button" class="btn sm" data-p="main">เฉพาะคอลัมน์หลัก</button><button type="button" class="btn sm" data-p="w">รีเซ็ตความกว้าง</button></div>'+
     names.map((n,i)=>'<label class="xo2"><input type="checkbox" data-c="'+i+'"'+(i===0?' disabled':'')+'> '+esc(n)+'</label>').join('');
   /* compact view for a narrow window: code, Stock Forecast, Pack key, Plan order, store note, ordered tick. Its own widths, kept apart from the full view's. */
-  const FLEX=[1,13,15,16,17,24];
+  const FLEX=[1,13,15,16,23];
   const CSHOW=[0,4,5,6,7,11,12,13,14],NOTE=13,CWC0={0:98,4:38,5:50,6:54,7:34,11:34,12:96,13:36,14:28};
   let CWC=Object.assign({},CWC0);
   try{const v=JSON.parse(localStorage.getItem('bo.cols.c6')||'null');if(v)CSHOW.forEach(i=>{if(+v[i]>=40)CWC[i]=+v[i]})}catch(e){}
@@ -1565,9 +1599,9 @@ function openOS(){
   const pend=osPending();if(!pend.length){commitOS({});return}
   $('osBody').innerHTML='<h2>ยังสั่งไม่ครบตามที่หน้าร้านกรอก</h2><p class="hint">มี '+pend.length+' รายการที่มี Plan order แต่ยังไม่ได้ติ๊กสั่งแล้ว กรุณาใส่เหตุผลทุกรายการก่อนบันทึก</p>'+
     '<div class="bar"><button type="button" class="btn sm" id="osAll">ใส่ "ตู้เต็ม" ทุกรายการ</button></div>'+
-    '<div class="osl">'+pend.map(i=>{const p=S.plans.get(i.code);return '<div class="osr"><div><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></div><div class="n">Plan '+fmt(p.qty)+'</div><input type="text" class="note" list="osReasons" data-os="'+esc(i.code)+'" placeholder="เหตุผล (บังคับ)" aria-label="เหตุผล '+esc(i.code)+'"></div>'}).join('')+'</div>'+
+    '<div class="osl">'+pend.map(i=>{const p=S.plans.get(i.code);return '<div class="osr"><div><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></div><div class="n">Plan '+fmt(p.qty)+'</div><input type="text" class="note" list="osReasons" data-os="'+esc(i.code)+'" value="'+esc(noteOf(p,S.orders.get(i.code)))+'" placeholder="เหตุผล (บังคับ)" aria-label="เหตุผล '+esc(i.code)+'"></div>'}).join('')+'</div>'+
     '<div class="bar"><button type="button" class="btn primary" id="osOk" disabled>บันทึกการสั่ง</button><button type="button" class="btn" id="osNo">ยกเลิก</button></div>';
-  $('osPanel').hidden=false;}
+  $('osPanel').hidden=false;osCheck();}
 function osCheck(){const ins=[...$('osBody').querySelectorAll('input[data-os]')];$('osOk').disabled=!ins.every(x=>x.value.trim())}
 $('saveOrder').addEventListener('click',openOS);
 $('osBody').addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.os!=null)osCheck()});
@@ -1578,7 +1612,9 @@ $('osBody').addEventListener('click',e=>{
 async function commitOS(reasons){
   const msg=$('s3msg');closeOS();if(!S.run||isLocked(S.run))return;
   try{
-    for(const code of Object.keys(reasons)){const pl=S.plans.get(code);const rec={runId:S.runId,code,done:false,note:reasons[code],by:S.uid,at:Date.now(),rev:pRev(pl)};S.orders.set(code,rec);if(S.db)await S.db.doc('orders/'+S.runId+'__'+safeId(code)).set(rec)}
+    for(const code of Object.keys(reasons)){const pl=S.plans.get(code);
+      if(pl&&(pl.note||'')!==reasons[code]){const np=Object.assign({},pl,{note:reasons[code]});S.plans.set(code,np);if(S.db)await S.db.doc('plans/'+S.runId+'__'+safeId(code)).set(np)}
+      const rec={runId:S.runId,code,done:false,skip:true,by:S.uid,at:Date.now(),rev:pRev(pl)};S.orders.set(code,rec);if(S.db)await S.db.doc('orders/'+S.runId+'__'+safeId(code)).set(rec)}
     const pl=osPlanned(),done=pl.filter(i=>isDoneC(i.code)).length;
     const os={at:Date.now(),by:S.uid||null,planned:pl.length,done,skipped:pl.length-done};
     S.run.orderSaved=os;if(S.db&&S.runId!=='local')await S.db.doc('runs/'+S.runId).update({orderSaved:os});
@@ -1593,7 +1629,7 @@ async function selectRun(id){
   if(!S.run){renderS3();return}
   const mk=arr=>{const r=arr.map(rowObj);if(S.run&&S.run.first)r.forEach(o=>{o.cat='';o.delta=0});return r};
   if(S.run.rows)S.rows=mk(S.run.rows);
-  else if(S.db){$('tb3').innerHTML='<tr><td colspan="25" class="empty">กำลังโหลดรายการ…</td></tr>';
+  else if(S.db){$('tb3').innerHTML='<tr><td colspan="24" class="empty">กำลังโหลดรายการ…</td></tr>';
     try{const snap=await S.db.collection('runs/'+id+'/chunks').get();if(S.runId!==id)return;
       S.rows=mk([...snap.docs].sort((x,y)=>x.id<y.id?-1:1).flatMap(d=>decRows(d.data().rows)))}
     catch(e){$('s3msg').textContent='โหลดรายการของรอบนี้ไม่ได้'}}
@@ -1618,9 +1654,9 @@ $('dlCompare').addEventListener('click',()=>{
     .concat(S.cmp.items.map(i=>[i.code,i.name,i.pack,-i.aBO,-i.bBO,i.delta,(S.first?'รอบแรก':CAT[i.cat][0]),i.ordered==null?'':i.ordered]));
   saveXlsx('เทียบ BO.xlsx',rows,[18,50,9,12,12,16,14,16],'เทียบ BO');});
 $('dlPlan').addEventListener('click',()=>{
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะ (ระบบ)','สั่งแล้วสะสม (ระบบ)','หมายเหตุระบบ','สั่งแล้ว (ในไฟล์)']];
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Pack key','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุ','สถานะ (ระบบ)','สั่งแล้วสะสม (ระบบ)','สั่งแล้ว (ในไฟล์)']];
   S.rows.forEach(i=>{const p=S.plans.get(i.code),o=S.orders.get(i.code),dn=isDoneP(p,o),sk=isSkipP(p,o),tot=orderedTotal(p,o);
-    if(p&&(p.qty>0||p.note||pBase(p))||o)rows.push([i.code,i.name,i.pack,i.bo<0?i.bo:'',p&&p.qty!=null?p.qty:'',p?p.note:'',dn?'สั่งแล้ว':sk?'ไม่สั่ง':(p&&p.qty>0?'รอสั่ง':''),tot||'',sk&&o?o.note:(dn&&o?o.note||'':''),i.ordered==null?'':i.ordered])});
+    if(p&&(p.qty>0||p.note||pBase(p))||o)rows.push([i.code,i.name,i.pack,i.bo<0?i.bo:'',p&&p.qty!=null?p.qty:'',noteOf(p,o),dn?'สั่งแล้ว':sk?'ไม่สั่ง':(p&&p.qty>0?'รอสั่ง':''),tot||'',NOSTK(i)?'ไม่มีของ คลัง 5':i.ordered==null?'':i.ordered])});
   if(rows.length===1){$('s3msg').textContent='ยังไม่มีรายการที่กรอก Plan order';return}
   saveXlsx('Plan order.xlsx',rows,[18,50,9,10,14,28,12,16,28,16],'Plan order');});
 
@@ -1679,7 +1715,7 @@ function renderHist(){
 $('histList').addEventListener('click',e=>{const c=e.target.closest('.hc');if(c)openHist(c.dataset.id)});
 $('hBack').addEventListener('click',()=>{S.hid=null;renderHist()});
 const hState=(i,H)=>{const p=H.plans.get(i.code),o=H.orders.get(i.code),has=!!(p&&typeof p.qty==='number'&&p.qty>0);
-  if(isDoneP(p,o))return'done';if(isSkipP(p,o))return'skip';if(has)return'wait';return''};
+  if(isDoneP(p,o))return'done';if(isSkipP(p,o))return'skip';if(has)return'wait';if(NOSTK(i))return'nostk';return''};
 async function openHist(id){
   const run=histRuns().find(r=>r.id===id)||S.runs.find(r=>r.id===id);if(!run)return;
   S.hid=id;S.hf='all';$('q4').value='';$('histListBox').hidden=true;$('histDetail').hidden=false;
@@ -1710,18 +1746,18 @@ function renderHistTable(){
   chips($('chips4'),HF,S.hf,cts,k=>{S.hf=k;renderHistTable()});
   const rows=H.rows.filter(i=>ok(i,S.hf)&&(!q||i.code.toLowerCase().includes(q)||String(i.name).toLowerCase().includes(q)));
   $('tb4').innerHTML=rows.length?rows.map(i=>{const p=H.plans.get(i.code)||{},o=H.orders.get(i.code)||{},st=hState(i,H),c=CAT[i.cat];
-    const stat=st==='done'?'<span class="pill p-down">สั่งแล้ว</span>':st==='skip'?'<span class="pill p-up">ไม่สั่ง</span>':st==='wait'?'<span class="pill p-ord">รอสั่ง</span>':'';
+    const stat=st==='nostk'?'<span class="pill p-nostk">ไม่มีของ คลัง 5</span>':st==='done'?'<span class="pill p-down">สั่งแล้ว</span>':st==='skip'?'<span class="pill p-up">ไม่สั่ง</span>':st==='wait'?'<span class="pill p-ord">รอสั่ง</span>':'';
     const who=[p.by?'หน้าร้าน: '+(S.names[p.by]||'')+' '+when(p.at):'',o.by?'ระบบ: '+(S.names[o.by]||'')+' '+when(o.at):''].filter(Boolean).map(esc).join('<br>');
     return '<tr class="'+(st?'hs-'+st:'')+'"><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n" data-s="'+(i.bBO||0)+'">'+(i.bBO?bo(i.bBO):'<span class="hint">0</span>')+histHtml(i,H.run.rounds)+'</td>'+
       '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
-      '<td class="n" data-s="'+(p.qty!=null?p.qty:'')+'">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td>'+'<td>'+esc(i.vol||'')+'</td><td>'+esc(i.freq||'')+'</td><td>'+esc(i.cv||'')+'</td><td class="n" data-s="'+(i.stock!=null&&i.stock!==''?i.stock:'')+'">'+(i.stock!=null&&i.stock!==''?fmt(i.stock):'<span class="hint">–</span>')+'</td>'+'</tr>'}).join('')
-    :'<tr><td colspan="12" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
+      '<td class="n" data-s="'+(p.qty!=null?p.qty:'')+'">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(noteOf(p,o))+'</td><td>'+stat+'</td><td class="who">'+who+'</td>'+'<td>'+esc(i.vol||'')+'</td><td>'+esc(i.freq||'')+'</td><td>'+esc(i.cv||'')+'</td><td class="n" data-s="'+(i.stock!=null&&i.stock!==''?i.stock:'')+'">'+(i.stock!=null&&i.stock!==''?fmt(i.stock):'<span class="hint">–</span>')+'</td>'+'</tr>'}).join('')
+    :'<tr><td colspan="11" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb4');fitSoon();}
 $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ','Sales volume class','Frequency class','CV class','Stock คลังต้นทาง']];
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุ','สถานะการสั่ง','สั่งแล้วสะสม','Sales volume class','Frequency class','CV class','Stock คลังต้นทาง']];
   H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
-    rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',oMatch(p,o)&&o?o.note||'':'',i.vol||'',i.freq||'',i.cv||'',i.stock!=null&&i.stock!==''?i.stock:''])});
-  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,14,28,14,14,28,10,10,8,12],'ประวัติ');});
+    rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',noteOf(p,o),st==='nostk'?'ไม่มีของ คลัง 5':st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',i.vol||'',i.freq||'',i.cv||'',i.stock!=null&&i.stock!==''?i.stock:''])});
+  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,14,30,14,14,10,10,8,12],'ประวัติ');});
 
 /* ---------- click a column header to sort: ▲ ascending → ▼ descending → back to normal order. Blanks always go last. ---------- */
 function sortVal(td){
@@ -1781,12 +1817,14 @@ $('rail').addEventListener('click',e=>{const b=e.target.closest('.step');if(b&&!
 /* ---------- per-user column matching ---------- */
 const MAPREQ=['code','name','bo','plan'],MAPF=MAPREQ.concat(GK.filter(f=>f!=='no'&&!MAPREQ.includes(f)));
 function refreshMapBtn(){const b=$('mapBtn');if(b){b.disabled=!(S.lastHdr&&S.lastHdr.length);b.classList.toggle('on',Object.keys(S.UM).length>0)}}
-function umLoadLocal(){try{const v=JSON.parse(localStorage.getItem('bo.colmap.'+(S.uid||'local'))||'null');S.UM=v&&typeof v==='object'?v:{}}catch(e){S.UM={}}}
+function umLoadLocal(){try{const v=JSON.parse(localStorage.getItem('bo.colmap.'+(S.uid||'local'))||'null');S.UM=v&&typeof v==='object'?v:{}}catch(e){S.UM={}}
+  try{const v=JSON.parse(localStorage.getItem('bo.pagemap.'+(S.uid||'local'))||'null');S.PM=v&&typeof v==='object'?v:{}}catch(e){S.PM={}}}
 async function umLoad(){umLoadLocal();
-  if(S.db&&S.uid){try{const d=await S.db.doc('prefs/'+S.uid).get();if(d.exists&&d.data().colmap){S.UM=d.data().colmap;try{localStorage.setItem('bo.colmap.'+S.uid,JSON.stringify(S.UM))}catch(e){}}}catch(e){}}
+  if(S.db&&S.uid){try{const d=await S.db.doc('prefs/'+S.uid).get();if(d.exists&&d.data().colmap){S.UM=d.data().colmap;try{localStorage.setItem('bo.colmap.'+S.uid,JSON.stringify(S.UM))}catch(e){}}
+    if(d.exists&&d.data().pagemap){S.PM=d.data().pagemap;try{localStorage.setItem('bo.pagemap.'+S.uid,JSON.stringify(S.PM))}catch(e){}}}catch(e){}}
   refreshMapBtn()}
 async function umSave(m){S.UM=m;try{localStorage.setItem('bo.colmap.'+(S.uid||'local'),JSON.stringify(m))}catch(e){}
-  if(S.db&&S.uid){try{await S.db.doc('prefs/'+S.uid).set({colmap:m,at:Date.now()});return true}catch(e){return false}}return true}
+  if(S.db&&S.uid){try{await S.db.doc('prefs/'+S.uid).set({colmap:m,pagemap:S.PM||{},at:Date.now()});return true}catch(e){return false}}return true}
 function openMap(){
   const hdr=S.lastHdr||[],cm=S.lastCM||[],seen=new Set(),opts=[];
   hdr.forEach((c,i)=>{const k=NORM(c);if(k&&!seen.has(k)){seen.add(k);opts.push([k,String(c).trim(),i])}});
@@ -1917,6 +1955,53 @@ $('pwForm').addEventListener('submit',async e=>{e.preventDefault();const m=$('pw
   try{const u=fauth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,$('pwCur').value));await u.updatePassword(n);
     m.textContent='เปลี่ยนรหัสผ่านแล้ว';setTimeout(()=>{$('pwOv').hidden=true},900)}
   catch(er){m.textContent=er&&(er.code==='auth/invalid-credential'||er.code==='auth/wrong-password')?'รหัสผ่านปัจจุบันไม่ถูกต้อง':errTh(er)}});
+
+/* ---- after a whole-page paste: show one product's key numbers so the user can compare with the source app; "ไม่ถูก" lets them pick each column, and the choice is kept for this page layout ---- */
+async function pmSave(){try{localStorage.setItem('bo.pagemap.'+(S.uid||'local'),JSON.stringify(S.PM||{}))}catch(e){}
+  if(S.db&&S.uid){try{await S.db.doc('prefs/'+S.uid).set({colmap:S.UM||{},pagemap:S.PM||{},at:Date.now()})}catch(e){}}}
+const PG={};
+function pgOpen(sd,before,ctx){
+  const val=(c,f,m)=>m[f]!=null&&m[f]>=0?c[m[f]]:'';
+  /* sample products: the ones whose key numbers differ the most from each other are the easiest to check */
+  const score=c=>{const v=PGF.map(([f])=>val(c,f,ctx.colOf)).filter(x=>x!==''&&x!=='-');return new Set(v).size+(v.some(x=>/^-/.test(x))?2:0)};
+  const idx=ctx.cells.map((c,i)=>[i,score(c)]).filter(([i])=>{const c=ctx.cells[i],code=c[ctx.colOf.code!=null?ctx.colOf.code:1];return code&&(c[ctx.colOf.name]||'').startsWith(code+'-')&&!SKIPOWN(val(c,'owner',ctx.colOf))})
+    .sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
+  if(!idx.length)return;
+  Object.assign(PG,{sd,before,ctx,idx,k:0,edit:false,m:Object.assign({},ctx.colOf)});
+  pgRender();$('pgChk').hidden=false;}
+function pgRender(){
+  const {ctx,idx,k,edit,m}=PG,c=ctx.cells[idx[k]],code=c[ctx.colOf.code!=null?ctx.colOf.code:1],name=c[ctx.colOf.name]||'';
+  const shown=v=>v===''||v==null?'<span class="hint">(ว่าง)</span>':(/^-/.test(v)?'<span class="bo">'+esc(v)+'</span>':esc(v));
+  const opts=f=>{let h='<option value="-1"'+(!(m[f]>=0)?' selected':'')+'>— ไม่มีคอลัมน์นี้ —</option>';
+    for(let j=1;j<ctx.N;j++){if(j===ctx.colOf.name||j===(ctx.colOf.code!=null?ctx.colOf.code:1))continue;
+      const l=ctx.lab[j]&&ctx.lab[j][0]!=='@'&&ctx.lab[j]!=='@?'?' · หัว '+ctx.lab[j]:'';
+      h+='<option value="'+j+'"'+(m[f]===j?' selected':'')+'>ช่องที่ '+j+': '+esc(c[j]===''?'(ว่าง)':c[j])+esc(l)+'</option>'}
+    return h};
+  $('pgBody').innerHTML='<h2>'+(edit?'เลือกคอลัมน์ให้ตรงกับแอปต้นทาง':'ตรวจว่าอ่านคอลัมน์ถูกไหม')+'</h2>'+
+    '<p class="hint">'+(edit?'ดูตัวเลขของสินค้าตัวอย่างในแอปต้นทาง แล้วเลือกช่องที่มีตัวเลขเดียวกัน':'เปิดแอปต้นทาง หาสินค้านี้ แล้วเทียบตัวเลขด้านล่าง')+(ctx.saved?' · ตอนนี้ใช้การจับคู่ที่คุณเคยแก้ไว้สำหรับหน้าแบบนี้':'')+'</p>'+
+    '<div class="smp"><b class="code">'+esc(code)+'</b><span class="nm">'+esc(name.slice(code.length+1))+'</span>'+(idx.length>1?'<button type="button" class="btn sm" data-pg="next">ตัวอย่างอื่น ('+(k+1)+'/'+idx.length+')</button>':'')+'</div>'+
+    '<table><tbody>'+PGF.map(([f,l])=>'<tr><th>'+esc(l)+'</th>'+(edit?'<td><select data-pgf="'+f+'" aria-label="คอลัมน์ของ '+esc(l)+'">'+opts(f)+'</select></td>':'<td class="n">'+shown(val0(c,f,m))+'</td>')+'</tr>').join('')+'</tbody></table>'+
+    '<div class="bar">'+(edit?'<button type="button" class="btn primary" data-pg="apply">ใช้การจับคู่นี้</button><button type="button" class="btn" data-pg="back">ยกเลิก</button>'
+      :'<button type="button" class="btn primary" data-pg="ok">ถูกต้อง</button><button type="button" class="btn" data-pg="edit">ไม่ถูก แก้เอง</button>')+
+    (ctx.saved&&!edit?'<button type="button" class="btn sm" data-pg="forget">ล้างการจับคู่ที่บันทึกไว้</button>':'')+'</div>';}
+const val0=(c,f,m)=>m[f]!=null&&m[f]>=0?c[m[f]]:'';
+function pgClose(){$('pgChk').hidden=true}
+function pgUse(m){
+  const {sd,before,ctx}=PG;
+  const rows=(pageBuild(ctx,m)||[]).filter(r=>!SKIPOWN(r[2]));
+  let out=mergeRows(before,rows);while(out.length<GROWS)out.push(GK.map(()=>''));
+  G[sd]=out;PI[sd]='ตรวจพบการคัดลอกทั้งหน้า · ใช้คอลัมน์ที่คุณเลือก · '+rows.length+' รายการ';gridChanged(sd);}
+$('pgBody').addEventListener('change',e=>{const x=e.target.closest('select[data-pgf]');if(x)PG.m[x.dataset.pgf]=+x.value});
+$('pgBody').addEventListener('click',async e=>{const b=e.target.closest('[data-pg]');if(!b)return;const a=b.dataset.pg;
+  if(a==='ok')pgClose();
+  else if(a==='next'){PG.k=(PG.k+1)%PG.idx.length;pgRender()}
+  else if(a==='edit'){PG.edit=true;pgRender()}
+  else if(a==='back'){PG.edit=false;PG.m=Object.assign({},PG.ctx.colOf);pgRender()}
+  else if(a==='apply'){const pick={};PGF.forEach(([f])=>pick[f]=PG.m[f]>=0?PG.m[f]:-1);
+    S.PM=Object.assign({},S.PM||{},{[PG.ctx.sig]:pick});pmSave();pgUse(PG.m);PG.ctx.colOf=Object.assign({},PG.m);PG.ctx.saved=true;PG.edit=false;pgRender()}
+  else if(a==='forget'){const pm=Object.assign({},S.PM||{});delete pm[PG.ctx.sig];S.PM=pm;pmSave();pgClose();
+    $('s1msg').textContent='ล้างการจับคู่ที่บันทึกไว้แล้ว วางข้อมูลใหม่อีกครั้งเพื่อให้แอปอ่านเอง'}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pgChk').hidden)pgClose()});
 paintNet();
 (function init(){
   if(!window.firebase||!FIREBASE_CONFIG.apiKey){
