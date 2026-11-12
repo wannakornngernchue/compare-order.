@@ -614,7 +614,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
       <div class="bar"><button type="button" class="btn sm" id="hBack">← กลับรายการ</button><h2 id="hTitle"></h2><span class="hint" id="hMeta"></span></div>
       <div class="bar"><span class="hint" id="hLock"></span><button type="button" class="btn sm" id="hOpen" hidden>เปิดในหน้ากรอก Plan order</button></div>
       <div class="bar"><div class="chips" id="chips4"></div><input type="search" class="grow" id="q4" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา"><button type="button" class="btn sm" id="hDl">ดาวน์โหลด (.xlsx)</button></div>
-      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th><th class="n">Plan order</th><th>หมายเหตุหน้าร้าน</th><th>สถานะการสั่ง</th><th>หมายเหตุระบบ</th><th>บันทึกโดย</th></tr></thead><tbody id="tb4"></tbody></table></div>
+      <div class="tw wide"><table><thead><tr><th>รหัส / สินค้า</th><th class="n">Stock Forecast</th><th>เทียบรอบก่อน</th><th class="n">Plan order</th><th>หมายเหตุหน้าร้าน</th><th>สถานะการสั่ง</th><th>หมายเหตุระบบ</th><th>บันทึกโดย</th><th>Sales volume class</th><th>Frequency class</th><th>CV class</th><th class="n">Stock คลังต้นทาง</th></tr></thead><tbody id="tb4"></tbody></table></div>
     </div>
   </section>
 
@@ -1714,15 +1714,14 @@ function renderHistTable(){
     const who=[p.by?'หน้าร้าน: '+(S.names[p.by]||'')+' '+when(p.at):'',o.by?'ระบบ: '+(S.names[o.by]||'')+' '+when(o.at):''].filter(Boolean).map(esc).join('<br>');
     return '<tr class="'+(st?'hs-'+st:'')+'"><td><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></td><td class="n" data-s="'+(i.bBO||0)+'">'+(i.bBO?bo(i.bBO):'<span class="hint">0</span>')+histHtml(i,H.run.rounds)+'</td>'+
       '<td data-s="'+(c?(i.delta||0):'')+'">'+(c?'<span class="pill '+c[1]+'">'+c[0]+(i.cat==='up'||i.cat==='down'?' '+(i.delta>0?'+':'−')+fmt(Math.abs(i.delta)):'')+'</span>':'')+'</td>'+
-      '<td>'+esc(i.vol||'')+'</td><td>'+esc(i.freq||'')+'</td><td>'+esc(i.cv||'')+'</td><td class="n" data-s="'+(i.stock!=null&&i.stock!==''?i.stock:'')+'">'+(i.stock!=null&&i.stock!==''?fmt(i.stock):'<span class="hint">–</span>')+'</td>'+
-      '<td class="n" data-s="'+(p.qty!=null?p.qty:'')+'">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td></tr>'}).join('')
+      '<td class="n" data-s="'+(p.qty!=null?p.qty:'')+'">'+(p.qty!=null?'<b>'+fmt(p.qty)+'</b>':'<span class="hint">–</span>')+(orderedTotal(p,o)?'<div class="nm">สั่งแล้วสะสม '+fmt(orderedTotal(p,o))+'</div>':(pBase(p)?'<div class="nm">สั่งแล้ว '+fmt(pBase(p))+'</div>':''))+'</td><td>'+esc(p.note||'')+'</td><td>'+stat+'</td><td>'+esc(oMatch(p,o)?o.note||'':'')+'</td><td class="who">'+who+'</td>'+'<td>'+esc(i.vol||'')+'</td><td>'+esc(i.freq||'')+'</td><td>'+esc(i.cv||'')+'</td><td class="n" data-s="'+(i.stock!=null&&i.stock!==''?i.stock:'')+'">'+(i.stock!=null&&i.stock!==''?fmt(i.stock):'<span class="hint">–</span>')+'</td>'+'</tr>'}).join('')
     :'<tr><td colspan="12" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb4');fitSoon();}
 $('hDl').addEventListener('click',()=>{const H=S.H;if(!H)return;
-  const rows=[['รหัสสินค้า','ชื่อสินค้า','Stock Forecast','Sales volume class','Frequency class','CV class','Stock คลังต้นทาง','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ']];
+  const rows=[['รหัสสินค้า','ชื่อสินค้า','Stock Forecast','Plan order (ล่าสุด)','หมายเหตุหน้าร้าน','สถานะการสั่ง','สั่งแล้วสะสม','หมายเหตุระบบ','Sales volume class','Frequency class','CV class','Stock คลังต้นทาง']];
   H.rows.forEach(i=>{const p=H.plans.get(i.code),o=H.orders.get(i.code);if(!(i.bBO||p||o))return;const st=hState(i,H);
-    rows.push([i.code,i.name,i.bBO?-i.bBO:0,i.vol||'',i.freq||'',i.cv||'',i.stock!=null&&i.stock!==''?i.stock:'',p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',oMatch(p,o)&&o?o.note||'':''])});
-  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,10,10,8,12,14,28,14,14,28],'ประวัติ');});
+    rows.push([i.code,i.name,i.bBO?-i.bBO:0,p&&p.qty!=null?p.qty:'',p?p.note||'':'',st==='done'?'สั่งแล้ว':st==='skip'?'ไม่สั่ง':st==='wait'?'รอสั่ง':'',orderedTotal(p,o)||'',oMatch(p,o)&&o?o.note||'':'',i.vol||'',i.freq||'',i.cv||'',i.stock!=null&&i.stock!==''?i.stock:''])});
+  saveXlsx('ประวัติ '+H.run.label+'.xlsx',rows,[18,50,9,14,28,14,14,28,10,10,8,12],'ประวัติ');});
 
 /* ---------- click a column header to sort: ▲ ascending → ▼ descending → back to normal order. Blanks always go last. ---------- */
 function sortVal(td){
