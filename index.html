@@ -518,7 +518,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
     <p class="hint">วางข้อมูลจากแอปต้นทางหรือนำเข้าไฟล์ Excel ลงตาราง 1 ชีทต่อ 1 รอบ กด "+ เพิ่มชีท" เมื่อมีรอบใหม่ แอปจะเทียบชีทล่าสุดกับชีทก่อนหน้าให้อัตโนมัติ (เพิ่มได้สูงสุด 4 ชีท)</p>
     <div class="shtabs" id="shTabs" role="tablist" aria-label="ชีทข้อมูลแต่ละรอบ"></div>
     <div class="bar">
-      <label class="btn sm" for="file" style="cursor:pointer">นำเข้าไฟล์ Excel</label><button type="button" class="btn sm" id="mapBtn" disabled title="นำเข้าไฟล์หรือวางข้อมูลก่อน แล้วกดเพื่อจับคู่คอลัมน์">⚙ จับคู่คอลัมน์</button><input type="file" id="file" accept=".xlsx,.xls" hidden aria-label="ไฟล์ Excel">
+      <label class="btn sm" for="file" style="cursor:pointer">นำเข้าไฟล์ Excel</label><button type="button" class="btn sm" id="pgAgain" hidden title="เปิดกล่องตรวจคอลัมน์ของข้อมูลที่วางล่าสุดอีกครั้ง">ตรวจคอลัมน์ที่วาง</button><button type="button" class="btn sm" id="mapBtn" disabled title="นำเข้าไฟล์หรือวางข้อมูลก่อน แล้วกดเพื่อจับคู่คอลัมน์">⚙ จับคู่คอลัมน์</button><input type="file" id="file" accept=".xlsx,.xls" hidden aria-label="ไฟล์ Excel">
       <span class="stat" id="stat"></span>
     </div>
     <div class="vsl" id="blkPA">
@@ -1098,7 +1098,7 @@ function gridEdit(sd,td){
     let rows=gridFromText(text,G[sd],GS[sd].r,GS[sd].c);
     while(rows.length<GROWS)rows.push(GK.map(()=>''));
     G[sd]=rows;PI[sd]=lastInfo();gridChanged(sd);
-    if(S.pageCtx)pgOpen(sd,before,S.pageCtx);});
+    if(S.pageCtx){PGL[sd]={before,ctx:S.pageCtx};PGL.last=sd;$('pgAgain').hidden=false;if(!S.pageCtx.saved)pgOpen(sd,before,S.pageCtx)}});
   el.addEventListener('keydown',e=>{
     if(e.target.isContentEditable)return;const s0=GS[sd];
     const mv={ArrowDown:[1,0],ArrowUp:[-1,0],ArrowLeft:[0,-1],ArrowRight:[0,1],Tab:[0,1]}[e.key];
@@ -1595,17 +1595,19 @@ function renderOS(){
   const ost=o?('บันทึกการสั่งแล้ว '+when(o.at)+' · สั่ง '+o.done+' จาก '+o.planned+' รายการ'+(o.skipped?' · ไม่สั่ง '+o.skipped+' (มีเหตุผล)':'')):(r?'ยังไม่ได้บันทึกการสั่ง':'');
   $('osInfo').textContent=o?('บันทึกแล้ว '+when(o.at)):'';$('osInfo').title=ost;b.title=ost;}
 function closeOS(){$('osPanel').hidden=true}
-/* reasons for "ไม่สั่งตามแพลน": one list shared by everyone (config/reasons), system staff can add or remove items */
+/* reasons for "ไม่สั่งตามแพลน": one list shared by everyone, system staff can add or remove items.
+   Kept in runs/_reasons so the existing security rules already allow it (members read, admins write); it has no createdAt, so the round lists never show it. */
+const REASON_DOC='runs/_reasons';
 const REASONS0=['ตู้เต็ม','ไม่มีสต็อคคลัง 5','เบิกแล้วไม่ได้'];
 S.reasons=REASONS0.slice();
 function paintReasons(){$('osReasons').innerHTML=S.reasons.map(r=>'<option value="'+esc(r)+'"></option>').join('')}
 paintReasons();
 let reasonsUnsub=null;
 function watchReasons(){if(reasonsUnsub||!S.db)return;
-  reasonsUnsub=S.db.doc('config/reasons').onSnapshot(d=>{const l=d.exists&&Array.isArray(d.data().list)?d.data().list.filter(x=>typeof x==='string'&&x.trim()):null;
+  reasonsUnsub=S.db.doc(REASON_DOC).onSnapshot(d=>{const l=d.exists&&Array.isArray(d.data().list)?d.data().list.filter(x=>typeof x==='string'&&x.trim()):null;
     S.reasons=l&&l.length?l:REASONS0.slice();paintReasons();if(!$('osPanel').hidden)osPaintList()},()=>{})}
 async function saveReasons(list){S.reasons=list;paintReasons();osPaintList();osRefreshSelects();
-  if(S.db){try{await S.db.doc('config/reasons').set({list,at:Date.now(),by:S.uid||null})}catch(e){$('osMsg').textContent='บันทึกรายการเหตุผลไม่ได้ (ตรวจกฎความปลอดภัยใน Firebase)'}}}
+  if(S.db){try{await S.db.doc(REASON_DOC).set({list,at:Date.now(),by:S.uid||null})}catch(e){$('osMsg').textContent='บันทึกรายการเหตุผลไม่ได้ ลองใหม่อีกครั้ง'}}}
 const OTHER='__other';
 function osSelHtml(v){const inList=S.reasons.includes(v);
   return '<option value=""'+(v?'':' selected')+'>— เลือกเหตุผล —</option>'+S.reasons.map(r=>'<option value="'+esc(r)+'"'+(r===v?' selected':'')+'>'+esc(r)+'</option>').join('')+
@@ -1996,7 +1998,9 @@ $('pwForm').addEventListener('submit',async e=>{e.preventDefault();const m=$('pw
 /* ---- after a whole-page paste: show one product's key numbers so the user can compare with the source app; "ไม่ถูก" lets them pick each column, and the choice is kept for this page layout ---- */
 async function pmSave(){try{localStorage.setItem('bo.pagemap.'+(S.uid||'local'),JSON.stringify(S.PM||{}))}catch(e){}
   if(S.db&&S.uid){try{await S.db.doc('prefs/'+S.uid).set({colmap:S.UM||{},pagemap:S.PM||{},at:Date.now()})}catch(e){}}}
-const PG={};
+const PG={},PGL={};
+/* remember the columns as confirmed for this page layout, so the same layout is read the same way next time without asking */
+function pgRemember(m){const pick={};PGF.forEach(([f])=>pick[f]=m[f]>=0?m[f]:-1);S.PM=Object.assign({},S.PM||{},{[PG.ctx.sig]:pick});pmSave();PG.ctx.saved=true}
 function pgOpen(sd,before,ctx){
   const val=(c,f,m)=>m[f]!=null&&m[f]>=0?c[m[f]]:'';
   /* sample products: the ones whose key numbers differ the most from each other are the easiest to check */
@@ -2015,7 +2019,7 @@ function pgRender(){
       h+='<option value="'+j+'"'+(m[f]===j?' selected':'')+'>ช่องที่ '+j+': '+esc(c[j]===''?'(ว่าง)':c[j])+esc(l)+'</option>'}
     return h};
   $('pgBody').innerHTML='<h2>'+(edit?'เลือกคอลัมน์ให้ตรงกับแอปต้นทาง':'ตรวจว่าอ่านคอลัมน์ถูกไหม')+'</h2>'+
-    '<p class="hint">'+(edit?'ดูตัวเลขของสินค้าตัวอย่างในแอปต้นทาง แล้วเลือกช่องที่มีตัวเลขเดียวกัน':'เปิดแอปต้นทาง หาสินค้านี้ แล้วเทียบตัวเลขด้านล่าง')+(ctx.saved?' · ตอนนี้ใช้การจับคู่ที่คุณเคยแก้ไว้สำหรับหน้าแบบนี้':'')+'</p>'+
+    '<p class="hint">'+(edit?'ดูตัวเลขของสินค้าตัวอย่างในแอปต้นทาง แล้วเลือกช่องที่มีตัวเลขเดียวกัน':'เปิดแอปต้นทาง หาสินค้านี้ แล้วเทียบตัวเลขด้านล่าง')+(ctx.saved?' · ตอนนี้ใช้การจับคู่ที่คุณยืนยันไว้สำหรับหน้าแบบนี้':' · ยืนยันครั้งเดียว ครั้งหน้าที่วางหน้าแบบนี้จะไม่ถามอีก')+'</p>'+
     '<div class="smp"><b class="code">'+esc(code)+'</b><span class="nm">'+esc(name.slice(code.length+1))+'</span>'+(idx.length>1?'<button type="button" class="btn sm" data-pg="next">ตัวอย่างอื่น ('+(k+1)+'/'+idx.length+')</button>':'')+'</div>'+
     '<table><tbody>'+PGF.map(([f,l])=>'<tr><th>'+esc(l)+'</th>'+(edit?'<td><select data-pgf="'+f+'" aria-label="คอลัมน์ของ '+esc(l)+'">'+opts(f)+'</select></td>':'<td class="n">'+shown(val0(c,f,m))+'</td>')+'</tr>').join('')+'</tbody></table>'+
     '<div class="bar">'+(edit?'<button type="button" class="btn primary" data-pg="apply">ใช้การจับคู่นี้</button><button type="button" class="btn" data-pg="back">ยกเลิก</button>'
@@ -2030,15 +2034,15 @@ function pgUse(m){
   G[sd]=out;PI[sd]='ตรวจพบการคัดลอกทั้งหน้า · ใช้คอลัมน์ที่คุณเลือก · '+rows.length+' รายการ';gridChanged(sd);}
 $('pgBody').addEventListener('change',e=>{const x=e.target.closest('select[data-pgf]');if(x)PG.m[x.dataset.pgf]=+x.value});
 $('pgBody').addEventListener('click',async e=>{const b=e.target.closest('[data-pg]');if(!b)return;const a=b.dataset.pg;
-  if(a==='ok')pgClose();
+  if(a==='ok'){pgRemember(PG.m);pgClose()}
   else if(a==='next'){PG.k=(PG.k+1)%PG.idx.length;pgRender()}
   else if(a==='edit'){PG.edit=true;pgRender()}
   else if(a==='back'){PG.edit=false;PG.m=Object.assign({},PG.ctx.colOf);pgRender()}
-  else if(a==='apply'){const pick={};PGF.forEach(([f])=>pick[f]=PG.m[f]>=0?PG.m[f]:-1);
-    S.PM=Object.assign({},S.PM||{},{[PG.ctx.sig]:pick});pmSave();pgUse(PG.m);PG.ctx.colOf=Object.assign({},PG.m);PG.ctx.saved=true;PG.edit=false;pgRender()}
+  else if(a==='apply'){pgRemember(PG.m);pgUse(PG.m);PG.ctx.colOf=Object.assign({},PG.m);PG.edit=false;pgRender()}
   else if(a==='forget'){const pm=Object.assign({},S.PM||{});delete pm[PG.ctx.sig];S.PM=pm;pmSave();pgClose();
-    $('s1msg').textContent='ล้างการจับคู่ที่บันทึกไว้แล้ว วางข้อมูลใหม่อีกครั้งเพื่อให้แอปอ่านเอง'}});
+    $('s1msg').textContent='ล้างการจับคู่ที่บันทึกไว้แล้ว วางข้อมูลใหม่อีกครั้ง แอปจะถามให้ตรวจใหม่'}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pgChk').hidden)pgClose()});
+$('pgAgain').addEventListener('click',()=>{const sd=PGL.last,l=sd&&PGL[sd];if(l)pgOpen(sd,l.before,l.ctx)});
 paintNet();
 (function init(){
   if(!window.firebase||!FIREBASE_CONFIG.apiKey){

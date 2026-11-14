@@ -17,12 +17,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // รายการเหตุผลไม่สั่งตามแพลน (ใช้ร่วมกันทุกคน) อ่านได้ทุกคน แก้ได้เฉพาะฝ่ายระบบ
-    match /config/reasons {
-      allow read: if isMember();
-      allow write: if isAdmin();
-    }
-
     match /members/{uid} {
       allow get: if isMember() || (signedIn() && request.auth.uid == uid);
       allow list: if isMember();
