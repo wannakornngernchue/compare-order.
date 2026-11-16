@@ -296,6 +296,7 @@ table.gt{font-size:14px}
 .pgb table{width:100%;border-collapse:collapse}.pgb td,.pgb th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}.pgb td.n{text-align:right;font-weight:700;font-size:16px}.pgb select{width:100%;max-width:340px}.pgb .smp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pgb .bo{color:var(--bo)}
 .ovb{background:var(--surface);border-radius:20px;border-top:4px solid var(--c3);box-shadow:var(--shadow);padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .osl{display:flex;flex-direction:column;gap:8px}
+.xf{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center}.xf input,.xf select{width:100%}.xerr{color:var(--bo);font-weight:600}
 .osin{display:flex;flex-direction:column;gap:6px}.osin select,.osin input{width:100%}.osm .osmb{display:flex;flex-direction:column;gap:10px;margin-top:10px}.osls{display:flex;flex-wrap:wrap;gap:6px}.rsn{display:inline-flex;align-items:center;gap:4px}.rx{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:inherit;padding:0 2px}#osNew{flex:1;min-width:180px}
 .osr{display:grid;grid-template-columns:1fr auto minmax(200px,240px);gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
 .osr .note{width:100%}
@@ -578,6 +579,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
       <div class="chips" id="chips3"></div>
       <select id="f3sel" aria-label="ตัวกรอง"></select>
       <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
+      <button type="button" class="btn sm" id="xAddBtn" hidden title="สั่งสินค้าที่ไม่อยู่ในรายการของรอบนี้">+ เพิ่มสินค้าที่ไม่มีในรายการ</button>
 
 
 
@@ -591,6 +593,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
     </tr></thead><tbody id="tb3"></tbody></table></div>
     <span class="hint" id="s3msg"></span>
     <datalist id="osReasons"></datalist>
+    <div class="ov" id="xPanel" hidden role="dialog" aria-modal="true" aria-label="เพิ่มสินค้าที่ไม่มีในรายการ"><div class="ovb" id="xBody"></div></div>
     <div class="ov" id="osPanel" hidden role="dialog" aria-modal="true" aria-label="บันทึกการสั่ง"><div class="ovb" id="osBody"></div></div>
   </section>
 
@@ -1045,6 +1048,14 @@ function rowObj(a){const o={};ROWKEYS.forEach((k,i)=>o[k]=a[i]);o.bBO=o.bo<0?-o.
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>n==null?'':Number(n).toLocaleString('th-TH');
+/* "เพิ่มเอง": a product the store added by hand to a round (not in the uploaded data). It lives only as a plan doc with extra:true. */
+const xItem=p=>({code:p.code,name:'เพิ่มเอง · '+(p.xr||''),extra:true,xr:p.xr||'',pack:null,bo:0,bBO:0,aBO:0,delta:0,cat:'',ordered:null,
+  owner:'',safety:null,onhand:null,rop:null,order:'',need:null,reason:'',desc:'',vol:'',freq:'',cv:'',stock:null,wh:'',quota:null});
+function withExtras(rows,plans){const have=new Set(rows.map(r=>r.code)),add=[];
+  (plans?[...plans.values()]:[]).forEach(p=>{if(p&&p.extra&&p.code&&!have.has(p.code)){have.add(p.code);add.push(xItem(p))}});
+  return add.length?rows.concat(add):rows}
+/* when a later round is compared, a hand-added item counts as ordered with its quantity, like any planned item */
+function addExtrasToMap(m,plans){(plans?[...plans.values()]:[]).forEach(p=>{if(p&&p.extra&&p.code&&!m.has(p.code)){const q=planTotal(p);m.set(p.code,{code:p.code,name:'',pack:null,bo:0,plan:q,planTxt:null})}})}
 const bo=n=>n?'<span class="bo">−'+fmt(n)+'</span>':'<span class="hint">–</span>';
 const CSHORT={new:'ใหม่',same:'=',gone:'หาย',up:'',down:''};
 const CAT={new:['BO ใหม่','p-new'],up:['เพิ่มขึ้น','p-up'],same:['เท่าเดิม','p-same'],down:['ลดลง','p-down'],gone:['หายไป','p-gone']};
@@ -1196,6 +1207,7 @@ async function runMap(run){
   const m=new Map();
   rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=planTotal(p)!=null?planTotal(p):(typeof o.ordered==='number'?o.ordered:null);
     m.set(o.code,{code:o.code,name:o.name,pack:o.pack,bo:o.bo,plan:q,planTxt:null})});
+  addExtrasToMap(m,plans);
   return m;}
 async function loadBase(id){
   const st=$('statR');S.baseMap=null;refreshGo();
@@ -1210,6 +1222,7 @@ async function loadBase(id){
     const m=new Map();let np=0;
     rows.forEach(a=>{const o=rowObj(a),p=plans.get(o.code),q=planTotal(p)!=null?planTotal(p):(typeof o.ordered==='number'?o.ordered:null);
       if(q!=null)np++;m.set(o.code,{code:o.code,name:o.name,pack:o.pack,bo:o.bo,plan:q,planTxt:null})});
+    const n0=m.size;addExtrasToMap(m,plans);np+=m.size-n0;
     S.baseMap=m;st.className='stat ok';
     st.textContent='พบ '+fmt(m.size)+' รายการ · BO '+fmt([...m.values()].filter(r=>r.bo<0).length)+' · มี Plan order '+fmt(np);
   }catch(e){st.className='stat err';st.textContent='โหลดรอบนี้ไม่ได้'}
@@ -1290,13 +1303,15 @@ $('saveRun').addEventListener('click',async()=>{
   $('saveRun').disabled=false;});
 
 /* ---------- step 3: plan order (front store) + ordered tick (system staff) ---------- */
-const F3=[['all','ทั้งหมด'],['bo','มี BO'],['empty','ยังไม่กรอก Plan'],['filled','กรอก Plan แล้ว'],['undone','มี Plan รอสั่ง'],['done','สั่งแล้ว'],['skip','ไม่สั่งตามแพลน']];
-S.rows=[];S.orders=new Map();S.unsubOrders=null;S.addCode=null;
+const F3=[['all','ทั้งหมด'],['bo','มี BO'],['empty','ยังไม่กรอก Plan'],['filled','กรอก Plan แล้ว'],['undone','มี Plan รอสั่ง'],['done','สั่งแล้ว'],['skip','ไม่สั่งตามแพลน'],['extra','เพิ่มเอง']];
+S.rows=[];S.rows0=[];S.orders=new Map();S.unsubOrders=null;S.addCode=null;
+function rebuildRows(){const before=S.rows.map(i=>i.code).join('|');S.rows=withExtras(S.rows0,S.plans);return S.rows.map(i=>i.code).join('|')!==before}
 /* "เพิ่ม Plan" after an item was ticked as ordered: the plan doc keeps base (qty already ordered) and rev (how many times it was topped up).
    An order tick counts only for the plan rev it was made on, so topping up puts the item back to "รอสั่ง" without touching the order doc. */
 const pRev=p=>(p&&p.rev)||0, pBase=p=>(p&&p.base)||0;
 const oMatch=(p,o)=>!!o&&((o.rev||0)===pRev(p));
 const isDoneP=(p,o)=>oMatch(p,o)&&!!o.done;
+const keepX=(prev,rec)=>{if(prev&&prev.extra){rec.extra=true;rec.xr=prev.xr||''}return rec};
 const isSkipP=(p,o)=>oMatch(p,o)&&!o.done&&(!!o.skip||!!o.note);
 /* one shared note per item (store and system staff write the same field); old rounds may still hold a separate system note */
 const noteOf=(p,o)=>{const a=(p&&p.note)||'',b=oMatch(p,o)&&o.note?o.note:'';return b&&b!==a?(a?a+' · ':'')+b:a};
@@ -1335,6 +1350,8 @@ function m3(i,f,q){
   if(f==='empty'&&(has||NOSTK(i)))return false;if(f==='filled'&&!has)return false;
   if(f==='undone'&&!(has&&!done&&i.ordered==null))return false;if(f==='done'&&!(done||ORDF(i)))return false;
   if(f==='skip'&&!isSkipP(p,o))return false;
+  if(f==='extra'&&!i.extra)return false;
+  if(f==='empty'&&i.extra)return false;
   if(q){q=q.toLowerCase();if(!(i.code.toLowerCase().includes(q)||i.name.toLowerCase().includes(q)))return false}
   return true;}
 const STL={nostk:'ไม่มีของ คลัง 5',done:'สั่งแล้ว',file:'สั่งแล้ว (ไฟล์)',skip:'ไม่สั่งตามแพลน',plan:'รอสั่ง',bo:'BO ไม่มี Plan'};
@@ -1384,6 +1401,7 @@ function renderS3(){
     :'<tr><td colspan="24" class="empty">ไม่มีรายการตรงกับตัวกรอง</td></tr>';
   sortBody('tb3');
   document.querySelectorAll('#tb3 tr[data-code]').forEach(tr=>{const it=S.rows.find(i=>i.code===tr.dataset.code);if(it)applyState(tr,it)});
+  $('xAddBtn').hidden=!S.run||isLocked(S.run);
   fillWho();updateProg();renderOS();fitSoon();}
 const ICON={
   pen:'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M11.3 1.7a1.5 1.5 0 0 1 2.1 0l.9.9a1.5 1.5 0 0 1 0 2.1L5.6 13.4 2 14l.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 3l3 3" stroke="currentColor" stroke-width="1.5"/></svg>',
@@ -1405,6 +1423,7 @@ function qtyCell(i){
   else h+='<span class="qin"><input type="text" class="qty" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-pk="'+(num(i.pack)||1)+'" data-min="'+(base?1:0)+'" data-f="qty" id="q_'+esc(code)+'" aria-label="Plan order '+esc(code)+' (▲▼ ทีละ Pack key '+(num(i.pack)||1)+')" value="'+(p.qty!=null?p.qty:'')+'"><span class="spn"><button type="button" class="spb" data-spin="1" tabindex="-1" title="เพิ่ม 1 Pack key" aria-label="เพิ่ม 1 Pack key">▲</button><button type="button" class="spb" data-spin="-1" tabindex="-1" title="ลด 1 Pack key" aria-label="ลด 1 Pack key">▼</button></span></span>';
   h+='<span class="qa">';
   if(!lock&&done)h+='<button type="button" class="ib" data-act="add" title="เพิ่ม Plan (สั่งเพิ่มจากที่สั่งไปแล้ว)" aria-label="เพิ่ม Plan '+esc(code)+'">'+ICON.pen+'</button>';
+  else if(!lock&&i.extra&&!base)h+='<button type="button" class="ib" data-act="xdel" title="ลบสินค้าที่เพิ่มเองนี้ออก" aria-label="ลบ '+esc(code)+' ที่เพิ่มเอง">'+ICON.no+'</button>';
   else if(!lock&&base>0)h+='<button type="button" class="ib" data-act="undoadd" title="ยกเลิกการเพิ่ม" aria-label="ยกเลิกการเพิ่ม '+esc(code)+'">'+ICON.undo+'</button>';
   return h+'</span></div>';}
 function updateProg(){
@@ -1444,8 +1463,9 @@ $('tb3').addEventListener('change',async e=>{
       if(isDoneP(prev,S.orders.get(code))&&f==='qty'){syncCells();return}
       if(base>0&&f==='qty'&&!(qty>=1)){msg.textContent='จำนวนที่เพิ่มต้องอย่างน้อย 1 ถ้าไม่ต้องการเพิ่มแล้ว ให้กด "ยกเลิกการเพิ่ม"';g('qty').value=prev&&prev.qty!=null?prev.qty:'';return}
       undo=()=>{if(prev)S.plans.set(code,prev);else S.plans.delete(code)};
+      if(prev&&prev.extra&&f==='qty'&&!(qty>=1)){msg.textContent='สินค้าที่เพิ่มเองต้องมีจำนวนอย่างน้อย 1 ถ้าไม่ต้องการแล้ว กด × ท้ายช่อง';g('qty').value=prev.qty!=null?prev.qty:'';return}
       if(qty==null&&!note&&!base){S.plans.delete(code);paint();if(S.db)await S.db.doc(id).delete()}
-      else{const rec={runId:S.runId,code,qty,note,by:S.uid,at:Date.now()};if(prev&&prev.rev){rec.base=base;rec.rev=prev.rev;rec.steps=prev.steps||[]}
+      else{const rec=keepX(prev,{runId:S.runId,code,qty,note,by:S.uid,at:Date.now()});if(prev&&prev.rev){rec.base=base;rec.rev=prev.rev;rec.steps=prev.steps||[]}
         S.plans.set(code,rec);paint();if(S.db)await S.db.doc(id).set(rec)}
     }else{
       const done=g('done').checked,note='',id='orders/'+S.runId+'__'+safeId(code),prev=S.orders.get(code);
@@ -1468,15 +1488,16 @@ function addOk(tr){
   const code=tr.dataset.code,inp=tr.querySelector('[data-add]'),v=Math.round(Number(inp&&inp.value));
   if(!(v>=1)){$('s3msg').textContent='ใส่จำนวนที่จะเพิ่ม อย่างน้อย 1';if(inp)inp.focus();return}
   const p=S.plans.get(code)||{},pq=typeof p.qty==='number'?p.qty:0;
-  writePlan(code,{runId:S.runId,code,qty:v,note:p.note||'',by:S.uid,at:Date.now(),base:pBase(p)+pq,rev:pRev(p)+1,steps:[...(p.steps||[]),pq]},'เพิ่ม Plan แล้ว');}
+  writePlan(code,keepX(p,{runId:S.runId,code,qty:v,note:p.note||'',by:S.uid,at:Date.now(),base:pBase(p)+pq,rev:pRev(p)+1,steps:[...(p.steps||[]),pq]}),'เพิ่ม Plan แล้ว');}
 $('tb3').addEventListener('click',e=>{
   const b=e.target.closest('button[data-act]');if(!b)return;const tr=b.closest('tr'),code=tr.dataset.code,act=b.dataset.act;
   if(isLocked(S.run))return;
   if(act==='add'){S.addCode=code;const qc=tr.querySelector('[data-qc]');const it=S.rows.find(i=>i.code===code);qc.innerHTML=qtyCell(it);qc.dataset.h='';const x=qc.querySelector('[data-add]');if(x)x.focus()}
   else if(act==='addno'){S.addCode=null;blurQc();syncCells()}
   else if(act==='addok')addOk(tr);
+  else if(act==='xdel')xDelete(code);
   else if(act==='undoadd'){const p=S.plans.get(code);if(!p||!p.rev)return;const steps=(p.steps||[]).slice(),last=steps.length?steps.pop():0;
-    const rec={runId:S.runId,code,qty:last,note:p.note||'',by:S.uid,at:Date.now()};if(p.rev>1){rec.base=pBase(p)-last;rec.rev=p.rev-1;rec.steps=steps}
+    const rec=keepX(p,{runId:S.runId,code,qty:last,note:p.note||'',by:S.uid,at:Date.now()});if(p.rev>1){rec.base=pBase(p)-last;rec.rev=p.rev-1;rec.steps=steps}
     writePlan(code,rec,'ยกเลิกการเพิ่มแล้ว')}});
 /* Plan order box: whole numbers only. ▲ / ▼ (or the arrow keys) move to the next multiple of the item's Pack key; typing any number is still allowed. */
 $('tb3').addEventListener('input',e=>{const x=e.target;if(!x.classList||!x.classList.contains('qty'))return;const v=x.value.replace(/,/g,'').split('.')[0].replace(/\D+/g,'').replace(/^0+(?=\d)/,'');if(v!==x.value)x.value=v});
@@ -1663,19 +1684,19 @@ async function commitOS(reasons){
 setInterval(()=>{if(S.run&&S.step===3&&isLocked(S.run)!==S.lockShown&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#tb3'))){renderRunSel();renderS3()}},30000);
 $('runSel').addEventListener('change',()=>selectRun($('runSel').value));
 async function selectRun(id){
-  S.runId=id||null;S.run=S.runs.find(r=>r.id===id)||null;S.addCode=null;S.plans=new Map();S.orders=new Map();S.rows=[];
+  S.runId=id||null;S.run=S.runs.find(r=>r.id===id)||null;S.addCode=null;S.plans=new Map();S.orders=new Map();S.rows=[];S.rows0=[];
   if(S.unsubPlans){S.unsubPlans();S.unsubPlans=null}if(S.unsubOrders){S.unsubOrders();S.unsubOrders=null}
   if(!S.run){renderS3();return}
   const mk=arr=>{const r=arr.map(rowObj);if(S.run&&S.run.first)r.forEach(o=>{o.cat='';o.delta=0});return r};
-  if(S.run.rows)S.rows=mk(S.run.rows);
+  if(S.run.rows)S.rows0=mk(S.run.rows);
   else if(S.db){$('tb3').innerHTML='<tr><td colspan="24" class="empty">กำลังโหลดรายการ…</td></tr>';
     try{const snap=await S.db.collection('runs/'+id+'/chunks').get();if(S.runId!==id)return;
-      S.rows=mk([...snap.docs].sort((x,y)=>x.id<y.id?-1:1).flatMap(d=>decRows(d.data().rows)))}
+      S.rows0=mk([...snap.docs].sort((x,y)=>x.id<y.id?-1:1).flatMap(d=>decRows(d.data().rows)))}
     catch(e){$('s3msg').textContent='โหลดรายการของรอบนี้ไม่ได้'}}
-  renderS3();
+  rebuildRows();renderS3();
   if(S.db&&id!=='local'){
     const bad=()=>{$('s3msg').textContent='อ่านข้อมูล Plan order ไม่ได้ในขณะนี้'};
-    S.unsubPlans=S.db.collection('plans').where('runId','==',id).onSnapshot(snap=>{const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x)m.set(x.code,x)});S.plans=m;syncCells()},bad);
+    S.unsubPlans=S.db.collection('plans').where('runId','==',id).onSnapshot(snap=>{const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x)m.set(x.code,x)});S.plans=m;if(rebuildRows())renderS3();else syncCells()},bad);
     S.unsubOrders=S.db.collection('orders').where('runId','==',id).onSnapshot(snap=>{const m=new Map();snap.docs.forEach(d=>{const x=d.data();if(x)m.set(x.code,x)});S.orders=m;syncCells()},bad);}}
 
 /* ---------- downloads ---------- */
@@ -1768,7 +1789,7 @@ async function openHist(id){
     }else{plans=S.plans;orders=S.orders}
     await nameOf([...plans.values(),...orders.values()].map(x=>x.by));
     if(S.hid!==id)return;
-    S.H={run,rows,plans,orders};
+    S.H={run,rows:withExtras(rows,plans),plans,orders};
   }catch(e){$('hMeta').textContent='โหลดประวัติรอบนี้ไม่ได้';return}
   const lk=isLocked(run);
   $('hMeta').textContent=when(run.createdAt)+' · '+(run.first?'รอบแรก':(run.fileA||'')+' → '+(run.fileB||''));
@@ -1935,7 +1956,7 @@ function startRuns(){
     S.runs=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.step===1)fillBaseRuns();if(S.step===4&&!S.hid&&!S.hr.list)renderHist();
     if(S.step===3){const keep=S.runs.some(r=>r.id===S.runId)?S.runId:(S.runs[0]&&S.runs[0].id);renderRunSel();if(keep!==S.runId||!S.run)selectRun(keep);else{S.run=S.runs.find(r=>r.id===S.runId);$('runSel').value=S.runId;renderOS()}}
   },e=>{showNote('อ่านข้อมูลไม่ได้ ('+esc(e&&e.code||'error')+') ตรวจว่าวางกฎความปลอดภัยครบ (ขั้นที่ 5) แล้วรีเฟรชหน้า')});}
-function stopAll(){if(reasonsUnsub){reasonsUnsub();reasonsUnsub=null}if(runsUnsub){runsUnsub();runsUnsub=null}if(memUnsub){memUnsub();memUnsub=null}}
+function stopAll(){if(reasonsUnsub){reasonsUnsub();reasonsUnsub=null}if(xrUnsub){xrUnsub();xrUnsub=null}if(runsUnsub){runsUnsub();runsUnsub=null}if(memUnsub){memUnsub();memUnsub=null}}
 async function showLogin(msg){
   $('loginOv').hidden=false;$('ubar').hidden=true;
   let setup=true;try{setup=(await fdb.doc('config/setup').get()).exists}catch(e){}
@@ -1956,7 +1977,7 @@ async function onUser(u){
     profiles:async ids=>{const o={};await Promise.all(ids.map(async id=>{const hit=S.members.find(x=>x.id===id);if(hit){o[id]={name:hit.name||hit.username};return}
       try{const d=await fdb.doc('members/'+id).get();o[id]={name:d.exists?(d.data().name||d.data().username||''):''}}catch(e){o[id]={name:''}}}));return o}};
   memUnsub=fdb.collection('members').onSnapshot(sn=>{S.members=sn.docs.map(d=>({id:d.id,...d.data()}));if(S.step===5)renderUsers()},()=>{});
-  startRuns();umLoad();watchReasons();
+  startRuns();umLoad();watchReasons();watchXReasons();
   if(!S.canEdit)go(3);else go(S.step===2&&!S.cmp?1:S.step);}
 /* ---- user management (admins) ---- */
 function renderUsers(){
@@ -2043,6 +2064,64 @@ $('pgBody').addEventListener('click',async e=>{const b=e.target.closest('[data-p
     $('s1msg').textContent='ล้างการจับคู่ที่บันทึกไว้แล้ว วางข้อมูลใหม่อีกครั้ง แอปจะถามให้ตรวจใหม่'}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pgChk').hidden)pgClose()});
 $('pgAgain').addEventListener('click',()=>{const sd=PGL.last,l=sd&&PGL[sd];if(l)pgOpen(sd,l.before,l.ctx)});
+
+/* ---- "+ เพิ่มสินค้าที่ไม่มีในรายการ": the store orders a product that is not in this round's data ---- */
+const XREASON_DOC='plans/_xreasons',XREASONS0=['ขายตัวโปร'];
+S.xreasons=XREASONS0.slice();let xrUnsub=null;
+function watchXReasons(){if(xrUnsub||!S.db)return;
+  xrUnsub=S.db.doc(XREASON_DOC).onSnapshot(d=>{const l=d.exists&&Array.isArray(d.data().list)?d.data().list.filter(x=>typeof x==='string'&&x.trim()):null;
+    S.xreasons=l&&l.length?l:XREASONS0.slice();if(!$('xPanel').hidden)xPaintReasons()},()=>{})}
+async function saveXReasons(list){S.xreasons=list;xPaintReasons();
+  if(S.db){try{await S.db.doc(XREASON_DOC).set({list,at:Date.now(),by:S.uid||null})}catch(e){$('xMsg').textContent='บันทึกรายการเหตุผลไม่ได้ ลองใหม่อีกครั้ง'}}}
+function xPaintReasons(){const sel=$('xReason');if(!sel)return;const cur=sel.value;
+  sel.innerHTML=S.xreasons.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('');if(S.xreasons.includes(cur))sel.value=cur;
+  $('xList').innerHTML=S.xreasons.map((r,k)=>'<span class="pill p-same rsn">'+esc(r)+' <button type="button" class="rx" data-xdel="'+k+'" title="เอาออกจากรายการ" aria-label="เอา '+esc(r)+' ออก">×</button></span>').join('')}
+function openX(){
+  if(!S.run||isLocked(S.run))return;
+  $('xBody').innerHTML='<h2>เพิ่มสินค้าที่ไม่มีในรายการ</h2><p class="hint">สำหรับสินค้าที่ไม่อยู่ในข้อมูลรอบนี้ แต่หน้าร้านต้องการสั่ง กรอกให้ครบทุกช่อง</p>'+
+    '<div class="xf"><label for="xSku">SKU</label><input type="text" id="xSku" autocomplete="off" spellcheck="false" placeholder="รหัสเต็ม เช่น 5CAN901F21">'+
+    '<label for="xQty">จำนวน (Case)</label><input type="text" id="xQty" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="อย่างน้อย 1">'+
+    '<label for="xReason">เหตุผล</label><select id="xReason"></select></div>'+
+    '<details class="osm"><summary class="btn sm">แก้รายการเหตุผล</summary><div class="osmb"><div class="osls" id="xList"></div>'+
+      '<div class="bar"><input type="text" id="xNew" placeholder="เพิ่มเหตุผลใหม่" aria-label="เหตุผลใหม่"><button type="button" class="btn sm" id="xAddR">เพิ่มในรายการ</button></div>'+
+      '<p class="hint">รายการนี้ใช้ร่วมกันทุกคน เพิ่มที่เครื่องไหน ทุกคนเห็น</p></div></details>'+
+    '<p class="hint" id="xMsg" aria-live="polite"></p>'+
+    '<div class="bar"><button type="button" class="btn primary" id="xOk" disabled>เพิ่มสินค้า</button><button type="button" class="btn" id="xNo">ยกเลิก</button></div>';
+  xPaintReasons();$('xPanel').hidden=false;$('xSku').focus();}
+const xSkuOk=v=>/^[A-Za-z0-9][A-Za-z0-9._\/-]{2,39}$/.test(v);
+function xCheck(){const sku=$('xSku').value.trim(),q=$('xQty').value.trim(),m=$('xMsg');m.className='hint';
+  let ok=xSkuOk(sku)&&/^\d+$/.test(q)&&+q>=1&&!!$('xReason').value;
+  const hit=sku&&S.rows.find(i=>i.code.toLowerCase()===sku.toLowerCase());
+  if(hit){ok=false;m.className='hint xerr';m.innerHTML='SKU นี้มีในรายการรอบนี้แล้ว <button type="button" class="btn sm" id="xGo" data-code="'+esc(hit.code)+'">ไปที่แถวนี้</button>'}
+  else if(sku&&!xSkuOk(sku)){m.className='hint xerr';m.textContent='SKU ต้องเป็นรหัสเต็ม ตัวอักษรอังกฤษหรือตัวเลข ไม่มีช่องว่าง อย่างน้อย 3 ตัว'}
+  else m.textContent='';
+  $('xOk').disabled=!ok;return ok}
+function xClose(){$('xPanel').hidden=true}
+function xGoto(code){xClose();S.f3='all';$('q3').value=code;renderS3();const x=document.getElementById('q_'+code);if(x)x.focus()}
+async function xSave(){if(!xCheck())return;
+  const code=$('xSku').value.trim().toUpperCase(),qty=+$('xQty').value.trim(),xr=$('xReason').value,msg=$('s3msg');
+  const rec={runId:S.runId,code,qty,note:'',by:S.uid,at:Date.now(),extra:true,xr};
+  S.plans.set(code,rec);rebuildRows();xClose();S.f3='extra';$('q3').value='';renderS3();
+  try{if(S.db)await S.db.doc('plans/'+S.runId+'__'+safeId(code)).set(rec);msg.textContent='เพิ่มสินค้าแล้ว ✓ '+code}
+  catch(e){S.plans.delete(code);rebuildRows();renderS3();msg.textContent='เพิ่มสินค้าไม่ได้ ลองใหม่อีกครั้ง'}}
+async function xDelete(code){const p=S.plans.get(code);if(!p||!p.extra||isDoneP(p,S.orders.get(code)))return;
+  if(!confirmDel(code))return;
+  S.plans.delete(code);rebuildRows();renderS3();
+  try{if(S.db)await S.db.doc('plans/'+S.runId+'__'+safeId(code)).delete();$('s3msg').textContent='ลบ '+code+' แล้ว'}
+  catch(e){S.plans.set(code,p);rebuildRows();renderS3();$('s3msg').textContent='ลบไม่ได้ ลองใหม่อีกครั้ง'}}
+/* a second click within 4 s confirms: no browser dialogs */
+function confirmDel(code){if(S.xdelArm===code){S.xdelArm=null;return true}S.xdelArm=code;$('s3msg').textContent='กด × อีกครั้งเพื่อยืนยันการลบ '+code;setTimeout(()=>{if(S.xdelArm===code)S.xdelArm=null},4000);return false}
+$('xAddBtn').addEventListener('click',openX);
+$('xBody').addEventListener('input',e=>{if(e.target.id==='xQty'){const v=e.target.value.replace(/\D+/g,'');if(v!==e.target.value)e.target.value=v}if(e.target.id==='xSku'||e.target.id==='xQty')xCheck()});
+$('xBody').addEventListener('change',e=>{if(e.target.id==='xReason')xCheck()});
+$('xBody').addEventListener('keydown',e=>{if(e.key==='Enter'){if(e.target.id==='xNew'){e.preventDefault();$('xAddR').click()}else if(e.target.id==='xSku'||e.target.id==='xQty'){e.preventDefault();xSave()}}if(e.key==='Escape')xClose()});
+$('xBody').addEventListener('click',e=>{const del=e.target.closest('[data-xdel]');
+  if(del){const l=S.xreasons.slice();l.splice(+del.dataset.xdel,1);if(!l.length){$('xMsg').textContent='ต้องมีเหตุผลอย่างน้อย 1 รายการ';return}saveXReasons(l);return}
+  const id=e.target.id;
+  if(id==='xNo')xClose();else if(id==='xOk')xSave();
+  else if(id==='xGo')xGoto(e.target.dataset.code);
+  else if(id==='xAddR'){const x=$('xNew'),v=x.value.trim().replace(/\s+/g,' ');if(!v)return;if(S.xreasons.includes(v)){$('xMsg').textContent='มี "'+v+'" ในรายการแล้ว';return}
+    x.value='';saveXReasons([...S.xreasons,v]);$('xReason').value=v;xCheck()}});
 paintNet();
 (function init(){
   if(!window.firebase||!FIREBASE_CONFIG.apiKey){
