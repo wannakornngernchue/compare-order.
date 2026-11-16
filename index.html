@@ -296,6 +296,9 @@ table.gt{font-size:14px}
 .pgb table{width:100%;border-collapse:collapse}.pgb td,.pgb th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}.pgb td.n{text-align:right;font-weight:700;font-size:16px}.pgb select{width:100%;max-width:340px}.pgb .smp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pgb .bo{color:var(--bo)}
 .ovb{background:var(--surface);border-radius:20px;border-top:4px solid var(--c3);box-shadow:var(--shadow);padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .osl{display:flex;flex-direction:column;gap:8px}
+.btn.xadd{background:var(--c3);border:0;color:#fff;font-weight:700;font-size:15px;padding:10px 18px 10px 12px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 18px -8px var(--c3);white-space:nowrap}
+.btn.xadd:hover:not(:disabled){filter:brightness(1.08)}.btn.xadd[hidden]{display:none}
+.xplus{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:rgba(255,255,255,.25);font-size:19px;line-height:1}
 .rled{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface2)}.rlh{display:flex;justify-content:space-between;align-items:center}
 .xf{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center}.xf input,.xf select{width:100%}.xerr{color:var(--bo);font-weight:600}
 .osin{display:flex;flex-direction:column;gap:6px}.osin select,.osin input{width:100%}.osm .osmb{display:flex;flex-direction:column;gap:10px;margin-top:10px}.osls{display:flex;flex-wrap:wrap;gap:6px}.rsn{display:inline-flex;align-items:center;gap:4px}.rx{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:inherit;padding:0 2px}#osNew{flex:1;min-width:180px}
@@ -581,7 +584,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
       <div class="chips" id="chips3"></div>
       <label class="hint" for="f3sel">แสดง</label><select id="f3sel" aria-label="ตัวกรอง"></select>
       <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
-      <button type="button" class="btn sm" id="xAddBtn" hidden title="สั่งสินค้าที่ไม่อยู่ในรายการของรอบนี้">+ เพิ่มสินค้าที่ไม่มีในรายการ</button>
+      <button type="button" class="btn xadd" id="xAddBtn" hidden title="สั่งสินค้าที่ไม่อยู่ในรายการของรอบนี้"><span class="xplus" aria-hidden="true">+</span>เพิ่มสินค้าที่ไม่มีในรายการ</button>
 
 
 
