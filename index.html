@@ -296,6 +296,7 @@ table.gt{font-size:14px}
 .pgb table{width:100%;border-collapse:collapse}.pgb td,.pgb th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}.pgb td.n{text-align:right;font-weight:700;font-size:16px}.pgb select{width:100%;max-width:340px}.pgb .smp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pgb .bo{color:var(--bo)}
 .ovb{background:var(--surface);border-radius:20px;border-top:4px solid var(--c3);box-shadow:var(--shadow);padding:22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .osl{display:flex;flex-direction:column;gap:8px}
+.rled{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface2)}.rlh{display:flex;justify-content:space-between;align-items:center}
 .xf{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center}.xf input,.xf select{width:100%}.xerr{color:var(--bo);font-weight:600}
 .osin{display:flex;flex-direction:column;gap:6px}.osin select,.osin input{width:100%}.osm .osmb{display:flex;flex-direction:column;gap:10px;margin-top:10px}.osls{display:flex;flex-wrap:wrap;gap:6px}.rsn{display:inline-flex;align-items:center;gap:4px}.rx{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:inherit;padding:0 2px}#osNew{flex:1;min-width:180px}
 .osr{display:grid;grid-template-columns:1fr auto minmax(200px,240px);gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
@@ -379,7 +380,8 @@ th.sorted{color:var(--c1)}
 .hpop td.n,.hpop th.n{text-align:right;font-variant-numeric:tabular-nums}
 .hpop tr.hcur td{background:var(--c1s);font-weight:600}
 .okt{color:var(--ok);font-weight:600}
-#f3sel{display:none;max-width:200px}
+#f3sel{display:block;max-width:240px}
+#chips3{display:none}
 .vseg{padding:3px}.vseg .segb{padding:5px 12px;font-size:13px}
 body.compact #chips3{display:none}
 body.compact #f3sel{display:block}
@@ -577,7 +579,7 @@ body.compact .qin{max-width:none}body.compact .spn{width:12px}body.compact .qc .
     </div>
     <div class="bar">
       <div class="chips" id="chips3"></div>
-      <select id="f3sel" aria-label="ตัวกรอง"></select>
+      <label class="hint" for="f3sel">แสดง</label><select id="f3sel" aria-label="ตัวกรอง"></select>
       <input type="search" class="grow" id="q3" placeholder="ค้นหารหัสหรือชื่อสินค้า" aria-label="ค้นหา">
       <button type="button" class="btn sm" id="xAddBtn" hidden title="สั่งสินค้าที่ไม่อยู่ในรายการของรอบนี้">+ เพิ่มสินค้าที่ไม่มีในรายการ</button>
 
@@ -1632,7 +1634,7 @@ async function saveReasons(list){S.reasons=list;paintReasons();osPaintList();osR
 const OTHER='__other';
 function osSelHtml(v){const inList=S.reasons.includes(v);
   return '<option value=""'+(v?'':' selected')+'>— เลือกเหตุผล —</option>'+S.reasons.map(r=>'<option value="'+esc(r)+'"'+(r===v?' selected':'')+'>'+esc(r)+'</option>').join('')+
-    '<option value="'+OTHER+'"'+(v&&!inList?' selected':'')+'>พิมพ์เอง…</option>'}
+    '<option value="'+OTHER+'"'+(v&&!inList?' selected':'')+'>พิมพ์เอง…</option><option value="__edit">✏️ แก้ไขรายการ…</option>'}
 function osPaintList(){const el=$('osList');if(!el)return;
   el.innerHTML=S.reasons.map((r,k)=>'<span class="pill p-same rsn">'+esc(r)+' <button type="button" class="rx" data-rdel="'+k+'" title="เอาออกจากรายการ" aria-label="เอา '+esc(r)+' ออก">×</button></span>').join('')}
 function osRefreshSelects(){$('osBody').querySelectorAll('select[data-osr]').forEach(sel=>{const row=sel.closest('.osr'),inp=row.querySelector('input[data-os]'),v=sel.value===OTHER?inp.value.trim():sel.value;
@@ -1647,25 +1649,29 @@ function openOS(){
       return '<div class="osr"><div><span class="code">'+esc(i.code)+'</span><div class="nm">'+esc(i.name)+'</div></div><div class="n">Plan '+fmt(p.qty)+'</div>'+
       '<div class="osin"><select data-osr="'+esc(i.code)+'" aria-label="เหตุผล '+esc(i.code)+'">'+osSelHtml(v)+'</select>'+
       '<input type="text" class="note" data-os="'+esc(i.code)+'" value="'+esc(v)+'" placeholder="พิมพ์เหตุผล" aria-label="พิมพ์เหตุผลเอง '+esc(i.code)+'"'+(v&&!inList?'':' hidden')+'></div></div>'}).join('')+'</div>'+
-    '<details class="osm"><summary class="btn sm">แก้รายการเหตุผล</summary><div class="osmb"><div class="osls" id="osList"></div>'+
-      '<div class="bar"><input type="text" id="osNew" placeholder="เพิ่มเหตุผลใหม่ เช่น สินค้าหมดอายุ" aria-label="เหตุผลใหม่"><button type="button" class="btn sm" id="osAdd">เพิ่มในรายการ</button></div>'+
-      '<p class="hint">รายการนี้ใช้ร่วมกันทุกคน และขึ้นเป็นตัวเลือกในช่องหมายเหตุของตารางด้วย</p></div></details>'+
+    '<div class="rled" id="osEd" hidden><div class="rlh"><b>แก้ไขรายการเหตุผล</b><button type="button" class="btn sm" id="osEdDone">เสร็จ</button></div><div class="osls" id="osList"></div>'+
+      '<div class="bar"><input type="text" id="osNew" placeholder="เพิ่มเหตุผลใหม่ เช่น สินค้าหมดอายุ" aria-label="เหตุผลใหม่"><button type="button" class="btn sm" id="osAdd">เพิ่ม</button></div>'+
+      '<p class="hint">ใช้ร่วมกันทุกคน และขึ้นเป็นตัวเลือกในช่องหมายเหตุของตารางด้วย</p></div>'+
     '<p class="hint" id="osMsg"></p>'+
     '<div class="bar"><button type="button" class="btn primary" id="osOk" disabled>บันทึกการสั่ง</button><button type="button" class="btn" id="osNo">ยกเลิก</button></div>';
   osPaintList();$('osPanel').hidden=false;osCheck();}
 function osCheck(){const ins=[...$('osBody').querySelectorAll('input[data-os]')];$('osOk').disabled=!ins.every(x=>x.value.trim())}
 $('saveOrder').addEventListener('click',openOS);
 $('osBody').addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.os!=null)osCheck()});
+$('osBody').addEventListener('focusin',e=>{const sel=e.target.closest&&e.target.closest('select[data-osr]');if(sel)sel.dataset.prev=sel.value});
 $('osBody').addEventListener('change',e=>{const sel=e.target.closest('select[data-osr]');if(!sel)return;const inp=sel.closest('.osr').querySelector('input[data-os]');
+  if(sel.value==='__edit'){sel.value=sel.dataset.prev!=null?sel.dataset.prev:'';$('osEd').hidden=false;osPaintList();$('osNew').focus();return}
+  sel.dataset.prev=sel.value;
   if(sel.value===OTHER){inp.hidden=false;if(S.reasons.includes(inp.value))inp.value='';inp.focus()}else{inp.hidden=true;inp.value=sel.value}osCheck()});
 $('osBody').addEventListener('keydown',e=>{if(e.target.id==='osNew'&&e.key==='Enter'){e.preventDefault();$('osAdd').click()}});
 $('osBody').addEventListener('click',e=>{
   const del=e.target.closest('[data-rdel]');
   if(del){const k=+del.dataset.rdel,l=S.reasons.slice();l.splice(k,1);if(!l.length){$('osMsg').textContent='ต้องมีเหตุผลอย่างน้อย 1 รายการ';return}saveReasons(l);return}
+  if(e.target.id==='osEdDone'){$('osEd').hidden=true;return}
   if(e.target.id==='osNo')closeOS();
   else if(e.target.id==='osAdd'){const x=$('osNew'),v=x.value.trim().replace(/\s+/g,' ');if(!v)return;
     if(S.reasons.includes(v)){$('osMsg').textContent='มี "'+v+'" ในรายการแล้ว';return}
-    x.value='';$('osMsg').textContent='เพิ่ม "'+v+'" ในรายการแล้ว';saveReasons([...S.reasons,v])}
+    x.value='';$('osMsg').textContent='เพิ่ม "'+v+'" ในรายการแล้ว';saveReasons([...S.reasons,v]);x.focus()}
   else if(e.target.id==='osAll'){const v=$('osAllSel').value;$('osBody').querySelectorAll('.osr').forEach(row=>{const inp=row.querySelector('input[data-os]'),sel=row.querySelector('select[data-osr]');
       if(!inp.value.trim()){inp.value=v;sel.value=v;inp.hidden=true}});osCheck()}
   else if(e.target.id==='osOk'){const r={};$('osBody').querySelectorAll('input[data-os]').forEach(x=>r[x.dataset.os]=x.value.trim());commitOS(r)}});
@@ -2074,7 +2080,7 @@ function watchXReasons(){if(xrUnsub||!S.db)return;
 async function saveXReasons(list){S.xreasons=list;xPaintReasons();
   if(S.db){try{await S.db.doc(XREASON_DOC).set({list,at:Date.now(),by:S.uid||null})}catch(e){$('xMsg').textContent='บันทึกรายการเหตุผลไม่ได้ ลองใหม่อีกครั้ง'}}}
 function xPaintReasons(){const sel=$('xReason');if(!sel)return;const cur=sel.value;
-  sel.innerHTML=S.xreasons.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('');if(S.xreasons.includes(cur))sel.value=cur;
+  sel.innerHTML=S.xreasons.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('')+'<option value="__edit">✏️ แก้ไขรายการ…</option>';sel.value=S.xreasons.includes(cur)?cur:S.xreasons[0];sel.dataset.prev=sel.value;
   $('xList').innerHTML=S.xreasons.map((r,k)=>'<span class="pill p-same rsn">'+esc(r)+' <button type="button" class="rx" data-xdel="'+k+'" title="เอาออกจากรายการ" aria-label="เอา '+esc(r)+' ออก">×</button></span>').join('')}
 function openX(){
   if(!S.run||isLocked(S.run))return;
@@ -2082,15 +2088,15 @@ function openX(){
     '<div class="xf"><label for="xSku">SKU</label><input type="text" id="xSku" autocomplete="off" spellcheck="false" placeholder="รหัสเต็ม เช่น 5CAN901F21">'+
     '<label for="xQty">จำนวน (Case)</label><input type="text" id="xQty" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="อย่างน้อย 1">'+
     '<label for="xReason">เหตุผล</label><select id="xReason"></select></div>'+
-    '<details class="osm"><summary class="btn sm">แก้รายการเหตุผล</summary><div class="osmb"><div class="osls" id="xList"></div>'+
-      '<div class="bar"><input type="text" id="xNew" placeholder="เพิ่มเหตุผลใหม่" aria-label="เหตุผลใหม่"><button type="button" class="btn sm" id="xAddR">เพิ่มในรายการ</button></div>'+
-      '<p class="hint">รายการนี้ใช้ร่วมกันทุกคน เพิ่มที่เครื่องไหน ทุกคนเห็น</p></div></details>'+
+    '<div class="rled" id="xEd" hidden><div class="rlh"><b>แก้ไขรายการเหตุผล</b><button type="button" class="btn sm" id="xEdDone">เสร็จ</button></div><div class="osls" id="xList"></div>'+
+      '<div class="bar"><input type="text" id="xNew" placeholder="เพิ่มเหตุผลใหม่" aria-label="เหตุผลใหม่"><button type="button" class="btn sm" id="xAddR">เพิ่ม</button></div>'+
+      '<p class="hint">ใช้ร่วมกันทุกคน เพิ่มที่เครื่องไหน ทุกคนเห็น</p></div>'+
     '<p class="hint" id="xMsg" aria-live="polite"></p>'+
     '<div class="bar"><button type="button" class="btn primary" id="xOk" disabled>เพิ่มสินค้า</button><button type="button" class="btn" id="xNo">ยกเลิก</button></div>';
   xPaintReasons();$('xPanel').hidden=false;$('xSku').focus();}
 const xSkuOk=v=>/^[A-Za-z0-9][A-Za-z0-9._\/-]{2,39}$/.test(v);
 function xCheck(){const sku=$('xSku').value.trim(),q=$('xQty').value.trim(),m=$('xMsg');m.className='hint';
-  let ok=xSkuOk(sku)&&/^\d+$/.test(q)&&+q>=1&&!!$('xReason').value;
+  let ok=xSkuOk(sku)&&/^\d+$/.test(q)&&+q>=1&&!!$('xReason').value&&$('xReason').value!=='__edit';
   const hit=sku&&S.rows.find(i=>i.code.toLowerCase()===sku.toLowerCase());
   if(hit){ok=false;m.className='hint xerr';m.innerHTML='SKU นี้มีในรายการรอบนี้แล้ว <button type="button" class="btn sm" id="xGo" data-code="'+esc(hit.code)+'">ไปที่แถวนี้</button>'}
   else if(sku&&!xSkuOk(sku)){m.className='hint xerr';m.textContent='SKU ต้องเป็นรหัสเต็ม ตัวอักษรอังกฤษหรือตัวเลข ไม่มีช่องว่าง อย่างน้อย 3 ตัว'}
@@ -2113,15 +2119,18 @@ async function xDelete(code){const p=S.plans.get(code);if(!p||!p.extra||isDoneP(
 function confirmDel(code){if(S.xdelArm===code){S.xdelArm=null;return true}S.xdelArm=code;$('s3msg').textContent='กด × อีกครั้งเพื่อยืนยันการลบ '+code;setTimeout(()=>{if(S.xdelArm===code)S.xdelArm=null},4000);return false}
 $('xAddBtn').addEventListener('click',openX);
 $('xBody').addEventListener('input',e=>{if(e.target.id==='xQty'){const v=e.target.value.replace(/\D+/g,'');if(v!==e.target.value)e.target.value=v}if(e.target.id==='xSku'||e.target.id==='xQty')xCheck()});
-$('xBody').addEventListener('change',e=>{if(e.target.id==='xReason')xCheck()});
+$('xBody').addEventListener('change',e=>{if(e.target.id!=='xReason')return;const sel=e.target;
+  if(sel.value==='__edit'){sel.value=sel.dataset.prev||S.xreasons[0];$('xEd').hidden=false;$('xNew').focus();return}
+  sel.dataset.prev=sel.value;xCheck()});
 $('xBody').addEventListener('keydown',e=>{if(e.key==='Enter'){if(e.target.id==='xNew'){e.preventDefault();$('xAddR').click()}else if(e.target.id==='xSku'||e.target.id==='xQty'){e.preventDefault();xSave()}}if(e.key==='Escape')xClose()});
 $('xBody').addEventListener('click',e=>{const del=e.target.closest('[data-xdel]');
   if(del){const l=S.xreasons.slice();l.splice(+del.dataset.xdel,1);if(!l.length){$('xMsg').textContent='ต้องมีเหตุผลอย่างน้อย 1 รายการ';return}saveXReasons(l);return}
   const id=e.target.id;
+  if(id==='xEdDone'){$('xEd').hidden=true;return}
   if(id==='xNo')xClose();else if(id==='xOk')xSave();
   else if(id==='xGo')xGoto(e.target.dataset.code);
   else if(id==='xAddR'){const x=$('xNew'),v=x.value.trim().replace(/\s+/g,' ');if(!v)return;if(S.xreasons.includes(v)){$('xMsg').textContent='มี "'+v+'" ในรายการแล้ว';return}
-    x.value='';saveXReasons([...S.xreasons,v]);$('xReason').value=v;xCheck()}});
+    x.value='';saveXReasons([...S.xreasons,v]);$('xReason').value=v;$('xReason').dataset.prev=v;x.focus();xCheck()}});
 paintNet();
 (function init(){
   if(!window.firebase||!FIREBASE_CONFIG.apiKey){
